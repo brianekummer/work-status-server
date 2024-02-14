@@ -69,7 +69,7 @@ const LOG_LEVELS = {
   INFO:  1,
   ERROR: 2
 };
-var LOG_LEVEL = LOG_LEVELS[process.argv[3].toUpperCase() || "ERROR"];
+var LOG_LEVEL = LOG_LEVELS[ ( process.argv.length > 3 ? process.argv[3].toUpperCase() : "ERROR")];
 let log = (level, message) => {
   if (level >= LOG_LEVEL) {
     console.log(message);
@@ -193,13 +193,16 @@ const getStatus = () => {
   let status = JSON.parse(readFileSyncWithRetry(STATUS_FILENAME));
   let rightNow = DateTime.now();
   
-  // I'm having problems with Luxon in Node on this phone. I should be able
-  // to get the short offset name (i.e. "EDT") using 
+  // I had problems with Luxon in Node when running this on a phone. I should
+  // be able to get the short offset name (i.e. "EDT") using 
   //   DateTime.now().toFormat("ZZZZ")
-  // but instead, I get something like "Monday, March 1, 2021, 9:56 PM"
-  // So I'm just parsing it out of the JavaScript printed date:
+  // but instead, I got something like "Monday, March 1, 2021, 9:56 PM", so I
+  // had to just parsing it out of the JavaScript printed date:
   //   Mon Mar 01 2021 22:39:15 GMT-0500 (EST)
-  let shortOffset = /\(([^)]+)\)/.exec(new Date().toLocaleString())[1];
+  //
+  // But since moving this web server off a phone, I don't have that problem 
+  // any more.
+  let shortOffset = DateTime.now().toFormat("ZZZZ");
 
   return {
     screen: status.screen,
