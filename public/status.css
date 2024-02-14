@@ -1,0 +1,25 @@
+.page--visible                { background:     DarkGray; }
+.page--invisible              { background:        Black; }
+
+.table--visible               { table-layout:      fixed;
+                                height:              98%;
+                                width:  calc(100% - 4px);
+                                border:  1px solid black;
+                                margin:              2px; }
+.table--invisible             { display:            none; }
+.table__column-icon--width    { width:             125px; }
+.table__column-status--width  {                           }
+.table--padding               { padding:            10px; 
+                                border-spacing: 10px 0px; }
+
+.row--visible                 { display:       table-row; }
+.row--invisible               { display:            none; }
+
+.emoji--size                  { width:              100%; 
+                                height:             auto; }
+
+.text-padding                 { padding:        0px 10px; } 
+.status--font-size            { font-size:          400%; }
+.status--font-size__small     { font-size:          225%; }
+.times--font-size             { font-size:          150%; }
+.last-updated--font-size      { font-size:          100%; }
