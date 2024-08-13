@@ -54,7 +54,7 @@ const STATUS_CONDITIONS = {
   },
   TIME_TEXT: {
     START: "Started @ (start)",
-    START_TO_END: "(start) - (work_status_expiration)"
+    START_TO_END: "(start) - (status_expiration)"
   }
 };
 
@@ -287,6 +287,11 @@ const getSlackStatus = securityToken => {
         `${jsonResponses[0].profile.status_expiration} / ` +
         `${jsonResponses[1].presence}`);
 
+    // Huddles don't set the emoji, they set "huddle_state" property. For my
+    // purposes, changing the emoji to the same as a Slack call is fine.
+    if (jsonResponses[0].profile.huddle_state == "in_a_huddle")
+        jsonResponses[0].profile.status_emoji = ":slack_call:";
+
     return Promise.resolve({
       emoji:      jsonResponses[0].profile.status_emoji,
       text:       jsonResponses[0].profile.status_text,
@@ -340,7 +345,7 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
         let statusTimesTemplate = (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TIMES] || "")
           .replace("TIME_TEXT_START_TO_END", STATUS_CONDITIONS.TIME_TEXT.START_TO_END)
           .replace("TIME_TEXT_START",        STATUS_CONDITIONS.TIME_TEXT.START);
-        if (statusTimesTemplate == STATUS_CONDITIONS.TIME_TEXT.START_TO_END && workSlackStatus.expiration == 0) {
+        if (statusTimesTemplate == STATUS_CONDITIONS.TIME_TEXT.START_TO_END && workSlackStatus.expiration == 0 && homeSlackStatus.expiration == 0) {
           statusTimesTemplate = STATUS_CONDITIONS.TIME_TEXT.START;
         }
 
@@ -380,7 +385,9 @@ const buildStatusTimes = (currentStatus, latestStatus) => {
     : currentStatus.statusStartTime;
   latestStatus.times = latestStatus.statusTimesTemplate
     .replace("(start)", latestStatus.statusStartTime)
-    .replace("(work_status_expiration)", DateTime.fromSeconds(latestStatus.workStatusExpiration).toLocaleString(DateTime.TIME_SIMPLE));
+    .replace("(status_expiration)", 
+      DateTime.fromSeconds(latestStatus.workStatusExpiration != 0 ? latestStatus.workStatusExpiration : latestStatus.homeStatusExpiration).toLocaleString(DateTime.TIME_SIMPLE)
+    );
 
   return latestStatus;
 };

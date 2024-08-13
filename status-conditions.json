@@ -21,6 +21,7 @@
   [  "Away from my desk",             "off",  "away",                "Away",                "",                         "",                      "away",     "",                      ""        ],
   [  "On PTO",                        "off",  "palm_tree",           "Vacation",            "",                         ":palm_tree:",           "",         "",                      ""        ],
   [  "On a Slack call",               "on",   "telephone_receiver",  "On a call",           "TIME_TEXT_START",          ":slack_call:",          "",         "",                      ""        ],
+  [  "In a Slack huddle",             "on",   "telephone_receiver",  "On a call",           "TIME_TEXT_START",          ":slack_call:",          "",         "",                      ""        ],
   [  "Heads down, focused",           "on",   "heads_down",          "Focusing",            "TIME_TEXT_START_TO_END",   ":heads-down:",          "",         "",                      ""        ],
   [  "In Pittsburgh",                 "on",   "cityscape",           "In Pittsburgh",       "",                         ":cityscape:",           "",         "",                      ""        ],
   [  "In a meeting",                  "on",   "spiral_calendar",     "Meeting",             "TIME_TEXT_START_TO_END",   ":spiral_calendar_pad:", "",         "",                      ""        ],
