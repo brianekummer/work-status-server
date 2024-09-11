@@ -68,11 +68,8 @@ let WORK = 0;
 let HOME = 1;
 let SLACK_SECURITY_TOKENS = process.argv[2].split(",");
 
-
 let HOME_ASSISTANT_URL = process.argv[3];
 let HOME_ASSISTANT_TOKEN = process.argv[4];
-console.log(HOME_ASSISTANT_URL);
-console.log(HOME_ASSISTANT_TOKEN);
 
 // My simple home grown logging
 const LOG_LEVELS = {
