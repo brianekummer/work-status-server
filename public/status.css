@@ -7,7 +7,7 @@
                                 border:  1px solid black;
                                 margin:              2px; }
 .table--invisible             { display:            none; }
-.table__column-icon--width    { width:             125px; }
+.table__column-icon--width    { width:             100px; }
 .table__column-status--width  {                           }
 .table--padding               { padding:            10px; 
                                 border-spacing: 10px 0px; }
@@ -19,7 +19,16 @@
                                 height:             auto; }
 
 .text-padding                 { padding:        0px 10px; } 
-.status--font-size            { font-size:          400%; }
-.status--font-size__small     { font-size:          225%; }
-.times--font-size             { font-size:          150%; }
+.status--font-size            { font-size:          300%; }
+.status--font-size__small     { font-size:          200%; }
+.times--font-size             { font-size:          125%; }
 .last-updated--font-size      { font-size:          100%; }
+
+
+.table__column-ha--width      { width:               25%; }
+.ha-status-cell               { display:     inline-flex;
+                                height:             45px; }
+.ha-icon--size                {                           }
+.ha--font                     { font-size:           85%;
+                                display:            flex;
+                                align-items:      center; }

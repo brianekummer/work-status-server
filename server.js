@@ -2,6 +2,9 @@
   Server side code for Home Working Status
 
 
+  TODO- Move command line arguments into env vars
+
+
   GENERAL STRATEGY
     - Timer runs every 60 seconds and gets my Slack status for work and home
       accounts. It calculates my new status to display at home, and if it's 
@@ -20,10 +23,12 @@
       argument 2.........Must be the Slack security tokens for my work and home
                          and accounts in a csv, like this: 
                          <work_token>,<home_token>
+      argument 3.........Home Assistant url
+      argument 4.........Home Assistant token                         
 
   OPTIONAL
     command-line
-      argument 3........The logging level- can be DEBUG|INFO|ERROR
+      argument 5........The logging level- can be DEBUG|INFO|ERROR
 
 ******************************************************************************/
 
@@ -54,7 +59,7 @@ const STATUS_CONDITIONS = {
   },
   TIME_TEXT: {
     START: "Started @ (start)",
-    START_TO_END: "(start) - (work_status_expiration)"
+    START_TO_END: "(start) - (status_expiration)"
   }
 };
 
@@ -63,13 +68,19 @@ let WORK = 0;
 let HOME = 1;
 let SLACK_SECURITY_TOKENS = process.argv[2].split(",");
 
+
+let HOME_ASSISTANT_URL = process.argv[3];
+let HOME_ASSISTANT_TOKEN = process.argv[4];
+console.log(HOME_ASSISTANT_URL);
+console.log(HOME_ASSISTANT_TOKEN);
+
 // My simple home grown logging
 const LOG_LEVELS = {
   DEBUG: 0,
   INFO:  1,
   ERROR: 2
 };
-var LOG_LEVEL = LOG_LEVELS[process.argv[3].toUpperCase() || "ERROR"];
+var LOG_LEVEL = LOG_LEVELS[ ( process.argv.length > 5 ? process.argv[5].toUpperCase() : "ERROR")];
 let log = (level, message) => {
   if (level >= LOG_LEVEL) {
     console.log(message);
@@ -86,7 +97,11 @@ let currentStatus = {
   statusTimesTemplate: null,
   statusStartTime: null,
   workStatusExpiration: null,
-  homeStatusExpiration: null
+  homeStatusExpiration: null,
+  homeAssistant: { 
+    url: null, 
+    token: null 
+  }
 };
 
 
@@ -186,6 +201,7 @@ const saveFileSyncWithRetry = (filename, data, encoding = "utf8", numberOfRetrie
 
 /******************************************************************************
   Get my status. This is read from the JSON file.
+  Also return any Home Assistant info that the browser needs to call HA.
 
   Returns the status as a JSON object
 ******************************************************************************/
@@ -193,13 +209,16 @@ const getStatus = () => {
   let status = JSON.parse(readFileSyncWithRetry(STATUS_FILENAME));
   let rightNow = DateTime.now();
   
-  // I'm having problems with Luxon in Node on this phone. I should be able
-  // to get the short offset name (i.e. "EDT") using 
+  // I had problems with Luxon in Node when running this on a phone. I should
+  // be able to get the short offset name (i.e. "EDT") using 
   //   DateTime.now().toFormat("ZZZZ")
-  // but instead, I get something like "Monday, March 1, 2021, 9:56 PM"
-  // So I'm just parsing it out of the JavaScript printed date:
+  // but instead, I got something like "Monday, March 1, 2021, 9:56 PM", so I
+  // had to just parsing it out of the JavaScript printed date:
   //   Mon Mar 01 2021 22:39:15 GMT-0500 (EST)
-  let shortOffset = /\(([^)]+)\)/.exec(new Date().toLocaleString())[1];
+  //
+  // But since moving this web server off a phone, I don't have that problem 
+  // any more.
+  let shortOffset = DateTime.now().toFormat("ZZZZ");
 
   return {
     screen: status.screen,
@@ -211,6 +230,10 @@ const getStatus = () => {
       local24: rightNow.toLocaleString(DateTime.TIME_24_SIMPLE),
       localShortOffset: shortOffset,
       utc: rightNow.toUTC().toFormat("HH:mm")
+    },
+    homeAssistant: {
+      url: HOME_ASSISTANT_URL,
+      token: HOME_ASSISTANT_TOKEN
     }
   };
 };
@@ -284,6 +307,11 @@ const getSlackStatus = securityToken => {
         `${jsonResponses[0].profile.status_expiration} / ` +
         `${jsonResponses[1].presence}`);
 
+    // Huddles don't set the emoji, they set "huddle_state" property. For my
+    // purposes, changing the emoji to the same as a Slack call is fine.
+    if (jsonResponses[0].profile.huddle_state == "in_a_huddle")
+        jsonResponses[0].profile.status_emoji = ":slack_call:";
+
     return Promise.resolve({
       emoji:      jsonResponses[0].profile.status_emoji,
       text:       jsonResponses[0].profile.status_text,
@@ -337,7 +365,7 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
         let statusTimesTemplate = (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TIMES] || "")
           .replace("TIME_TEXT_START_TO_END", STATUS_CONDITIONS.TIME_TEXT.START_TO_END)
           .replace("TIME_TEXT_START",        STATUS_CONDITIONS.TIME_TEXT.START);
-        if (statusTimesTemplate == STATUS_CONDITIONS.TIME_TEXT.START_TO_END && workSlackStatus.expiration == 0) {
+        if (statusTimesTemplate == STATUS_CONDITIONS.TIME_TEXT.START_TO_END && workSlackStatus.expiration == 0 && homeSlackStatus.expiration == 0) {
           statusTimesTemplate = STATUS_CONDITIONS.TIME_TEXT.START;
         }
 
@@ -377,7 +405,9 @@ const buildStatusTimes = (currentStatus, latestStatus) => {
     : currentStatus.statusStartTime;
   latestStatus.times = latestStatus.statusTimesTemplate
     .replace("(start)", latestStatus.statusStartTime)
-    .replace("(work_status_expiration)", DateTime.fromSeconds(latestStatus.workStatusExpiration).toLocaleString(DateTime.TIME_SIMPLE));
+    .replace("(status_expiration)", 
+      DateTime.fromSeconds(latestStatus.workStatusExpiration != 0 ? latestStatus.workStatusExpiration : latestStatus.homeStatusExpiration).toLocaleString(DateTime.TIME_SIMPLE)
+    );
 
   return latestStatus;
 };

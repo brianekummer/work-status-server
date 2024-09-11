@@ -23,7 +23,7 @@ function displaySlackStatus() {
     //     dim it all the way down, which combined with making everything
     //     black, is good enough for me. So I set the Tasker global variable
     //     variable "ChangeScreenTo" to say if I want the screen off 
-    //     (dimmed) or on (undimmed), and a aTasker profile watches for that
+    //     (dimmed) or on (undimmed), and a Tasker profile watches for that
     //     and does as it's told.
     // 
     // If viewing this web page somewhere other than on that phone, such
@@ -55,6 +55,30 @@ function displaySlackStatus() {
       document.getElementById("local24ShortOffset").innerHTML = jsonResponse.timestamps.localShortOffset;
       document.getElementById("utc").innerHTML = jsonResponse.timestamps.utc;
       document.getElementById("times-table").className = "table--visible";
+
+      // Set the URL for each of the images using the HA url from the server
+      if (!document.getElementById("washer-image").src)
+        document.getElementById("washer-image").src = `${jsonResponse.homeAssistant.url}/local/icon/mdi-washing-machine-light.png`;
+      if (!document.getElementById("dryer-image").src)
+        document.getElementById("dryer-image").src = `${jsonResponse.homeAssistant.url}/local/icon/mdi-tumble-dryer-light.png`;
+      if (!document.getElementById("thermometer-image").src)
+        document.getElementById("thermometer-image").src = `${jsonResponse.homeAssistant.url}/local/icon/thermometer.png`;
+
+      // Get data from Home Assistant to display
+      var xhttp = new XMLHttpRequest();
+      xhttp.responseType = 'json';
+      xhttp.onreadystatechange = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          var state = JSON.parse(this.response.state);
+
+          document.getElementById("washer-text").innerHTML = state.Washer;
+          document.getElementById("dryer-text").innerHTML = state.Dryer;
+          document.getElementById("thermometer-text").innerHTML = state.Temperature + "°";
+        }
+      };
+      xhttp.open("GET", `${jsonResponse.homeAssistant.url}/api/states/sensor.work_status_phone_info`, true);
+      xhttp.setRequestHeader("Authorization", `Bearer ${jsonResponse.homeAssistant.token}`);
+      xhttp.send();
     }
     else 
     {
