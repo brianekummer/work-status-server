@@ -29,6 +29,6 @@
 .ha-status-cell               { display:     inline-flex;
                                 height:             45px; }
 .ha-icon--size                {                           }
-.ha--font                     { font-size:           85%;
+.ha--font                     { font-size:          100%;
                                 display:            flex;
                                 align-items:      center; }
