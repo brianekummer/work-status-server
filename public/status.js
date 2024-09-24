@@ -73,7 +73,7 @@ function displaySlackStatus() {
 
           document.getElementById("washer-text").innerHTML = state.Washer;
           document.getElementById("dryer-text").innerHTML = state.Dryer;
-          document.getElementById("thermometer-text").innerHTML = state.Temperature + "°";
+          document.getElementById("thermometer-text").innerHTML = state.Temperature;
         }
       };
       xhttp.open("GET", `${jsonResponse.homeAssistant.url}/api/states/sensor.work_status_phone_info`, true);
