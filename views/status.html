@@ -2,11 +2,12 @@
 <html>
   <head>
     <link type="text/css" href="./status.css" rel="stylesheet">
-    <script type="text/javascript">var showUtc = {{showUtc}};</script>
+    <script type="text/javascript">var showDesk = {{showDesk}};</script>
     <script type="text/javascript" src="status.js"></script>
   </head>
-  <body class="page--visible">
-    <table id="times-table" class="table--invisible">
+
+  <body class="page--visible wall">
+    <table class="current-times">
       <colgroup>
         <col style="width:33%">
         <col style="width:33%">
@@ -14,47 +15,50 @@
       </colgroup>
       <tbody>
         <tr>
-          <td style="text-align:left">&nbsp;<span id="local12" class="status--font-size__small"></span>&nbsp;<span id="local12ShortOffset"></span></td>
-          <td style="text-align:center"><span id="local24" class="status--font-size__small"></span>&nbsp;<span id="local24ShortOffset"></span></td>
-          <td style="text-align:right"><span id="utc"     class="status--font-size__small"></span>&nbsp;<span>UTC&nbsp;</span></td>
+          <td class="left">&nbsp;<span id="local12" class="time"></span>&nbsp;<span id="local12ShortOffset"></span></td>
+          <td class="center"><span id="local24" class="time"></span>&nbsp;<span id="local24ShortOffset"></span></td>
+          <td class="right"><span id="utc" class="time"></span>&nbsp;<span>UTC&nbsp;</span></td>
         </tr>
       </tbody>
     </table>
-    <table id="status-table" class="table--visible table--padding">
+
+    <table id="status-table" class="status-table">
       <colgroup>
-       <col class="table__column-icon--width">
-       <col class="table__column-status--width">
-       <col class="table__column-ha--width">
+       <col class="emoji">
+       <col> <!-- No specific styling, will fill the remaining space -->
+       <col class="ha">
       </colgroup>
       <tr id="working" class="row--visible">
         <td rowspan="2">
-          <img id="emoji" class="emoji--size" src=""/>
+          <img id="status-emoji" class="emoji--size" src=""/>
         </td>
         <td class="text-padding">
-          <span id="text" class="status--font-size"></span></br>
+          <span id="status-text" class="status--font-size"></span></br>
           </br>
-          <span id="times" class="times--font-size"></span></br>
+          <span id="status-times" class="times--font-size"></span></br>
           </br>
         </td>
         <td rowspan="2">
-          <span id="home_assistant_info">
+          <span>
             <span class="ha-status-cell">
-              <img id="washer-image" class="ha-icon--size">
+              <img id="washer-image">
               <span id="washer-text" class="ha--font"></span>
             </span>
             </br>
             <span class="ha-status-cell">
-              <img id="dryer-image" class="ha-icon--size">
+              <img id="dryer-image">
               <span id="dryer-text" class="ha--font"></span>
             </span>
             </br>
             <span class="ha-status-cell">
-              <img id="thermometer-image" class="ha-icon--size">
+              <img id="thermometer-image">
               <span id="thermometer-text" class="ha--font"></span>
             </span>
           </span>
         </td>
       </tr>
+
+      <!-- Debugging -->
       <tr id="not-working" class="row--invisible">
         <td rowspan="2"/>
         <td class="text-padding">
@@ -64,6 +68,7 @@
           </br>
         </td>
       </tr>
+
       <tr>
         <td class="text-padding">
           <span class="last-updated--font-size">Last updated <span id="last-updated-timestamp" /></span>

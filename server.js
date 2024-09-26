@@ -118,14 +118,14 @@ app.use(express.static(`${__dirname}/public`));
 // but ok for me here. https://github.com/node-fetch/node-fetch/issues/568
 process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
 
-// "http://xxxxx:3000"  without a path sends the status page
+// "http://xxxxx:3000" without a path sends the status page
 app.get("/", (request, response) => {
-  let showUtc = false;    
-  if (typeof request.query.showutc === 'string') {
-    showUtc = (request.query.showutc.toLowerCase() == 'true'); 
+  let showDesk = false;    
+  if (typeof request.query.showDesk === 'string') {
+    showDesk = (request.query.showDesk.toLowerCase() == 'true'); 
   }
   
-  response.render('status', {"showUtc": showUtc});
+  response.render('status', {"showDesk": showDesk});
 });
 
 // Call from status.html asking for latest status
