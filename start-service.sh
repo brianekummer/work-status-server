@@ -16,4 +16,3 @@ case "$OSTYPE" in
     node --watch server.js $SLACK_TOKENS $HOME_ASSISTANT_URL $HOME_ASSISTANT_TOKEN
     ;;
 esac
-
