@@ -12,19 +12,22 @@
 .right                                        { text-align:         right; }
 
 
+/* For both times and status tables */
 table                                         { table-layout:       fixed;
                                                 height:               98%;
                                                 width:   calc(100% - 4px);
-                                                border: 1px solid black;
+                                                border:   1px solid black;
                                                 margin:               2px; }
 
 
+/* To make page visible/invisible (display: table-column hides all my content
+   but still shows the background */
 .page--visible                                { background:      DarkGray;
                                                 display:            block; }
 .page--invisible                              { background:         Black;
                                                 display:     table-column; }
 
-
+/* For status table */
 .status-table                                 { padding:             10px;
                                                 border-spacing:  10px 0px; }
 .status-table .text-padding                   { padding:         0px 10px; }
