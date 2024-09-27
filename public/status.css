@@ -1,61 +1,54 @@
+/*
+  This intentionally doesn't use CSS Nesting, because that is only available
+  on very modern browsers, and the phones I'm using to display my work status
+  are typically several years old.
+
+  I could look into using a polyfill or SASS, but it's not worth it to me.
+*/
+
 /* Generic stuff  */
-.left                         { text-align:          left; }
-.center                       { text-align:        center; }
-.right                        { text-align:         right; }
+.left                                         { text-align:          left; }
+.center                                       { text-align:        center; }
+.right                                        { text-align:         right; }
 
 
-table                         { table-layout:       fixed;
-                                height:               98%;
-                                width:   calc(100% - 4px);
-                                border: 1px solid black;
-                                margin:               2px; }
+table                                         { table-layout:       fixed;
+                                                height:               98%;
+                                                width:   calc(100% - 4px);
+                                                border: 1px solid black;
+                                                margin:               2px; }
 
-.page--visible                { background:    DarkGray; }
-.page--invisible              { background:       Black; }
+.page--visible                                { background:      DarkGray; }
+.page--invisible                              { background:         Black; }
 
 
+.status-table                                 { padding:             10px;
+                                                border-spacing:  10px 0px; }
+.status-table .text-padding                   { padding:         0px 10px; }
+.status-table .emoji--size                    { width:               100%;
+                                                height:              auto; }
+.status-table .last-updated--font-size        { font-size:           100%; }
+.status-table .row--visible                   { display:        table-row; }
+.status-table .row--invisible                 { display:             none; }
 
-.status-table                 { padding:             10px;
-                                border-spacing:  10px 0px;
-  .text-padding               { padding:         0px 10px; }
-  .emoji--size                { width:               100%;
-                                height:              auto; }
 
-  .last-updated--font-size    { font-size:           100%; }
+.wall .current-times                          { display:             none; }
+.wall .status-table .emoji                    { width:              150px; }
+.wall .status-table .ha                       { width:                  0; }
+.wall .status-table .status--font-size        { font-size:           350%; }
+.wall .status-table .status--font-size__small { font-size:           275%; }
+.wall .status-table .times--font-size         { font-size:           175%; }
 
-  .row--visible               { display:        table-row; }
-  .row--invisible             { display:             none; }
-}
 
-.wall {
-  .current-times              { display:             none; }
-  .status-table {
-    .emoji                    { width:              150px; }
-    .ha                       { width:                  0; }
-
-    .status--font-size        { font-size:           350%; }
-    .status--font-size__small { font-size:           200%; }
-    .times--font-size         { font-size:           200%; }
-  }
-}
-
-.desk {
-  .current-times              { display:            table;
-    .time                     { font-size:           200%; }
-  }
-
-  .status-table {
-    .emoji                    { width:              100px; }
-    .ha                       { width:                25%; }
-
-    .status--font-size        { font-size:           300%; }
-    .status--font-size__small { font-size:           200%; }
-    .times--font-size         { font-size:           125%; }
-
-    .ha-status-cell           { display:      inline-flex;
-                                height:              45px; }
-    .ha--font                 { font-size:           100%;
-                                display:             flex;
-                                align-items:       center; }
-  }
-}
+.desk .current-times                          { display:            table; }
+.desk .current-times .time                    { font-size:           200%; }
+.desk .status-table .emoji                    { width:              100px; }
+.desk .status-table .ha                       { width:                25%; }
+.desk .status-table .status--font-size        { font-size:           300%; }
+.desk .status-table .status--font-size__small { font-size:           200%; }
+.desk .status-table .times--font-size         { font-size:           125%; }
+.desk .status-table .ha-status-cell           { display:      inline-flex;
+                                                height:              45px; }
+.desk .status-table .ha-status-cell .ha--font { font-size:           100%;
+                                                display:             flex;
+                                                align-items:       center; }
