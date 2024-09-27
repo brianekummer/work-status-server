@@ -20,8 +20,10 @@
 
 .table--invisible                             { display:             none; }
 
-.page--visible                                { background:      DarkGray; }
-.page--invisible                              { background:         Black; }
+.page--visible                                { background:      DarkGray;
+                                                display:            block; }
+.page--invisible                              { background:         Black;
+                                                display:     table-column; }
 
 
 .status-table                                 { padding:             10px;
@@ -34,7 +36,7 @@
 .status-table .row--invisible                 { display:             none; }
 
 
-.wall .current-times                          { display:             none; }
+.wall .current-times-table                    { display:             none; }
 .wall .status-table .emoji                    { width:              150px; }
 .wall .status-table .ha                       { width:                  0; }
 .wall .status-table .status--font-size        { font-size:           350%; }
@@ -42,8 +44,8 @@
 .wall .status-table .times--font-size         { font-size:           175%; }
 
 
-.desk .current-times                          { display:            table; }
-.desk .current-times .time                    { font-size:           200%; }
+.desk .current-times-table                    { display:            table; }
+.desk .current-times-table .time              { font-size:           200%; }
 .desk .status-table .emoji                    { width:              100px; }
 .desk .status-table .ha                       { width:                25%; }
 .desk .status-table .status--font-size        { font-size:           300%; }
