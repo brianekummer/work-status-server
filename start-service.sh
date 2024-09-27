@@ -5,7 +5,7 @@ case "$OSTYPE" in
     ##########################################################################
     source /root/.env
     cd /opt/work-status/
-    node server.js $SLACK_TOKENS $HOME_ASSISTANT_URL $HOME_ASSISTANT_TOKEN
+    node server.js
     ;;
 
   msys)
@@ -13,6 +13,6 @@ case "$OSTYPE" in
     # Windows, running in Git Bash
     ##########################################################################
     source .env
-    node --watch server.js $SLACK_TOKENS $HOME_ASSISTANT_URL $HOME_ASSISTANT_TOKEN
+    node --watch server.js
     ;;
 esac

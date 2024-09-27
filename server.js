@@ -2,9 +2,6 @@
   Server side code for Home Working Status
 
 
-  TODO- Move command line arguments into env vars
-
-
   GENERAL STRATEGY
     - Timer runs every 60 seconds and gets my Slack status for work and home
       accounts. It calculates my new status to display at home, and if it's 
@@ -14,21 +11,23 @@
 
   REQUIREMENTS
     NPM Packages
-      express............For coding simple web pages
-      node-fetch.........For simplifying http commands
-      node-json-minify...Since comments are invalid syntax in JSON, they need to be 
-                         stripped out of the status conditions matrix
-      luxon..............For date formatting, instead of momentJS
-    Command-line 
-      argument 2.........Must be the Slack security tokens for my work and home
-                         and accounts in a csv, like this: 
-                         <work_token>,<home_token>
-      argument 3.........Home Assistant url
-      argument 4.........Home Assistant token                         
+      express................For coding simple web pages
+      node-fetch.............For simplifying http commands
+      node-json-minify.......Since comments are invalid syntax in JSON, they need 
+                             to be stripped out of the status conditions matrix
+      luxon..................For date formatting, instead of momentJS
+      mustache-express.......For implementing Mustache templates with Express
+
+    Environment Variables
+      SLACK_TOKENS...........Must be the Slack security tokens for my work and home
+                             and accounts in a csv, like this: 
+                             <work_token>,<home_token>
+      HOME_ASSISTANT_URL.....URL for Home Assistant
+      HOME_ASSISTANT_TOKEN...Security token for accessing Home Assistant
 
   OPTIONAL
-    command-line
-      argument 5........The logging level- can be DEBUG|INFO|ERROR
+    Command Line Parameters
+      argument 2.............The logging level- can be DEBUG|INFO|ERROR
 
 ******************************************************************************/
 
@@ -66,10 +65,10 @@ const STATUS_CONDITIONS = {
 // My Slack security tokens
 let WORK = 0;
 let HOME = 1;
-let SLACK_SECURITY_TOKENS = process.argv[2].split(",");
+let SLACK_TOKENS = process.env.SLACK_TOKENS.split(",");
 
-let HOME_ASSISTANT_URL = process.argv[3];
-let HOME_ASSISTANT_TOKEN = process.argv[4];
+let HOME_ASSISTANT_URL = process.env.HOME_ASSISTANT_URL;
+let HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
 
 // My simple home grown logging
 const LOG_LEVELS = {
@@ -77,7 +76,7 @@ const LOG_LEVELS = {
   INFO:  1,
   ERROR: 2
 };
-var LOG_LEVEL = LOG_LEVELS[ ( process.argv.length > 5 ? process.argv[5].toUpperCase() : "ERROR")];
+var LOG_LEVEL = LOG_LEVELS[ ( process.argv.length > 2 ? process.argv[2].toUpperCase() : "ERROR")];
 let log = (level, message) => {
   if (level >= LOG_LEVEL) {
     console.log(message);
@@ -256,8 +255,8 @@ const statusHasChanged = (currentStatus, latestStatus) => {
 ******************************************************************************/
 const processAnyStatusChange = () => {
   Promise.all([
-	getSlackStatus(SLACK_SECURITY_TOKENS[WORK]),
-	getSlackStatus(SLACK_SECURITY_TOKENS[HOME])
+	getSlackStatus(SLACK_TOKENS[WORK]),
+	getSlackStatus(SLACK_TOKENS[HOME])
   ])
   .then(slackStatuses => {
     let latestStatus = calculateLatestStatus(slackStatuses[WORK], slackStatuses[HOME]);
@@ -294,11 +293,11 @@ const getSlackStatus = securityToken => {
   .then(responses => Promise.all(responses.map(response => response.json())))
   .then(jsonResponses => {
     if (LOG_LEVEL == LOG_LEVELS.DEBUG)
-      log(LOG_LEVELS.DEBUG, `Got SLACK for ${securityToken == SLACK_SECURITY_TOKENS[WORK] ? 'WORK' : 'HOME'}\n` +
+      log(LOG_LEVELS.DEBUG, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? 'WORK' : 'HOME'}\n` +
         `profile=${JSON.stringify(jsonResponses[0])}\n` + 
         `presence=${JSON.stringify(jsonResponses[1])}`);
     else if (LOG_LEVEL == LOG_LEVELS.INFO) 
-      log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken == SLACK_SECURITY_TOKENS[WORK] ? 'WORK' : 'HOME'}: ` +
+      log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? 'WORK' : 'HOME'}: ` +
         `${jsonResponses[0].profile.status_emoji} / ` +
         `${jsonResponses[0].profile.status_text} / ` +
         `${jsonResponses[0].profile.status_expiration} / ` +
