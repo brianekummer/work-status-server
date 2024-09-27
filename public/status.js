@@ -47,7 +47,10 @@ function displaySlackStatus() {
     let mode = showDesk ? "desk" : "wall";
 
     if (runningOnStatusPhone) {
+      // Set the background to gray/black (page--visible/page--invisible)
       document.body.className = `page--${visibility} ${mode}`;
+      // Set the status table visible/invisible
+      $("status-table").className = `table--padding table--${visibility}`;
       tk.setGlobal("ChangeScreenTo", jsonResponse.screen);
     }
     else {

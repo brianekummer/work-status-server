@@ -12,11 +12,13 @@
 .right                                        { text-align:         right; }
 
 
-table                                         { table-layout:       fixed;
+.table--visible                               { table-layout:       fixed;
                                                 height:               98%;
                                                 width:   calc(100% - 4px);
                                                 border: 1px solid black;
                                                 margin:               2px; }
+
+.table--invisible                             { display:             none; }
 
 .page--visible                                { background:      DarkGray; }
 .page--invisible                              { background:         Black; }
