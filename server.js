@@ -17,6 +17,9 @@
                              to be stripped out of the status conditions matrix
       luxon..................For date formatting, instead of momentJS
       mustache-express.......For implementing Mustache templates with Express
+      node-watch.............For watching if the status conditions file changes,
+                             so we can pickup any changes to that file without
+                             requiring an app restart
 
     Environment Variables
       SLACK_TOKENS...........Must be the Slack security tokens for my work and home
@@ -29,6 +32,10 @@
     Command Line Parameters
       argument 2.............The logging level- can be DEBUG|INFO|ERROR
 
+  TO DO
+    - Why is the browser calling Home Assistant to get that information?
+      Can't this app do that?
+
 ******************************************************************************/
 
 // Require packages
@@ -36,11 +43,10 @@ const express = require("express");
 const mustacheExpress = require("mustache-express");
 const fs = require("fs");
 const fetch = require("node-fetch");
+const watch = require('node-watch');
 const app = express();
-var { DateTime } = require('luxon');
+const { DateTime } = require('luxon');
 JSON.minify = require("node-json-minify");
-
-const STATUS_FILENAME = "status.json";
 
 // Constants for working with the matrix of conditions for each status
 const STATUS_CONDITIONS = {
@@ -84,7 +90,8 @@ let log = (level, message) => {
 };
 log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEVELS[key] == LOG_LEVEL)}`);
 
-// Keep the current status in memory
+// Keep the status conditions and current status in memory
+let statusConditions = {};
 let currentStatus = {
   screen: null,
   emoji:  null,
@@ -113,7 +120,7 @@ app.set('views', __dirname + '/views');
 // Expose only the necessary files
 app.use(express.static(`${__dirname}/public`));
 
-// Hack to prevent "certificate has expired" issue. Note suitable for production,
+// Hack to prevent "certificate has expired" issue. Not suitable for production,
 // but ok for me here. https://github.com/node-fetch/node-fetch/issues/568
 process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
 
@@ -125,6 +132,21 @@ app.get("/", (request, response) => {
   }
   
   response.render('status', {"showDesk": showDesk});
+});
+
+// Read status conditions from a file, strip out comments, and parse it into a usable
+// JSON object
+const getStatusConditions = () => {
+  return JSON.parse(JSON.minify(fs.readFileSync(STATUS_CONDITIONS.FILENAME, "utf8")));
+};
+
+// Get the conditions to determine the status. Whenever they change, get the changes
+// and re-evaluate our status, because it might be different because of those changes.
+statusConditions = getStatusConditions();
+watch(STATUS_CONDITIONS.FILENAME, {}, function(evt, name) {
+  log(LOG_LEVELS.DEBUG, `${name} changed, so am re-reading it`);
+  statusConditions = getStatusConditions();
+  processAnyStatusChange();
 });
 
 // Call from status.html asking for latest status
@@ -146,63 +168,12 @@ const sleep = ms => {
 
 
 /******************************************************************************
-  Read a file synchronously, with retry logic
-    filename..........Filename, including path
-    encoding..........File encoding
-    numberOfRetries...Number of retries
-  Returns the data read from the file
-******************************************************************************/
-const readFileSyncWithRetry = (filename, encoding = "utf8", numberOfRetries = 3) => {
-  let data = null;
-  let tryNumber = 1;
-  do {
-    try {
-      data = fs.readFileSync(filename, encoding);
-    }
-    catch (ex) {
-      if (tryNumber > numberOfRetries) throw ex;
-      sleep(100 + tryNumber*150);  // 250, 400, 550, 700 ms
-      tryNumber += 1;
-    }
-  } while (data == null);
-    
-  return data;
-};
-
-
-/******************************************************************************
-  Save a file synchronously, with retry logic
-    filename..........Filename, including path
-    data..............The data to write
-    encoding..........File encoding
-    numberOfRetries...Number of retries
-  Returns nothing
-******************************************************************************/
-const saveFileSyncWithRetry = (filename, data, encoding = "utf8", numberOfRetries = 3) => {
-  let success = false;
-  let tryNumber = 1;
-  do {
-    try {
-      fs.writeFileSync(filename, data, encoding);
-      success = true;
-    }
-    catch (ex) {
-      if (tryNumber > numberOfRetries) throw ex;
-      sleep(100 + tryNumber*150);  // 250, 400, 550, 700 ms
-      tryNumber += 1;
-    }
-  } while (!success);
-};
-
-
-/******************************************************************************
-  Get my status. This is read from the JSON file.
-  Also return any Home Assistant info that the browser needs to call HA.
+  Get my status. This merges my current Slack status and any Home Assistant 
+  info that the browser needs in order for it to call HA.
 
   Returns the status as a JSON object
 ******************************************************************************/
 const getStatus = () => {
-  let status = JSON.parse(readFileSyncWithRetry(STATUS_FILENAME));
   let rightNow = DateTime.now();
   
   // I had problems with Luxon in Node when running this on a phone. I should
@@ -217,10 +188,10 @@ const getStatus = () => {
   let shortOffset = DateTime.now().toFormat("ZZZZ");
 
   return {
-    screen: status.screen,
-    emoji: `/images/${status.emoji}.png`,
-    text: status.text,
-    times: status.times,
+    screen: currentStatus.screen,
+    emoji: `/images/${currentStatus.emoji}.png`,
+    text: currentStatus.text,
+    times: currentStatus.times,
     timestamps: {
       local12: rightNow.toLocaleString(DateTime.TIME_SIMPLE),
       local24: rightNow.toLocaleString(DateTime.TIME_24_SIMPLE),
@@ -255,8 +226,8 @@ const statusHasChanged = (currentStatus, latestStatus) => {
 ******************************************************************************/
 const processAnyStatusChange = () => {
   Promise.all([
-	getSlackStatus(SLACK_TOKENS[WORK]),
-	getSlackStatus(SLACK_TOKENS[HOME])
+	  getSlackStatus(SLACK_TOKENS[WORK]),
+	  getSlackStatus(SLACK_TOKENS[HOME])
   ])
   .then(slackStatuses => {
     let latestStatus = calculateLatestStatus(slackStatuses[WORK], slackStatuses[HOME]);
@@ -266,7 +237,6 @@ const processAnyStatusChange = () => {
         `Changed status from ${currentStatus.screen}/${currentStatus.emoji}/${currentStatus.text}/${currentStatus.times} => ` +
         `${latestStatus.screen}/${latestStatus.emoji}/${latestStatus.text}/${latestStatus.times}`);
       currentStatus = latestStatus;
-      saveFileSyncWithRetry(STATUS_FILENAME, JSON.stringify(latestStatus));
     }
   })
   .catch(ex => {
@@ -343,18 +313,14 @@ const matchesAllCriteria = (evaluatingStatus, workSlackStatus, homeSlackStatus) 
 
 /******************************************************************************
   Calculate the latest status
-  
-  Reads the status conditions from a JSON file, to simplify updating it. The
-  first matching status is used.
 ******************************************************************************/
 const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
   let latestStatus = null;
 
   try {
-    // Read status conditions from a file, strip out comments, and parse it
-    let statusConditions = JSON.parse(JSON.minify(fs.readFileSync(STATUS_CONDITIONS.FILENAME, "utf8")));
-
     for (let evaluatingStatus of statusConditions) {
+      // The FIRST condition that matches all criteria is used, so the order of
+      // conditions in the file is important
       if (matchesAllCriteria(evaluatingStatus, workSlackStatus, homeSlackStatus)) {
 
         // Handle when we want both start and end time, but we only have the start time
