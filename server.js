@@ -3,11 +3,11 @@
 
 
   GENERAL STRATEGY
-    - Timer runs every 60 seconds and gets my Slack status for work and home
-      accounts. It calculates my new status to display at home, and if it's 
-      changed, it saves it to a file ("status.json").
+    - Timer runs every 30 seconds and gets my Slack status for work and home
+      accounts. It calculates my new status to display at home, and saves it 
+      in a variable in memory.
     - Web pages periodically (every 10 seconds) ask for my latest status. This
-      call returns the contents of that file so they can show my latest status.
+      call returns the contents of that variable in memory.
 
   REQUIREMENTS
     NPM Packages
@@ -34,7 +34,9 @@
 
   TO DO
     - Why is the browser calling Home Assistant to get that information?
-      Can't this app do that?
+      Can't this app do that? Yes, it can, but the browser makes a call every 10 
+      seconds or so, meaning it will get the most up-to-date information from
+      Home Assistant.
 
 ******************************************************************************/
 
@@ -43,9 +45,9 @@ const express = require("express");
 const mustacheExpress = require("mustache-express");
 const fs = require("fs");
 const fetch = require("node-fetch");
-const watch = require('node-watch');
+const watch = require("node-watch");
 const app = express();
-const { DateTime } = require('luxon');
+const { DateTime } = require("luxon");
 JSON.minify = require("node-json-minify");
 
 // Constants for working with the matrix of conditions for each status
@@ -68,6 +70,8 @@ const STATUS_CONDITIONS = {
   }
 };
 
+const SLACK_CALL_STATUS_EMOJI = ":slack_call:";
+
 // My Slack security tokens
 let WORK = 0;
 let HOME = 1;
@@ -76,7 +80,7 @@ let SLACK_TOKENS = process.env.SLACK_TOKENS.split(",");
 let HOME_ASSISTANT_URL = process.env.HOME_ASSISTANT_URL;
 let HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
 
-// My simple home grown logging
+// My simple home-grown logging
 const LOG_LEVELS = {
   DEBUG: 0,
   INFO:  1,
@@ -113,25 +117,25 @@ let currentStatus = {
 const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
 
 // Register mustache extension withe mustache express
-app.engine('html', mustacheExpress());
-app.set('view engine', 'html');
-app.set('views', __dirname + '/views');
+app.engine("html", mustacheExpress());
+app.set("view engine", "html");
+app.set("views", `${__dirname}/views`);
 
 // Expose only the necessary files
 app.use(express.static(`${__dirname}/public`));
 
 // Hack to prevent "certificate has expired" issue. Not suitable for production,
 // but ok for me here. https://github.com/node-fetch/node-fetch/issues/568
-process.env.NODE_TLS_REJECT_UNAUTHORIZED='0';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
 // "http://xxxxx:3000" without a path sends the status page
 app.get("/", (request, response) => {
   let showDesk = false;    
-  if (typeof request.query.showDesk === 'string') {
-    showDesk = (request.query.showDesk.toLowerCase() == 'true'); 
+  if (typeof request.query.showDesk === "string") {
+    showDesk = (request.query.showDesk.toLowerCase() == "true"); 
   }
   
-  response.render('status', {"showDesk": showDesk});
+  response.render("status", {"showDesk": showDesk});
 });
 
 // Read status conditions from a file, strip out comments, and parse it into a usable
@@ -150,7 +154,7 @@ watch(STATUS_CONDITIONS.FILENAME, {}, function(evt, name) {
 });
 
 // Call from status.html asking for latest status
-app.get('/get-status', (request, response) => response.status(200).json(getStatus()));
+app.get("/get-status", (request, response) => response.status(200).json(getStatus()));
 
 app.listen(port, () => log(LOG_LEVELS.INFO, `Listening on port ${port}`));
 /************************  End of Node Configuration  ************************/
@@ -257,26 +261,26 @@ const getSlackStatus = securityToken => {
     "Authorization": `Bearer ${securityToken}`  
   };
   return Promise.all([
-    fetch("https://slack.com/api/users.profile.get", { method: 'GET', headers: headers}),
-    fetch("https://slack.com/api/users.getPresence", { method: 'GET', headers: headers})
+    fetch("https://slack.com/api/users.profile.get", { method: "GET", headers: headers }),
+    fetch("https://slack.com/api/users.getPresence", { method: "GET", headers: headers })
   ])
   .then(responses => Promise.all(responses.map(response => response.json())))
   .then(jsonResponses => {
     if (LOG_LEVEL == LOG_LEVELS.DEBUG)
-      log(LOG_LEVELS.DEBUG, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? 'WORK' : 'HOME'}\n` +
+      log(LOG_LEVELS.DEBUG, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? "WORK" : "HOME"}\n` +
         `profile=${JSON.stringify(jsonResponses[0])}\n` + 
         `presence=${JSON.stringify(jsonResponses[1])}`);
     else if (LOG_LEVEL == LOG_LEVELS.INFO) 
-      log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? 'WORK' : 'HOME'}: ` +
+      log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
         `${jsonResponses[0].profile.status_emoji} / ` +
         `${jsonResponses[0].profile.status_text} / ` +
         `${jsonResponses[0].profile.status_expiration} / ` +
         `${jsonResponses[1].presence}`);
 
-    // Huddles don't set the emoji, they set "huddle_state" property. For my
-    // purposes, changing the emoji to the same as a Slack call is fine.
+    // Huddles don't set an emoji, they only set "huddle_state" property. For
+    // my purposes, changing the emoji to the same as a Slack call is fine.
     if (jsonResponses[0].profile.huddle_state == "in_a_huddle")
-        jsonResponses[0].profile.status_emoji = ":slack_call:";
+      jsonResponses[0].profile.status_emoji = SLACK_CALL_STATUS_EMOJI;
 
     return Promise.resolve({
       emoji:      jsonResponses[0].profile.status_emoji,
@@ -320,7 +324,7 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
   try {
     for (let evaluatingStatus of statusConditions) {
       // The FIRST condition that matches all criteria is used, so the order of
-      // conditions in the file is important
+      // conditions is important
       if (matchesAllCriteria(evaluatingStatus, workSlackStatus, homeSlackStatus)) {
 
         // Handle when we want both start and end time, but we only have the start time
@@ -368,7 +372,10 @@ const buildStatusTimes = (currentStatus, latestStatus) => {
   latestStatus.times = latestStatus.statusTimesTemplate
     .replace("(start)", latestStatus.statusStartTime)
     .replace("(status_expiration)", 
-      DateTime.fromSeconds(latestStatus.workStatusExpiration != 0 ? latestStatus.workStatusExpiration : latestStatus.homeStatusExpiration).toLocaleString(DateTime.TIME_SIMPLE)
+      DateTime.fromSeconds(latestStatus.workStatusExpiration != 0 
+        ? latestStatus.workStatusExpiration 
+        : latestStatus.homeStatusExpiration
+      ).toLocaleString(DateTime.TIME_SIMPLE)
     );
 
   return latestStatus;
