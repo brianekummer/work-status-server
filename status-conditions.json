@@ -4,27 +4,26 @@
   //   - These entries are evaluated in order, so the order is important. For example, 
   //     if my home status is :8bit:, then I'm playing, even if my work status is PTO.
   //   - If a condition is null or an empty string, then it is ignored.
-  //   - Slack automatically sets users "away" after some amount of inactivity. I've
-  //.    seen differing statements of how long that is.
+  //   - Slack automatically sets users "away" after some amount of inactivity, although
+  //     I've seen differing statements of how long that is.
   //
-  //                                |                            What to Display at Home                              |                       Conditions                                        |
-  //                                |                                                                                 |                Work                |               Home                 |
-  // Status Name                    | Screen  Emoji                  Text                   Times                     | Emoji                    Presence  | Emoji                    Presence  |
-  // ------------------------------ | ------  ---------------------  ---------------------  ------------------------- | -----------------------  --------- | -----------------------  --------- | 
-  [  "At lunch",                      "on",   "hamburger",           "Lunch",               "TIME_TEXT_START",          ":hamburger:",           "",         "",                      ""        ],
-  [  "At dinner",                     "on",   "poultry_leg",         "Dinner",              "TIME_TEXT_START",          ":poultry_leg:",         "",         "",                      ""        ],
-  [  "Unavailable",                   "on",   "no_entry",            "(work_status_text)",  "TIME_TEXT_START_TO_END",   ":no_entry:",            "",         "",                      ""        ],
-  [  "Be right back",                 "on",   "brb",                 "Be right back",       "TIME_TEXT_START",          ":brb:",                 "",         "",                      ""        ],
-  [  "Commuting",                     "on",   "blue_car",            "Commuting",           "TIME_TEXT_START",          ":blue_car:",            "",         "",                      ""        ],
-  [  "In a non-work meeting",         "on",   "no_work_meeting",     "Non-Work Meeting",    "TIME_TEXT_START_TO_END",   "",                      "away",     ":no_work_meeting:",     ""        ],
-  [  "Playing on computer at home",   "on",   "8bit",                "Playing",             "",                         "",                      "away",     ":8bit:",                ""        ],
-  [  "Away from my desk",             "off",  "away",                "Away",                "",                         "",                      "away",     "",                      ""        ],
-  [  "On PTO",                        "off",  "palm_tree",           "Vacation",            "",                         ":palm_tree:",           "",         "",                      ""        ],
-  [  "On a Slack call",               "on",   "telephone_receiver",  "On a call",           "TIME_TEXT_START",          ":slack_call:",          "",         "",                      ""        ],
-  [  "In a Slack huddle",             "on",   "telephone_receiver",  "On a call",           "TIME_TEXT_START",          ":slack_call:",          "",         "",                      ""        ],
-  [  "Heads down, focused",           "on",   "heads_down",          "Focusing",            "TIME_TEXT_START_TO_END",   ":heads-down:",          "",         "",                      ""        ],
-  [  "In Pittsburgh",                 "on",   "cityscape",           "In Pittsburgh",       "",                         ":cityscape:",           "",         "",                      ""        ],
-  [  "In a meeting",                  "on",   "spiral_calendar",     "Meeting",             "TIME_TEXT_START_TO_END",   ":spiral_calendar_pad:", "",         "",                      ""        ],
-  [  "Studying",                      "on",   "books",               "Studying",            "TIME_TEXT_START_TO_END",   ":books:",               "",         "",                      ""        ],
-  [  "Working",                       "on",   "keyboard",            "Working",             "",                         "",                      "active",   "",                      ""        ]
+  //                                |                       Conditions                                        |                            What to Display at Home                              |
+  //                                |                Work                |               Home                 |                                                                                 |
+  // Status Name                    | Emoji                    Presence  | Emoji                    Presence  | Screen  Emoji                  Text                   Times                     |
+  // ------------------------------ | -----------------------  --------- | -----------------------  --------- | ------  ---------------------  ---------------------  ------------------------- |
+  [  "At lunch",                      ":hamburger:",           "",         "",                      "",         "on",   "hamburger",           "Lunch",               "TIME_TEXT_START"         ],
+  [  "At dinner",                     ":poultry_leg:",         "",         "",                      "",         "on",   "poultry_leg",         "Dinner",              "TIME_TEXT_START"         ],
+  [  "Unavailable",                   ":no_entry:",            "",         "",                      "",         "on",   "no_entry",            "(work_status_text)",  "TIME_TEXT_START_TO_END"  ],
+  [  "Be right back",                 ":brb:",                 "",         "",                      "",         "on",   "brb",                 "Be right back",       "TIME_TEXT_START"         ],
+  [  "Commuting",                     ":blue_car:",            "",         "",                      "",         "on",   "blue_car",            "Commuting",           "TIME_TEXT_START"         ],
+  [  "In a non-work meeting",         "",                      "away",     ":no_work_meeting:",     "",         "on",   "no_work_meeting",     "Non-Work Meeting",    "TIME_TEXT_START_TO_END"  ],
+  [  "Goofing off",                   "",                      "away",     ":8bit:",                "",         "on",   "8bit",                "Playing",             ""                        ],
+  [  "Away from my desk",             "",                      "away",     "",                      "",         "off",  "away",                "Away",                ""                        ],
+  [  "On PTO",                        ":palm_tree:",           "",         "",                      "",         "off",  "palm_tree",           "Vacation",            ""                        ],
+  [  "On a Slack call",               ":slack_call:",          "",         "",                      "",         "on",   "telephone_receiver",  "On a call",           "TIME_TEXT_START"         ],
+  [  "Heads down, focused",           ":heads-down:",          "",         "",                      "",         "on",   "heads_down",          "Focusing",            "TIME_TEXT_START_TO_END"  ],
+  [  "In Pittsburgh",                 ":cityscape:",           "",         "",                      "",         "on",   "cityscape",           "In Pittsburgh",       ""                        ],
+  [  "In a meeting",                  ":spiral_calendar_pad:", "",         "",                      "",         "on",   "spiral_calendar",     "Meeting",             "TIME_TEXT_START_TO_END"  ],
+  [  "Studying",                      ":books:",               "",         "",                      "",         "on",   "books",               "Studying",            "TIME_TEXT_START_TO_END"  ],
+  [  "Working",                       "",                      "active",   "",                      "",         "on",   "keyboard",            "Working",             ""                        ]
 ]
