@@ -34,9 +34,6 @@ table                                         { table-layout:       fixed;
 .status-table .emoji--size                    { width:               100%;
                                                 height:              auto; }
 .status-table .last-updated--font-size        { font-size:           100%; }
-.status-table .row--visible                   { display:        table-row; }
-.status-table .row--invisible                 { display:             none; }
-
 
 .wall .current-times-table                    { display:             none; }
 .wall .status-table .emoji                    { width:              150px; }

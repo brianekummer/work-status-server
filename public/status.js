@@ -18,13 +18,10 @@ function displaySlackStatus() {
       ? "status--font-size__small" 
       : "status--font-size";
 
-    // TODO- clean this up
-    let screenOn = jsonResponse.screen == "on";
-    let visibility = screenOn ? "visible" : "invisible";
+    // Setup page visibility and showing the correct mode
+    let visibilityClass = `page--${jsonResponse.screen == "on" ? "visible" : "invisible"}`;
     let mode = showDesk ? "desk" : "wall";
-    document.body.className = `page--${visibility} ${mode}`;
-    $("working").className = `row--${visibility}`;
-    $("not-working").className = `row--${screenOn ? "invisible" : "visible"}`;
+    document.body.className = `${visibilityClass} ${mode}`;
     
     if (showDesk) {
       // Set the times
