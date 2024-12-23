@@ -3,20 +3,6 @@
 //     on her phone. This is the default.
 //   - Desk mode is for the phone on my desk, which displays the time in ET
 //     and UTC, as well as some data from Home Assistant.
-//
-// When I'm not working, I want the screen of the status phone to
-// be off. I originally had Tasker handle that, but there were issues
-// getting the screen to turn back on. 
-//   - Instead, because that phone has an AMOLED screen, I just make 
-//     everything black and all those pixels are off.
-//   - But on the phone for my desk that shows that same status and
-//     the local and UTC times, that is an LCD screen, so making it 
-//     all black still leaves the screen pretty bright. So I just
-//     dim it all the way down, which combined with making everything
-//     black, is good enough for me. So I set the Tasker global variable
-//     variable "ChangeScreenTo" to say if I want the screen off 
-//     (dimmed) or on (undimmed), and a Tasker profile watches for that
-//     and does as it's told.
 function displaySlackStatus() {
   fetch("/get-status")
   .then(response => response.json())
@@ -32,30 +18,13 @@ function displaySlackStatus() {
       ? "status--font-size__small" 
       : "status--font-size";
 
-    // If viewing this web page somewhere other than on a status phone (wall
-    // or desk), such as my laptop, Jodi's phone, etc, then I want to display
-    // some other message. One row of the table of the web page is to be
-    // displayed on the working status phone, and another row is displayed on
-    // any other device. The code below shows/hides those rows depending on
-    // which device this page is being rendered on.
-    //
-    // The variable "tk" is defined when running in a Tasker scene, which is
-    // only applicable on a status phone like on the wall or my office desk.
-    let runningOnStatusPhone = (typeof tk !== "undefined");
+    // TODO- clean this up
     let screenOn = jsonResponse.screen == "on";
     let visibility = screenOn ? "visible" : "invisible";
     let mode = showDesk ? "desk" : "wall";
-
-    if (runningOnStatusPhone) {
-      // Set the background to gray/black (page--visible/page--invisible)
-      document.body.className = `page--${visibility} ${mode}`;
-      tk.setGlobal("ChangeScreenTo", jsonResponse.screen);
-    }
-    else {
-      document.body.className = `page--visible ${mode}`;    // Always be visible
-      $("working").className = `row--${visibility}`;
-      $("not-working").className = `row--${screenOn ? "invisible" : "visible"}`;
-    }
+    document.body.className = `page--${visibility} ${mode}`;
+    $("working").className = `row--${visibility}`;
+    $("not-working").className = `row--${screenOn ? "invisible" : "visible"}`;
     
     if (showDesk) {
       // Set the times
