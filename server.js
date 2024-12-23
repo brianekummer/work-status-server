@@ -59,10 +59,9 @@ const STATUS_CONDITIONS = {
     CRITERIA_WORK_PRESENCE:     2,
     CRITERIA_HOME_STATUS_EMOJI: 3,
     CRITERIA_HOME_PRESENCE:     4,
-    RESULT_SCREEN:              5,
-    RESULT_NEW_STATUS_EMOJI:    6,
-    RESULT_NEW_STATUS_TEXT:     7,
-    RESULT_NEW_STATUS_TIMES:    8
+    RESULT_NEW_STATUS_EMOJI:    5,
+    RESULT_NEW_STATUS_TEXT:     6,
+    RESULT_NEW_STATUS_TIMES:    7
   },
   TIME_TEXT: {
     START: "Started @ (start)",
@@ -97,7 +96,6 @@ log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEV
 // Keep the status conditions and current status in memory
 let statusConditions = {};
 let currentStatus = {
-  screen: null,
   emoji:  null,
   text:   null,
   times:  null,
@@ -192,8 +190,7 @@ const getStatus = () => {
   let shortOffset = DateTime.now().toFormat("ZZZZ");
 
   return {
-    screen: currentStatus.screen,
-    emoji: `/images/${currentStatus.emoji}.png`,
+    emoji: currentStatus.emoji ? `/images/${currentStatus.emoji}.png` : "",
     text: currentStatus.text,
     times: currentStatus.times,
     timestamps: {
@@ -238,8 +235,8 @@ const processAnyStatusChange = () => {
     if (statusHasChanged(currentStatus, latestStatus)) {
       latestStatus = buildStatusTimes(currentStatus, latestStatus);
       log(LOG_LEVELS.INFO, 
-        `Changed status from ${currentStatus.screen}/${currentStatus.emoji}/${currentStatus.text}/${currentStatus.times} => ` +
-        `${latestStatus.screen}/${latestStatus.emoji}/${latestStatus.text}/${latestStatus.times}`);
+        `Changed status from ${currentStatus.emoji}/${currentStatus.text}/${currentStatus.times} => ` +
+        `${latestStatus.emoji}/${latestStatus.text}/${latestStatus.times}`);
       currentStatus = latestStatus;
     }
   })
@@ -337,7 +334,6 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
 
         // Build the latest status
         latestStatus = {
-          screen: evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_SCREEN],
           emoji:  evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_EMOJI],
           text:   (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TEXT] || "")
                     .replace("(work_status_text)", workSlackStatus.text)
@@ -347,7 +343,7 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
           homeStatusExpiration: homeSlackStatus.expiration
         };
         
-        log(LOG_LEVELS.INFO, `Latest status is now ${latestStatus.screen}/${latestStatus.emoji}/${latestStatus.text}`);
+        log(LOG_LEVELS.INFO, `Latest status is now ${latestStatus.emoji}/${latestStatus.text}`);
         
         break;
       }
