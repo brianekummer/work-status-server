@@ -1,9 +1,12 @@
 /*
-  This intentionally doesn't use CSS Nesting, because that is only available
-  on very modern browsers, and the phones I'm using to display my work status
-  are typically several years old.
+  I intentionally don't use CSS nesting, because that is only available on modern
+  browsers, and the phones I'm using to display my work status are typically
+  several years old.
+  
+  https://caniuse.com/css-nesting says phone must have WebView version >= 131
 
-  I could look into using a polyfill or SASS, but it's not worth it to me.
+  I could look into using a polyfill or SASS, or logging the status phones into
+  Google so I can update the webview, but it's not currently worth it to me.
 */
 
 /* Generic stuff */
@@ -29,7 +32,7 @@ table                                         { table-layout:          fixed;
 /* For vertically centering the tables */
 .vertical-center                              { position:           absolute;
                                                 top:                     50%;
-                                                margin:             auto 10%;
+                                                margin:              auto 5%;
                                                 transform:  translateY(-50%); 
                                                 background-color: DarkGray; }
                                                 
