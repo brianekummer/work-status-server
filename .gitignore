@@ -7,5 +7,5 @@
 node_modules
 package-lock.json
 
-# The output of server.js
-status.json
+.vscode/*
+
