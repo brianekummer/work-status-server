@@ -60,14 +60,12 @@ function $(id) {
 
 
 function getAndDisplayHomeAssistantData(url, token) {
-  // Get data from Home Assistant to display
   var xhttp = new XMLHttpRequest();
   xhttp.responseType = 'json';
   xhttp.onreadystatechange = function() {
     // Ready state has changed, check if the data has been returned
     if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
       var state = JSON.parse(this.response.state);
-
       $("washer-text").innerHTML = state.Washer;
       $("dryer-text").innerHTML = state.Dryer;
       $("thermometer-text").innerHTML = state.Temperature;

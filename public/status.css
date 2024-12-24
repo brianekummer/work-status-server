@@ -7,58 +7,56 @@
 */
 
 /* Generic stuff */
-.left                                         { text-align:          left; }
-.center                                       { text-align:        center; }
-.right                                        { text-align:         right; }
-
+.left                                         { text-align:             left; }
+.center                                       { text-align:           center; }
+.right                                        { text-align:            right; }
 
 /* For both times and status tables */
-table                                         { table-layout:       fixed;
-                                                width:                85%;
-                                                border: 1px solid black;
-                                                margin:              auto; 
-                                                margin-bottom:        5px; }
+table                                         { table-layout:          fixed;
+                                                width:     calc(100% - 16px);
+                                                border:    1px solid black;
+                                                margin:                  8px; }
 
 /* To make page visible/invisible (display: table-column hides all my content
    but still shows the background) */
-.page                                         { height:                auto;
-                                                position:          relative; }
-.page--visible                                { background:      DarkGray;
-                                                display:              block; }
-.page--invisible                              { background:         Black;
-                                                display:       table-column; }
+.page                                         { height:                 auto;
+                                                position:           relative; }
+.page--visible                                { background:          Black;
+                                                display:               block; }
+.page--invisible                              { background:          Black;
+                                                display:        table-column; }
 
 /* For vertically centering the tables */
-.vertical-center {                              margin:                   0;
-                                                position:          absolute;
-                                                top:                    50%;
-                                                transform: translateY(-50%); }
+.vertical-center {                              position:           absolute;
+                                                top:                     50%;
+                                                margin:             auto 10%;
+                                                transform:  translateY(-50%); 
+                                                background-color: DarkGray; }
                                                 
 /* For status table */
-.status-table                                 { padding:               10px;
-                                                border-spacing:    10px 0px; }
-.status-table .text-padding                   { padding:           0px 10px; }
-.status-table .emoji--size                    { width:                 100%;
-                                                height:                auto; }
-.status-table .last-updated--font-size        { font-size:             100%; }
+.status-table                                 { padding:                10px;
+                                                border-spacing:     10px 0px; }
+.status-table .text-padding                   { padding:            0px 10px; }
+.status-table .emoji--size                    { width:                  100%;
+                                                height:                 auto; }
+.status-table .last-updated--font-size        { font-size:              100%; }
 
-.wall .current-times-table                    { display:               none; }
-.wall .status-table .emoji                    { width:                150px; }
-.wall .status-table .ha                       { width:                    0; }
-.wall .status-table .status--font-size        { font-size:             350%; }
-.wall .status-table .status--font-size__small { font-size:             275%; }
-.wall .status-table .times--font-size         { font-size:             175%; }
+.wall .current-times-table                    { display:                none; }
+.wall .status-table .emoji                    { width:                 150px; }
+.wall .status-table .ha                       { width:                     0; }
+.wall .status-table .status--font-size        { font-size:              350%; }
+.wall .status-table .status--font-size__small { font-size:              275%; }
+.wall .status-table .times--font-size         { font-size:              175%; }
 
-
-.desk .current-times-table                    { display:              table; }
-.desk .current-times-table .time              { font-size:             200%; }
-.desk .status-table .emoji                    { width:                100px; }
-.desk .status-table .ha                       { width:                  25%; }
-.desk .status-table .status--font-size        { font-size:             300%; }
-.desk .status-table .status--font-size__small { font-size:             200%; }
-.desk .status-table .times--font-size         { font-size:             125%; }
-.desk .status-table .ha-status-cell           { display:        inline-flex;
-                                                height:                45px; }
-.desk .status-table .ha-status-cell .ha--font { font-size:             100%;
-                                                display:               flex;
-                                                align-items:         center; }
+.desk .current-times-table                    { display:               table; }
+.desk .current-times-table .time              { font-size:              200%; }
+.desk .status-table .emoji                    { width:                 100px; }
+.desk .status-table .ha                       { width:                   25%; }
+.desk .status-table .status--font-size        { font-size:              300%; }
+.desk .status-table .status--font-size__small { font-size:              200%; }
+.desk .status-table .times--font-size         { font-size:              125%; }
+.desk .status-table .ha-status-cell           { display:         inline-flex;
+                                                height:                 45px; }
+.desk .status-table .ha-status-cell .ha--font { font-size:              100%;
+                                                display:                flex;
+                                                align-items:          center; }
