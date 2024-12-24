@@ -27,7 +27,7 @@ table                                         { table-layout:          fixed;
                                                 display:        table-column; }
 
 /* For vertically centering the tables */
-.vertical-center {                              position:           absolute;
+.vertical-center                              { position:           absolute;
                                                 top:                     50%;
                                                 margin:             auto 10%;
                                                 transform:  translateY(-50%); 
