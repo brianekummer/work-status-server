@@ -6,63 +6,65 @@
     <script type="text/javascript" src="status.js"></script>
   </head>
 
-  <body class="page--visible wall">
-    <table class="current-times-table">
-      <colgroup>
-        <col style="width:33%">
-        <col style="width:33%">
-        <col style="width:33%">
-      </colgroup>
-      <tbody>
+  <body class="page page--visible wall">
+    <div class="vertical-center">
+      <table class="current-times-table">
+        <colgroup>
+          <col style="width:33%">
+          <col style="width:33%">
+          <col style="width:33%">
+        </colgroup>
+        <tbody>
+          <tr>
+            <td class="left">&nbsp;<span id="local12" class="time"></span>&nbsp;<span id="local12ShortOffset"></span></td>
+            <td class="center"><span id="local24" class="time"></span>&nbsp;<span id="local24ShortOffset"></span></td>
+            <td class="right"><span id="utc" class="time"></span>&nbsp;<span>UTC&nbsp;</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <table id="status-table" class="status-table">
+        <colgroup>
+        <col class="emoji">
+        <col> <!-- No specific styling, will fill the remaining space -->
+        <col class="ha">
+        </colgroup>
         <tr>
-          <td class="left">&nbsp;<span id="local12" class="time"></span>&nbsp;<span id="local12ShortOffset"></span></td>
-          <td class="center"><span id="local24" class="time"></span>&nbsp;<span id="local24ShortOffset"></span></td>
-          <td class="right"><span id="utc" class="time"></span>&nbsp;<span>UTC&nbsp;</span></td>
+          <td rowspan="2">
+            <img id="status-emoji" class="emoji--size" src=""/>
+          </td>
+          <td class="text-padding">
+            <span id="status-text" class="status--font-size"></span></br>
+            </br>
+            <span id="status-times" class="times--font-size"></span></br>
+            </br>
+          </td>
+          <td rowspan="2">
+            <span>
+              <span class="ha-status-cell">
+                <img id="washer-image">
+                <span id="washer-text" class="ha--font"></span>
+              </span>
+              </br>
+              <span class="ha-status-cell">
+                <img id="dryer-image">
+                <span id="dryer-text" class="ha--font"></span>
+              </span>
+              </br>
+              <span class="ha-status-cell">
+                <img id="thermometer-image">
+                <span id="thermometer-text" class="ha--font"></span>
+              </span>
+            </span>
+          </td>
         </tr>
-      </tbody>
-    </table>
 
-    <table id="status-table" class="status-table">
-      <colgroup>
-       <col class="emoji">
-       <col> <!-- No specific styling, will fill the remaining space -->
-       <col class="ha">
-      </colgroup>
-      <tr>
-        <td rowspan="2">
-          <img id="status-emoji" class="emoji--size" src=""/>
-        </td>
-        <td class="text-padding">
-          <span id="status-text" class="status--font-size"></span></br>
-          </br>
-          <span id="status-times" class="times--font-size"></span></br>
-          </br>
-        </td>
-        <td rowspan="2">
-          <span>
-            <span class="ha-status-cell">
-              <img id="washer-image">
-              <span id="washer-text" class="ha--font"></span>
-            </span>
-            </br>
-            <span class="ha-status-cell">
-              <img id="dryer-image">
-              <span id="dryer-text" class="ha--font"></span>
-            </span>
-            </br>
-            <span class="ha-status-cell">
-              <img id="thermometer-image">
-              <span id="thermometer-text" class="ha--font"></span>
-            </span>
-          </span>
-        </td>
-      </tr>
-
-      <tr>
-        <td class="text-padding">
-          <span class="last-updated--font-size">Last updated <span id="last-updated-timestamp" /></span>
-        </td>
-      </tr>
-    </table>
+        <tr>
+          <td class="text-padding">
+            <span class="last-updated--font-size">Last updated <span id="last-updated-timestamp" /></span>
+          </td>
+        </tr>
+      </table>
+    </div>
   </body>
 </html>

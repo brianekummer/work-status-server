@@ -6,7 +6,7 @@
   I could look into using a polyfill or SASS, but it's not worth it to me.
 */
 
-/* Generic stuff  */
+/* Generic stuff */
 .left                                         { text-align:          left; }
 .center                                       { text-align:        center; }
 .right                                        { text-align:         right; }
@@ -14,17 +14,35 @@
 
 /* For both times and status tables */
 table                                         { table-layout:       fixed;
-                                                height:               98%;
-                                                width:   calc(100% - 4px);
-                                                border:   1px solid black;
-                                                margin:               2px; }
+                                                height:               85%;
+                                                width:   90%;
+                                                border: 1px solid black;
+                                                margin:               auto; }
+
+
+
+
+
+
+.vertical-center {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
+
+
+
 
 
 /* To make page visible/invisible (display: table-column hides all my content
-   but still shows the background */
-.page--visible                                { background:      DarkGray;
+   but still shows the background) */
+.page                                         { height:              auto;
+                                                position:        relative; }
+.page--visible                                { background:    DarkGray;
                                                 display:            block; }
-.page--invisible                              { background:         Black;
+.page--invisible                              { background:       Black;
                                                 display:     table-column; }
 
 /* For status table */
