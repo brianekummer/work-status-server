@@ -148,8 +148,11 @@ app.get('/favicon.ico', (request, response) => response.status(204).end());
 // Since we have them now, we'll pass the URLs for the Home Assistant icons that will
 // be displayed if showDesk=true
 app.get("/", (request, response) => {
-  let payload = {};
+  // Default payload
+  let payload = { showDesk: false };
+  
   if (typeof request.query.showDesk === "string") {
+    // User passed showDesk as a query param
     payload = {
       showDesk: (request.query.showDesk.toLowerCase() == "true"),
       washerIconUrl: `${HOME_ASSISTANT_URL}/local/icon/mdi-washing-machine-light.png`,
