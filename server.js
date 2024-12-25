@@ -152,7 +152,7 @@ statusConditions = getStatusConditions();
 watch(STATUS_CONDITIONS.FILENAME, {}, function(evt, name) {
   log(LOG_LEVELS.DEBUG, `${name} changed, so am re-reading it`);
   statusConditions = getStatusConditions();
-  processAnyStatusChange();
+  checkForStatusChange();
 });
 
 // Call from status.html asking for latest status
@@ -222,33 +222,35 @@ const statusHasChanged = (currentStatus, latestStatus) => {
   status to display at home. If that status has changed, the save it so that 
   it can be read by the web pages.
 ******************************************************************************/
-const processAnyStatusChange = () => {
+const checkForStatusChange = () => {
   Promise.all([
 	  getSlackStatus(SLACK_TOKENS[WORK]),
 	  getSlackStatus(SLACK_TOKENS[HOME]),
-    getHomeAssistantData()
+    getHomeAssistantStatus()
   ])
-  .then(slackStatuses => {
-    console.log("!!! ", JSON.stringify(slackStatuses));
-    // TODO- fix slackStatuses[2]
-    let latestStatus = calculateLatestStatus(slackStatuses[WORK], slackStatuses[HOME], slackStatuses[2]);
+  .then(statuses => {
+    let latestStatus = calculateLatestStatus(statuses[WORK], statuses[HOME], statuses[2]);
     if (statusHasChanged(currentStatus, latestStatus)) {
-      latestStatus = updateStatusTimes(currentStatus, latestStatus);
+      latestStatus = updateSlackStatusTimes(currentStatus, latestStatus);
       log(LOG_LEVELS.INFO, 
-        `Changed status from ${currentStatus.slack.emoji}/${currentStatus.slack.text}/${currentStatus.slack.times} => ` +
-        `${latestStatus.slack.emoji}/${latestStatus.slack.text}/${latestStatus.slack.times}`);
+        `Changed status from Slack:${currentStatus.slack.emoji}/${currentStatus.slack.text}/${currentStatus.slack.times}/HA:${currentStatus.homeAssistant.washerText}/${currentStatus.homeAssistant.dryerText}/${currentStatus.homeAssistant.temperatureText}} => ` +
+        `${latestStatus.slack.emoji}/${latestStatus.slack.text}/${latestStatus.slack.times}/HA:${latestStatus.homeAssistant.washerText}/${latestStatus.homeAssistant.dryerText}/${latestStatus.homeAssistant.temperatureText}`);
       currentStatus = latestStatus;
     }
   })
   .catch(ex => {
-    log(LOG_LEVELS.ERROR, `ERROR in processAnyStatusChange: ${ex}`);
+    log(LOG_LEVELS.ERROR, `ERROR in checkForStatusChange: ${ex}`);
   });
 }
 
 
-// TODO- cleanup and comments
-const getHomeAssistantData = () => {
-  const headers = {
+/******************************************************************************
+  Get status of Home Assistant devices
+  
+  Returns a JSON object with status of those Home Assistant entities
+******************************************************************************/
+const getHomeAssistantStatus = () => {
+  let headers = {
     "Authorization": `Bearer ${HOME_ASSISTANT_TOKEN}`
   };
 
@@ -256,7 +258,6 @@ const getHomeAssistantData = () => {
     .then(response => response.json())
     .then(jsonResponse => {
       const state = JSON.parse(jsonResponse.state);
-      console.log(`>>> HA: ${state.Washer} / ${state.Dryer} / ${state.Temperature}`);
 
       return {
         washerText: state.Washer,
@@ -348,9 +349,6 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus, homeAssistantDa
       // The FIRST condition that matches all criteria is used, so the order of
       // conditions is important
       if (matchesAllCriteria(evaluatingStatus, workSlackStatus, homeSlackStatus)) {
-
-        console.log("### ", homeAssistantData);
-
         // Handle when we want both start and end time, but we only have the start time
         let statusTimesTemplate = (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TIMES] || "")
           .replace("TIME_TEXT_START_TO_END", STATUS_CONDITIONS.TIME_TEXT.START_TO_END)
@@ -391,11 +389,11 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus, homeAssistantDa
 
 
 /******************************************************************************
-  Format the times of the status. The start time only changes when the status
-  text changes, so that if I add minutes to my focus time, only the end time 
-  changes.
+  Format the times of the Slack status. The start time only changes when the
+  status text changes, so that if I add minutes to my focus time, only the end 
+  time changes.
 ******************************************************************************/
-const updateStatusTimes = (currentStatus, latestStatus) => {
+const updateSlackStatusTimes = (currentStatus, latestStatus) => {
   latestStatus.slack.statusStartTime = currentStatus.slack.text != latestStatus.slack.text
     ? DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
     : currentStatus.slack.statusStartTime;
@@ -422,4 +420,4 @@ const updateStatusTimes = (currentStatus, latestStatus) => {
 };
 
 
-setInterval(processAnyStatusChange, 30000);
+setInterval(checkForStatusChange, 30000);
