@@ -172,17 +172,8 @@ app.listen(port, () => log(LOG_LEVELS.INFO, `Listening on port ${port}`));
 
 
 /******************************************************************************
-  Sleep x milliseconds
-******************************************************************************/
-const sleep = ms => {
-  var waitTill = new Date(new Date().getTime() + ms);
-  while(waitTill > new Date()){}
-};
-
-
-/******************************************************************************
-  Get my status. This merges my current Slack status and any Home Assistant 
-  info that the browser needs in order for it to call HA.
+  Get status to send to the client, making any necessary changes, such as
+  converting an emoji to an actual filename.
 
   I am intentionally not sending a timestamp in the payload because that'd 
   cause every payload to be unique and wreck the etag caching. So instead, the
@@ -223,9 +214,8 @@ const statusHasChanged = (currentStatus, latestStatus) => {
 /******************************************************************************
   Process any status change. This is executed on the server every x seconds.
 
-  It gets my Slack status for my work and home accounts and calculates my  
-  status to display at home. If that status has changed, the save it so that 
-  it can be read by the web pages.
+  It gets my Slack status for my work and home accounts, as well as statuses of
+  things in Home Assistant. Then it builds the latest status to display at home.
 ******************************************************************************/
 const processAnyStatusChange = () => {
   Promise.all([
@@ -234,14 +224,16 @@ const processAnyStatusChange = () => {
     getHomeAssistantStatus()
   ])
   .then(statuses => {
-    let latestStatus = calculateLatestStatus(currentStatus, statuses[WORK], statuses[HOME], statuses[2]);
+    let latestStatus = buildLatestStatus(currentStatus, statuses[WORK], statuses[HOME], statuses[2]);
+
     if (statusHasChanged(currentStatus, latestStatus)) {
       log(LOG_LEVELS.INFO, 
         `Changed status\n` +
         `   from Slack: ${currentStatus.slack.emoji}/${currentStatus.slack.text}/${currentStatus.slack.times} --- HA: ${currentStatus.homeAssistant.washerText}/${currentStatus.homeAssistant.dryerText}/${currentStatus.homeAssistant.temperatureText}\n` +
         `     to Slack: ${latestStatus.slack.emoji}/${latestStatus.slack.text}/${latestStatus.slack.times} --- HA: ${latestStatus.homeAssistant.washerText}/${latestStatus.homeAssistant.dryerText}/${latestStatus.homeAssistant.temperatureText}`);
-      currentStatus = latestStatus;
     }
+
+    currentStatus = latestStatus;
   })
   .catch(ex => {
     log(LOG_LEVELS.ERROR, `ERROR in processAnyStatusChange: ${ex}`);
@@ -281,7 +273,7 @@ const getHomeAssistantStatus = () => {
   Get my Slack status for the given account. This includes my status and 
   presence.
   
-  Returns a JSON object with my Slack status.
+  Returns a JSON object with my Slack status
 ******************************************************************************/
 const getSlackStatus = securityToken => {
   let headers = {
@@ -340,9 +332,12 @@ const matchesAllCriteria = (evaluatingStatus, workSlackStatus, homeSlackStatus) 
 
 
 /******************************************************************************
-  Calculate the latest status
+  Builds the latest status
+
+  It needs the current (about to be previous) status, as well as the latest
+  Slack statuses for work and home, as well as the Home Assistant data.
 ******************************************************************************/
-const calculateLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistantData) => {
+const buildLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistantData) => {
   let latestStatus = null;
 
   try {
