@@ -12,7 +12,7 @@ function displaySlackStatus() {
       response.json()
       .then(jsonResponse => {
         // Setup page visibility and showing the correct mode
-        let showStatus = jsonResponse.emoji || jsonResponse.text;
+        let showStatus = jsonResponse.slack.emoji || jsonResponse.slack.text;
         let visibilityClass = `page--${showStatus ? "visible" : "invisible"}`;
         let mode = showDesk ? "desk" : "wall";
         document.body.className = `${visibilityClass} ${mode}`;
@@ -43,12 +43,12 @@ function displaySlackStatus() {
           }
 
           // Load the data into the web page
-          $("status-emoji").src = jsonResponse.emoji;
-          $("status-text").innerHTML = jsonResponse.text;
-          $("status-times").innerHTML = jsonResponse.times;
+          $("status-emoji").src = jsonResponse.slack.emoji;
+          $("status-text").innerHTML = jsonResponse.slack.text;
+          $("status-times").innerHTML = jsonResponse.slack.times;
 
           // Set the size of the status text
-          $("status-text").className = jsonResponse.text.length > 13 
+          $("status-text").className = jsonResponse.slack.text.length > 13 
             ? "status--font-size__small" 
             : "status--font-size";
 

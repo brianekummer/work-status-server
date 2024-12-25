@@ -96,13 +96,15 @@ log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEV
 // Keep the status conditions and current status in memory
 let statusConditions = {};
 let currentStatus = {
-  emoji:  null,
-  text:   null,
-  times:  null,
-  statusTimesTemplate: null,
-  statusStartTime: null,
-  workStatusExpiration: null,
-  homeStatusExpiration: null,
+  slack: {
+    emoji:  null,
+    text:   null,
+    times:  null,
+    statusTimesTemplate: null,
+    statusStartTime: null,
+    workStatusExpiration: null,
+    homeStatusExpiration: null
+  },
   homeAssistant: { 
     url: null,
     washerText: null,
@@ -154,7 +156,7 @@ watch(STATUS_CONDITIONS.FILENAME, {}, function(evt, name) {
 });
 
 // Call from status.html asking for latest status
-app.get("/get-status", (request, response) => response.status(200).json(getStatus()));
+app.get("/get-status", (request, response) => response.status(200).json(getStatusForClient()));
 
 app.listen(port, () => log(LOG_LEVELS.INFO, `Listening on port ${port}`));
 /************************  End of Node Configuration  ************************/
@@ -182,17 +184,18 @@ const sleep = ms => {
 
   Returns the status as a JSON object
 ******************************************************************************/
-const getStatus = () => {
+const getStatusForClient = () => {
   return {
-    emoji: currentStatus.emoji ? `/images/${currentStatus.emoji}.png` : "",
-    text: currentStatus.text,
-    times: currentStatus.times,
+    slack: {
+      emoji: currentStatus.slack.emoji ? `/images/${currentStatus.slack.emoji}.png` : "",
+      text: currentStatus.slack.text,
+      times: currentStatus.slack.times
+    },
     homeAssistant: {
       url: HOME_ASSISTANT_URL,
-
-      washerText: currentStatus.washerText,
-      dryerText: currentStatus.dryerText,
-      temperatureText: currentStatus.temperatureText
+      washerText: currentStatus.homeAssistant.washerText,
+      dryerText: currentStatus.homeAssistant.dryerText,
+      temperatureText: currentStatus.homeAssistant.temperatureText
     }
   };
 };
@@ -203,12 +206,12 @@ const getStatus = () => {
 ******************************************************************************/
 const statusHasChanged = (currentStatus, latestStatus) => {
   return (currentStatus == null || 
-          currentStatus.text != latestStatus.text || 
-          currentStatus.workStatusExpiration != latestStatus.workStatusExpiration ||
-          currentStatus.homeStatusExpiration != latestStatus.homeStatusExpiration ||
-          currentStatus.washerText != latestStatus.washerText ||
-          currentStatus.dryerText != latestStatus.dryerText ||
-          currentStatus.temperatureText != latestStatus.temperatureText);
+          currentStatus.slack.text != latestStatus.slack.text || 
+          currentStatus.slack.workStatusExpiration != latestStatus.slack.workStatusExpiration ||
+          currentStatus.slack.homeStatusExpiration != latestStatus.slack.homeStatusExpiration ||
+          currentStatus.homeAssistant.washerText != latestStatus.homeAssistant.washerText ||
+          currentStatus.homeAssistant.dryerText != latestStatus.homeAssistant.dryerText ||
+          currentStatus.homeAssistant.temperatureText != latestStatus.homeAssistant.temperatureText);
 };
 
 
@@ -232,8 +235,8 @@ const processAnyStatusChange = () => {
     if (statusHasChanged(currentStatus, latestStatus)) {
       latestStatus = updateStatusTimes(currentStatus, latestStatus);
       log(LOG_LEVELS.INFO, 
-        `Changed status from ${currentStatus.emoji}/${currentStatus.text}/${currentStatus.times} => ` +
-        `${latestStatus.emoji}/${latestStatus.text}/${latestStatus.times}`);
+        `Changed status from ${currentStatus.slack.emoji}/${currentStatus.slack.text}/${currentStatus.slack.times} => ` +
+        `${latestStatus.slack.emoji}/${latestStatus.slack.text}/${latestStatus.slack.times}`);
       currentStatus = latestStatus;
     }
   })
@@ -358,21 +361,23 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus, homeAssistantDa
 
         // Build the latest status
         latestStatus = {
-          emoji:  evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_EMOJI],
-          text:   (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TEXT] || "")
-                    .replace("(work_status_text)", workSlackStatus.text)
-                    .replace("(home_status_text)", homeSlackStatus.text),
-          statusTimesTemplate:  statusTimesTemplate,
-          workStatusExpiration: workSlackStatus.expiration,
-          homeStatusExpiration: homeSlackStatus.expiration,
-          
-          // Add Home Assistant Data
-          washerText: homeAssistantData.washerText,
-          dryerText: homeAssistantData.dryerText,
-          temperatureText: homeAssistantData.temperatureText
+          slack: {
+            emoji:  evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_EMOJI],
+            text:   (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TEXT] || "")
+                      .replace("(work_status_text)", workSlackStatus.text)
+                      .replace("(home_status_text)", homeSlackStatus.text),
+            statusTimesTemplate:  statusTimesTemplate,
+            workStatusExpiration: workSlackStatus.expiration,
+            homeStatusExpiration: homeSlackStatus.expiration,
+          },
+          homeAssistant: {          
+            washerText: homeAssistantData.washerText,
+            dryerText: homeAssistantData.dryerText,
+            temperatureText: homeAssistantData.temperatureText
+          }
         };
         
-        log(LOG_LEVELS.INFO, `Latest status is now ${latestStatus.emoji}/${latestStatus.text}`);
+        log(LOG_LEVELS.INFO, `Latest status is now ${latestStatus.slack.emoji}/${latestStatus.slack.text}`);
         
         break;
       }
@@ -391,9 +396,9 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus, homeAssistantDa
   changes.
 ******************************************************************************/
 const updateStatusTimes = (currentStatus, latestStatus) => {
-  latestStatus.statusStartTime = currentStatus.text != latestStatus.text
+  latestStatus.slack.statusStartTime = currentStatus.slack.text != latestStatus.slack.text
     ? DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
-    : currentStatus.statusStartTime;
+    : currentStatus.slack.statusStartTime;
 
   // When calculating status_expiration, I am intentionally checking the home
   // expiration first because
@@ -402,12 +407,12 @@ const updateStatusTimes = (currentStatus, latestStatus) => {
   //     of an hour or so. In this case, I want to use the home expiration.
   //   - It's highly unlikely I'd have a home status with an expiration while 
   //     I'm working, where I'd want to use the work status's expiration.
-  let statusExpiration = latestStatus.homeStatusExpiration != 0
-    ? latestStatus.homeStatusExpiration
-    : latestStatus.workStatusExpiration;
+  let statusExpiration = latestStatus.slack.homeStatusExpiration != 0
+    ? latestStatus.slack.homeStatusExpiration
+    : latestStatus.slack.workStatusExpiration;
 
-  latestStatus.times = latestStatus.statusTimesTemplate
-    .replace("(start)", latestStatus.statusStartTime)
+  latestStatus.slack.times = latestStatus.slack.statusTimesTemplate
+    .replace("(start)", latestStatus.slack.statusStartTime)
     .replace("(status_expiration)", 
       DateTime.fromSeconds(statusExpiration)
       .toLocaleString(DateTime.TIME_SIMPLE)
