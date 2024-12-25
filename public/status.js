@@ -3,9 +3,6 @@
 //     on her phone. This is the default.
 //   - Desk mode is for the phone on my desk, which displays the time in ET
 //     and UTC, as well as some data from Home Assistant.
-
-
-
 function displaySlackStatus() {
   fetch("/get-status")
     .then(response => {
@@ -27,14 +24,6 @@ function displaySlackStatus() {
             $("local24").innerHTML = now.toLocaleString(luxon.DateTime.TIME_24_SIMPLE);
             $("local24TimeZoneAbbreviation").innerHTML = timeZoneAbbreviation;
             $("utc").innerHTML = now.toUTC().toFormat("HH:mm");
-
-            // Set the URL for each of the HA icons, using the HA url from the server,
-            // IF it has not already been set
-            // TODO- move this out of this loop, and move building urls to server
-            const baseUrl = `${jsonResponse.homeAssistant.url}/local/icon`;
-            $("washer-image").src = $("washer-image").src || `${baseUrl}/mdi-washing-machine-light.png`;
-            $("dryer-image").src = $("dryer-image").src || `${baseUrl}/mdi-tumble-dryer-light.png`;
-            $("thermometer-image").src = $("thermometer-image").src || `${baseUrl}/thermometer.png`;
 
             // Display Home Assistant data
             $("washer-text").innerHTML = jsonResponse.homeAssistant.washerText;
@@ -58,7 +47,6 @@ function displaySlackStatus() {
           $("last-updated-time").innerHTML = luxon.DateTime
             .fromHTTP(response.headers.get('Date'))
             .toLocaleString(luxon.DateTime.TIME_SIMPLE);
-
         }
       })
       .catch(err => console.log(`ERROR: ${err}`));

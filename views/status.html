@@ -2,7 +2,12 @@
 <html>
   <head>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.5.0/luxon.min.js"></script>
-    <script type="text/javascript">var showDesk = {{showDesk}};</script>
+    <script type="text/javascript">
+      var showDesk = {{ showDesk }};
+      var washerIconUrl = "{{ washerIconUrl }}";
+      var dryerIconUrl = "{{ dryerIconUrl }}";
+      var temperatureIconUrl = "{{ temperatureIconUrl }}";
+    </script>
     <script type="text/javascript" src="status.js"></script>
     <link type="text/css" href="./status.css" rel="stylesheet">
   </head>
@@ -44,17 +49,17 @@
           <td rowspan="2">
             <span>
               <span class="ha-status-cell">
-                <img id="washer-image">
+                <img id="washer-image" src="{{ washerIconUrl }}">
                 <span id="washer-text" class="ha--font"></span>
               </span>
               </br>
               <span class="ha-status-cell">
-                <img id="dryer-image">
+                <img id="dryer-image" src="{{ dryerIconUrl }}">
                 <span id="dryer-text" class="ha--font"></span>
               </span>
               </br>
               <span class="ha-status-cell">
-                <img id="thermometer-image">
+                <img id="thermometer-image" src="{{ temperatureIconUrl }}">
                 <span id="temperature-text" class="ha--font"></span>
               </span>
             </span>

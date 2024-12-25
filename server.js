@@ -103,7 +103,6 @@ let currentStatus = {
     times:  null
   },
   homeAssistant: { 
-    url: null,
     washerText: null,
     dryerText: null,
     temperatureText: null
@@ -144,15 +143,20 @@ watch(STATUS_CONDITIONS.FILENAME, {}, function(evt, name) {
 
 // "http://xxxxx:3000" without a path sends the status page
 app.get("/", (request, response) => {
-  let showDesk = false;    
+  let payload = {};
   if (typeof request.query.showDesk === "string") {
-    showDesk = (request.query.showDesk.toLowerCase() == "true"); 
+    payload = {
+      showDesk: (request.query.showDesk.toLowerCase() == "true"),
+      washerIconUrl: `${HOME_ASSISTANT_URL}/local/icon/mdi-washing-machine-light.png`,
+      dryerIconUrl: `${HOME_ASSISTANT_URL}/local/icon/mdi-tumble-dryer-light.png`,
+      temperatureIconUrl: `${HOME_ASSISTANT_URL}/local/icon/thermometer.png`
+    }
   }
   
-  response.render("status", {"showDesk": showDesk});
+  response.render("status", payload);
 });
 
-// Call from status.html asking for latest status
+// Call from status.js on the client asking for the latest status
 app.get("/get-status", (request, response) => response.status(200).json(getStatusForClient()));
 
 // Don't bother returning a favicon
@@ -193,7 +197,6 @@ const getStatusForClient = () => {
       times: currentStatus.slack.times
     },
     homeAssistant: {
-      url: HOME_ASSISTANT_URL,
       washerText: currentStatus.homeAssistant.washerText,
       dryerText: currentStatus.homeAssistant.dryerText,
       temperatureText: currentStatus.homeAssistant.temperatureText
