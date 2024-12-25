@@ -17,6 +17,8 @@ function displaySlackStatus() {
         let mode = showDesk ? "desk" : "wall";
         document.body.className = `${visibilityClass} ${mode}`;
 
+        console.log(">>> ", jsonResponse);
+
         if (showStatus) {
           // Get the last updated time from the header
           const lastUpdatedTime = luxon.DateTime
@@ -41,7 +43,9 @@ function displaySlackStatus() {
             $("thermometer-image").src = $("thermometer-image").src || `${baseUrl}/thermometer.png`;
 
             // Display Home Assistant data
-            getAndDisplayHomeAssistantData(jsonResponse.homeAssistant.url, jsonResponse.homeAssistant.token);
+            $("washer-text").innerHTML = jsonResponse.homeAssistant.washerText;
+            $("dryer-text").innerHTML = jsonResponse.homeAssistant.dryerText;
+            $("temperature-text").innerHTML = jsonResponse.homeAssistant.temperatureText;
           }
           else 
           {
@@ -72,24 +76,6 @@ function displaySlackStatus() {
 // Shorthand to simplify code, same syntax as jQuery
 function $(id) {
   return document.getElementById(id);
-}
-
-
-function getAndDisplayHomeAssistantData(url, token) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.responseType = 'json';
-  xhttp.onreadystatechange = function() {
-    // Ready state has changed, check if the data has been returned
-    if (this.readyState == XMLHttpRequest.DONE && this.status == 200) {
-      var state = JSON.parse(this.response.state);
-      $("washer-text").innerHTML = state.Washer;
-      $("dryer-text").innerHTML = state.Dryer;
-      $("thermometer-text").innerHTML = state.Temperature;
-    }
-  };
-  xhttp.open("GET", `${url}/api/states/sensor.work_status_phone_info`, true);
-  xhttp.setRequestHeader("Authorization", `Bearer ${token}`);
-  xhttp.send();
 }
 
 

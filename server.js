@@ -104,8 +104,10 @@ let currentStatus = {
   workStatusExpiration: null,
   homeStatusExpiration: null,
   homeAssistant: { 
-    url: null, 
-    token: null 
+    url: null,
+    washerText: null,
+    dryerText: null,
+    temperatureText: null
   }
 };
 
@@ -160,6 +162,7 @@ app.listen(port, () => log(LOG_LEVELS.INFO, `Listening on port ${port}`));
 
 
 
+
 /******************************************************************************
   Sleep x milliseconds
 ******************************************************************************/
@@ -186,7 +189,10 @@ const getStatus = () => {
     times: currentStatus.times,
     homeAssistant: {
       url: HOME_ASSISTANT_URL,
-      token: HOME_ASSISTANT_TOKEN
+
+      washerText: currentStatus.washerText,
+      dryerText: currentStatus.dryerText,
+      temperatureText: currentStatus.temperatureText
     }
   };
 };
@@ -199,8 +205,12 @@ const statusHasChanged = (currentStatus, latestStatus) => {
   return (currentStatus == null || 
           currentStatus.text != latestStatus.text || 
           currentStatus.workStatusExpiration != latestStatus.workStatusExpiration ||
-          currentStatus.homeStatusExpiration != latestStatus.homeStatusExpiration);
+          currentStatus.homeStatusExpiration != latestStatus.homeStatusExpiration ||
+          currentStatus.washerText != latestStatus.washerText ||
+          currentStatus.dryerText != latestStatus.dryerText ||
+          currentStatus.temperatureText != latestStatus.temperatureText);
 };
+
 
 /******************************************************************************
   Process any status change. This is executed on the server every x seconds.
@@ -212,10 +222,13 @@ const statusHasChanged = (currentStatus, latestStatus) => {
 const processAnyStatusChange = () => {
   Promise.all([
 	  getSlackStatus(SLACK_TOKENS[WORK]),
-	  getSlackStatus(SLACK_TOKENS[HOME])
+	  getSlackStatus(SLACK_TOKENS[HOME]),
+    getHomeAssistantData()
   ])
   .then(slackStatuses => {
-    let latestStatus = calculateLatestStatus(slackStatuses[WORK], slackStatuses[HOME]);
+    console.log("!!! ", JSON.stringify(slackStatuses));
+    // TODO- fix slackStatuses[2]
+    let latestStatus = calculateLatestStatus(slackStatuses[WORK], slackStatuses[HOME], slackStatuses[2]);
     if (statusHasChanged(currentStatus, latestStatus)) {
       latestStatus = updateStatusTimes(currentStatus, latestStatus);
       log(LOG_LEVELS.INFO, 
@@ -228,6 +241,31 @@ const processAnyStatusChange = () => {
     log(LOG_LEVELS.ERROR, `ERROR in processAnyStatusChange: ${ex}`);
   });
 }
+
+
+// TODO- cleanup and comments
+const getHomeAssistantData = () => {
+  const headers = {
+    "Authorization": `Bearer ${HOME_ASSISTANT_TOKEN}`
+  };
+
+  return fetch(`${HOME_ASSISTANT_URL}/api/states/sensor.work_status_phone_info`, { method: "GET", headers: headers })
+    .then(response => response.json())
+    .then(jsonResponse => {
+      const state = JSON.parse(jsonResponse.state);
+      console.log(`>>> HA: ${state.Washer} / ${state.Dryer} / ${state.Temperature}`);
+
+      return {
+        washerText: state.Washer,
+        dryerText: state.Dryer,
+        temperatureText: state.Temperature,
+      };
+    })
+    .catch(ex => {
+      log(LOG_LEVELS.ERROR, `ERROR in getHomeAssistantData: ${ex}`);
+      return null; // Explicitly handle the error case
+    });
+};
 
 
 /******************************************************************************
@@ -299,7 +337,7 @@ const matchesAllCriteria = (evaluatingStatus, workSlackStatus, homeSlackStatus) 
 /******************************************************************************
   Calculate the latest status
 ******************************************************************************/
-const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
+const calculateLatestStatus = (workSlackStatus, homeSlackStatus, homeAssistantData) => {
   let latestStatus = null;
 
   try {
@@ -307,6 +345,8 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
       // The FIRST condition that matches all criteria is used, so the order of
       // conditions is important
       if (matchesAllCriteria(evaluatingStatus, workSlackStatus, homeSlackStatus)) {
+
+        console.log("### ", homeAssistantData);
 
         // Handle when we want both start and end time, but we only have the start time
         let statusTimesTemplate = (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TIMES] || "")
@@ -324,7 +364,12 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
                     .replace("(home_status_text)", homeSlackStatus.text),
           statusTimesTemplate:  statusTimesTemplate,
           workStatusExpiration: workSlackStatus.expiration,
-          homeStatusExpiration: homeSlackStatus.expiration
+          homeStatusExpiration: homeSlackStatus.expiration,
+          
+          // Add Home Assistant Data
+          washerText: homeAssistantData.washerText,
+          dryerText: homeAssistantData.dryerText,
+          temperatureText: homeAssistantData.temperatureText
         };
         
         log(LOG_LEVELS.INFO, `Latest status is now ${latestStatus.emoji}/${latestStatus.text}`);
