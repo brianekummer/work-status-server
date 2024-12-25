@@ -141,7 +141,12 @@ watch(STATUS_CONDITIONS.FILENAME, {}, function(evt, name) {
   processAnyStatusChange();
 });
 
+// Don't bother returning a favicon
+app.get('/favicon.ico', (request, response) => response.status(204).end());
+
 // "http://xxxxx:3000" without a path sends the status page
+// Since we have them now, we'll pass the URLs for the Home Assistant icons that will
+// be displayed if showDesk=true
 app.get("/", (request, response) => {
   let payload = {};
   if (typeof request.query.showDesk === "string") {
@@ -158,10 +163,6 @@ app.get("/", (request, response) => {
 
 // Call from status.js on the client asking for the latest status
 app.get("/get-status", (request, response) => response.status(200).json(getStatusForClient()));
-
-// Don't bother returning a favicon
-// TODO- this doesn't work
-//app.get('/favicon.ico', (request, response) => response.status(204));
 
 app.listen(port, () => log(LOG_LEVELS.INFO, `Listening on port ${port}`));
 /************************  End of Node Configuration  ************************/
