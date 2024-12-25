@@ -202,7 +202,6 @@ const statusHasChanged = (currentStatus, latestStatus) => {
           currentStatus.homeStatusExpiration != latestStatus.homeStatusExpiration);
 };
 
-
 /******************************************************************************
   Process any status change. This is executed on the server every x seconds.
 
@@ -218,7 +217,7 @@ const processAnyStatusChange = () => {
   .then(slackStatuses => {
     let latestStatus = calculateLatestStatus(slackStatuses[WORK], slackStatuses[HOME]);
     if (statusHasChanged(currentStatus, latestStatus)) {
-      latestStatus = buildStatusTimes(currentStatus, latestStatus);
+      latestStatus = updateStatusTimes(currentStatus, latestStatus);
       log(LOG_LEVELS.INFO, 
         `Changed status from ${currentStatus.emoji}/${currentStatus.text}/${currentStatus.times} => ` +
         `${latestStatus.emoji}/${latestStatus.text}/${latestStatus.times}`);
@@ -346,17 +345,27 @@ const calculateLatestStatus = (workSlackStatus, homeSlackStatus) => {
   text changes, so that if I add minutes to my focus time, only the end time 
   changes.
 ******************************************************************************/
-const buildStatusTimes = (currentStatus, latestStatus) => {
+const updateStatusTimes = (currentStatus, latestStatus) => {
   latestStatus.statusStartTime = currentStatus.text != latestStatus.text
     ? DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
     : currentStatus.statusStartTime;
+
+  // When calculating status_expiration, I am intentionally checking the home
+  // expiration first because
+  //   - It's possible that I'd be on PTO for work and have an expiration in
+  //     a couple of days, and also be on a non-work meeting with an expiration 
+  //     of an hour or so. In this case, I want to use the home expiration.
+  //   - It's highly unlikely I'd have a home status with an expiration while 
+  //     I'm working, where I'd want to use the work status's expiration.
+  let statusExpiration = latestStatus.homeStatusExpiration != 0
+    ? latestStatus.homeStatusExpiration
+    : latestStatus.workStatusExpiration;
+
   latestStatus.times = latestStatus.statusTimesTemplate
     .replace("(start)", latestStatus.statusStartTime)
     .replace("(status_expiration)", 
-      DateTime.fromSeconds(latestStatus.workStatusExpiration != 0 
-        ? latestStatus.workStatusExpiration 
-        : latestStatus.homeStatusExpiration
-      ).toLocaleString(DateTime.TIME_SIMPLE)
+      DateTime.fromSeconds(statusExpiration)
+      .toLocaleString(DateTime.TIME_SIMPLE)
     );
 
   return latestStatus;
