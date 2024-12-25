@@ -173,32 +173,17 @@ const sleep = ms => {
   Get my status. This merges my current Slack status and any Home Assistant 
   info that the browser needs in order for it to call HA.
 
+  I am intentionally not sending a timestamp in the payload because that'd 
+  cause every payload to be unique and wreck the etag caching. So instead, the
+  client will get the time from the response header.
+
   Returns the status as a JSON object
 ******************************************************************************/
 const getStatus = () => {
-  let rightNow = DateTime.now();
-  
-  // I had problems with Luxon in Node when running this on a phone. I should
-  // be able to get the short offset name (i.e. "EDT") using 
-  //   DateTime.now().toFormat("ZZZZ")
-  // but instead, I got something like "Monday, March 1, 2021, 9:56 PM", so I
-  // had to just parsing it out of the JavaScript printed date:
-  //   Mon Mar 01 2021 22:39:15 GMT-0500 (EST)
-  //
-  // But since moving this web server off a phone, I don't have that problem 
-  // any more.
-  let shortOffset = DateTime.now().toFormat("ZZZZ");
-
   return {
     emoji: currentStatus.emoji ? `/images/${currentStatus.emoji}.png` : "",
     text: currentStatus.text,
     times: currentStatus.times,
-    timestamps: {
-      local12: rightNow.toLocaleString(DateTime.TIME_SIMPLE),
-      local24: rightNow.toLocaleString(DateTime.TIME_24_SIMPLE),
-      localShortOffset: shortOffset,
-      utc: rightNow.toUTC().toFormat("HH:mm")
-    },
     homeAssistant: {
       url: HOME_ASSISTANT_URL,
       token: HOME_ASSISTANT_TOKEN

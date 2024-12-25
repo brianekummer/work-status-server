@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link type="text/css" href="./status.css" rel="stylesheet">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.5.0/luxon.min.js"></script>
     <script type="text/javascript">var showDesk = {{showDesk}};</script>
     <script type="text/javascript" src="status.js"></script>
+    <link type="text/css" href="./status.css" rel="stylesheet">
   </head>
 
   <body class="page page--visible wall">
@@ -17,8 +18,8 @@
         </colgroup>
         <tbody>
           <tr>
-            <td class="left">&nbsp;<span id="local12" class="time"></span>&nbsp;<span id="local12ShortOffset"></span></td>
-            <td class="center"><span id="local24" class="time"></span>&nbsp;<span id="local24ShortOffset"></span></td>
+            <td class="left">&nbsp;<span id="local12" class="time"></span>&nbsp;<span id="local12TimeZoneAbbreviation"></span></td>
+            <td class="center"><span id="local24" class="time"></span>&nbsp;<span id="local24TimeZoneAbbreviation"></span></td>
             <td class="right"><span id="utc" class="time"></span>&nbsp;<span>UTC&nbsp;</span></td>
           </tr>
         </tbody>
@@ -62,7 +63,7 @@
 
         <tr>
           <td class="text-padding">
-            <span class="last-updated--font-size">Last updated <span id="last-updated-timestamp" /></span>
+            <span class="last-updated-time--font-size">Last updated <span id="last-updated-time" /></span>
           </td>
         </tr>
       </table>
