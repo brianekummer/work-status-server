@@ -4,8 +4,6 @@
 //   - Desk mode is for the phone on my desk, which displays the time in ET
 //     and UTC, as well as some data from Home Assistant.
 function displaySlackStatus() {
-  console.log(`>>>> ${luxon.DateTime.now().toLocaleString(luxon.DateTime.TIME_WITH_SECONDS)}`);
-
   fetch("/get-status")
     .then(response => {
       response.json()
