@@ -11,22 +11,25 @@
 
   REQUIREMENTS
     NPM Packages
-      express................For coding simple web pages
-      node-fetch.............For simplifying http commands
-      node-json-minify.......Since comments are invalid syntax in JSON, they need 
-                             to be stripped out of the status conditions matrix
-      luxon..................For date formatting, instead of momentJS
-      mustache-express.......For implementing Mustache templates with Express
-      node-watch.............For watching if the status conditions file changes,
-                             so we can pickup any changes to that file without
-                             requiring an app restart
+      express..................For coding simple web pages
+      node-fetch...............For simplifying http commands
+      node-json-minify.........Since comments are invalid syntax in JSON, they
+                               need to be stripped out of the status conditions 
+                               matrix
+      luxon....................For date formatting, instead of momentJS
+      mustache-express.........For implementing Mustache templates with Express
+      node-watch...............For watching if the status conditions file changes,
+                               so we can pickup any changes to that file without
+                               requiring an app restart
 
     Environment Variables
-      SLACK_TOKENS...........Must be the Slack security tokens for my work and home
-                             and accounts in a csv, like this: 
-                             <work_token>,<home_token>
-      HOME_ASSISTANT_URL.....URL for Home Assistant
-      HOME_ASSISTANT_TOKEN...Security token for accessing Home Assistant
+      SLACK_TOKENS.............Must be the Slack security tokens for my work and
+                               home accounts in a csv, like this: 
+                               <work_token>,<home_token>
+      HOME_ASSISTANT_URL.......URL for Home Assistant
+      HOME_ASSISTANT_TOKEN.....Security token for accessing Home Assistant
+      SERVER_REFRESH_SECONDS...Refresh time on the server side, defaults to 30
+      CLIENT_REFRESH_SECONDS...Refresh time on the client side, defaults to 15
 
   OPTIONAL
     Command Line Parameters
@@ -78,6 +81,9 @@ let SLACK_TOKENS = process.env.SLACK_TOKENS.split(",");
 
 let HOME_ASSISTANT_URL = process.env.HOME_ASSISTANT_URL;
 let HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
+
+let SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
+let CLIENT_REFRESH_MS = (process.env.CLIENT_REFRESH_SECONDS || 30) * 1000;
 
 // My simple home-grown logging
 const LOG_LEVELS = {
@@ -149,16 +155,20 @@ app.get('/favicon.ico', (request, response) => response.status(204).end());
 // be displayed if showDesk=true
 app.get("/", (request, response) => {
   // Default payload
-  let payload = { showDesk: false };
+  let payload = { 
+    SHOW_DESK: false,
+    CLIENT_REFRESH_MS: CLIENT_REFRESH_MS
+  };
   
   if (typeof request.query.showDesk === "string") {
     // User passed showDesk as a query param
     payload = {
-      showDesk: (request.query.showDesk.toLowerCase() == "true"),
-      washerIconUrl: `${HOME_ASSISTANT_URL}/local/icon/mdi-washing-machine-light.png`,
-      dryerIconUrl: `${HOME_ASSISTANT_URL}/local/icon/mdi-tumble-dryer-light.png`,
-      temperatureIconUrl: `${HOME_ASSISTANT_URL}/local/icon/thermometer.png`
-    }
+      SHOW_DESK: (request.query.showDesk.toLowerCase() == "true"),
+      CLIENT_REFRESH_MS: CLIENT_REFRESH_MS,
+      WASHER_ICON_URL: `${HOME_ASSISTANT_URL}/local/icon/mdi-washing-machine-light.png`,
+      DRYER_ICON_URL: `${HOME_ASSISTANT_URL}/local/icon/mdi-tumble-dryer-light.png`,
+      TEMPERATURE_ICON_URL: `${HOME_ASSISTANT_URL}/local/icon/thermometer.png`
+    };
   }
   
   response.render("status", payload);
@@ -420,4 +430,4 @@ const updateSlackStatusTimes = (currentStatus, latestStatus, statusTimesTemplate
 
 
 
-setInterval(processAnyStatusChange, 30000);
+setInterval(processAnyStatusChange, SERVER_REFRESH_MS);

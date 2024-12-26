@@ -4,6 +4,8 @@
 //   - Desk mode is for the phone on my desk, which displays the time in ET
 //     and UTC, as well as some data from Home Assistant.
 function displaySlackStatus() {
+  console.log(`>>>> ${luxon.DateTime.now().toLocaleString(luxon.DateTime.TIME_WITH_SECONDS)}`);
+
   fetch("/get-status")
     .then(response => {
       response.json()
@@ -11,11 +13,11 @@ function displaySlackStatus() {
         // Setup page visibility and showing the correct mode
         let showStatus = jsonResponse.slack.emoji || jsonResponse.slack.text;
         let visibilityClass = `page--${showStatus ? "visible" : "invisible"}`;
-        let mode = showDesk ? "desk" : "wall";
+        let mode = SHOW_DESK ? "desk" : "wall";
         document.body.className = `${visibilityClass} ${mode}`;
 
         if (showStatus) {
-          if (showDesk) {
+          if (SHOW_DESK) {
             // Set the times
             let now = luxon.DateTime.now();
             let timeZoneAbbreviation = now.toFormat("ZZZZ");
@@ -62,4 +64,4 @@ function $(id) {
 
 // Display the status and then refresh every 15 seconds
 setTimeout(displaySlackStatus, 1);
-setInterval(displaySlackStatus, 15000);
+setInterval(displaySlackStatus, CLIENT_REFRESH_MS);

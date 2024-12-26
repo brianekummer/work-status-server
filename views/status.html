@@ -3,10 +3,11 @@
   <head>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.5.0/luxon.min.js"></script>
     <script type="text/javascript">
-      var showDesk = {{ showDesk }};
-      var washerIconUrl = "{{ washerIconUrl }}";
-      var dryerIconUrl = "{{ dryerIconUrl }}";
-      var temperatureIconUrl = "{{ temperatureIconUrl }}";
+      let SHOW_DESK = {{ SHOW_DESK }};
+      let CLIENT_REFRESH_MS = {{ CLIENT_REFRESH_MS }};
+      let WASHER_ICON_URL = "{{ WASHER_ICON_URL }}";
+      let DRYER_ICON_URL = "{{ DRYER_ICON_URL }}";
+      let TEMPERATURE_ICON_URL = "{{ TEMPERATURE_ICON_URL }}";
     </script>
     <script type="text/javascript" src="status.js"></script>
     <link type="text/css" href="./status.css" rel="stylesheet">
@@ -49,17 +50,17 @@
           <td rowspan="2">
             <span>
               <span class="ha-status-cell">
-                <img id="washer-image" src="{{ washerIconUrl }}">
+                <img id="washer-image" src="{{ WASHER_ICON_URL }}">
                 <span id="washer-text" class="ha--font"></span>
               </span>
               </br>
               <span class="ha-status-cell">
-                <img id="dryer-image" src="{{ dryerIconUrl }}">
+                <img id="dryer-image" src="{{ DRYER_ICON_URL }}">
                 <span id="dryer-text" class="ha--font"></span>
               </span>
               </br>
               <span class="ha-status-cell">
-                <img id="thermometer-image" src="{{ temperatureIconUrl }}">
+                <img id="thermometer-image" src="{{ TEMPERATURE_ICON_URL }}">
                 <span id="temperature-text" class="ha--font"></span>
               </span>
             </span>
