@@ -166,9 +166,9 @@ app.get("/", (request, response) => {
     payload = {
       SHOW_DESK: (request.query.showDesk.toLowerCase() == "true"),
       CLIENT_REFRESH_MS: CLIENT_REFRESH_MS,
-      WASHER_ICON_URL: `${HOME_ASSISTANT_URL}/local/icon/mdi-washing-machine-light.png`,
-      DRYER_ICON_URL: `${HOME_ASSISTANT_URL}/local/icon/mdi-tumble-dryer-light.png`,
-      TEMPERATURE_ICON_URL: `${HOME_ASSISTANT_URL}/local/icon/thermometer.png`
+      WASHER_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/mdi-washing-machine-light.png` : "",
+      DRYER_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/mdi-tumble-dryer-light.png` : "",
+      TEMPERATURE_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/thermometer.png` : ""
     };
   }
   
@@ -256,38 +256,10 @@ const processAnyStatusChange = () => {
 
 
 /******************************************************************************
-  Get status of Home Assistant devices
+  Get my Slack status for the given account, which includes my status and 
+  presence
   
-  Returns a JSON object with status of those Home Assistant entities
-******************************************************************************/
-const getHomeAssistantStatus = () => {
-  let headers = {
-    "Authorization": `Bearer ${HOME_ASSISTANT_TOKEN}`
-  };
-
-  return fetch(`${HOME_ASSISTANT_URL}/api/states/sensor.work_status_phone_info`, { method: "GET", headers: headers })
-    .then(response => response.json())
-    .then(jsonResponse => {
-      const state = JSON.parse(jsonResponse.state);
-
-      return {
-        washerText: state.Washer,
-        dryerText: state.Dryer,
-        temperatureText: state.Temperature,
-      };
-    })
-    .catch(ex => {
-      log(LOG_LEVELS.ERROR, `ERROR in getHomeAssistantData: ${ex}`);
-      return null; // Explicitly handle the error case
-    });
-};
-
-
-/******************************************************************************
-  Get my Slack status for the given account. This includes my status and 
-  presence.
-  
-  If there is no security token, then just return nulls.
+  If there is no security token, then just return nulls
 
   Returns a JSON object with my Slack status
 ******************************************************************************/
@@ -332,6 +304,45 @@ const getSlackStatus = securityToken => {
     .catch(ex => {
       log(LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
     });
+  }
+};
+
+
+/******************************************************************************
+  Get status of Home Assistant devices
+  
+  If there is no security token, then just return nulls
+
+  Returns a JSON object with status of those Home Assistant entities
+******************************************************************************/
+const getHomeAssistantStatus = () => {
+  if (!HOME_ASSISTANT_URL && !HOME_ASSISTANT_TOKEN) {
+    return {
+      washerText: null,
+      dryerText: null,
+      temperatureText: null
+    };
+  } else {
+    let headers = {
+      "Authorization": `Bearer ${HOME_ASSISTANT_TOKEN}`
+    };
+  
+    return fetch(`${HOME_ASSISTANT_URL}/api/states/sensor.work_status_phone_info`, { method: "GET", headers: headers })
+      .then(response => response.json())
+      .then(jsonResponse => {
+        const state = JSON.parse(jsonResponse.state);
+  
+        return {
+          washerText: state.Washer,
+          dryerText: state.Dryer,
+          temperatureText: state.Temperature
+        };
+      })
+      .catch(ex => {
+        log(LOG_LEVELS.ERROR, `ERROR in getHomeAssistantData: ${ex}`);
+        return null;     // Explicitly handle the error case
+      });
+  
   }
 };
 
@@ -439,6 +450,8 @@ const updateSlackStatusTimes = (currentStatus, latestStatus, statusTimesTemplate
     .replace("(start)", latestStatus.slack.statusStartTime)
     .replace("(status_expiration)", statusExpiration);
 };
+
+
 
 
 
