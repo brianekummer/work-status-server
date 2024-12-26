@@ -74,10 +74,11 @@ const STATUS_CONDITIONS = {
 
 const SLACK_CALL_STATUS_EMOJI = ":slack_call:";
 
-// My Slack security tokens
+// Get my Slack security tokens, and if there is only one Slack token, set the home token to blank
 let WORK = 0;
 let HOME = 1;
 let SLACK_TOKENS = process.env.SLACK_TOKENS.split(",");
+if (SLACK_TOKENS.length === 1) SLACK_TOKENS.push("");
 
 let HOME_ASSISTANT_URL = process.env.HOME_ASSISTANT_URL;
 let HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
@@ -103,10 +104,10 @@ log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEV
 let statusConditions = {};
 let currentStatus = {
   slack: {
-    emoji:  null,
-    text:   null,
+    emoji: null,
+    text: null,
     statusStartTime: null,
-    times:  null
+    times: null
   },
   homeAssistant: { 
     washerText: null,
@@ -286,41 +287,52 @@ const getHomeAssistantStatus = () => {
   Get my Slack status for the given account. This includes my status and 
   presence.
   
+  If there is no security token, then just return nulls.
+
   Returns a JSON object with my Slack status
 ******************************************************************************/
 const getSlackStatus = securityToken => {
-  let headers = {
-    "Content-Type":  "application/x-www-form-urlencoded",
-    "Authorization": `Bearer ${securityToken}`  
-  };
-  return Promise.all([
-    fetch("https://slack.com/api/users.profile.get", { method: "GET", headers: headers }),
-    fetch("https://slack.com/api/users.getPresence", { method: "GET", headers: headers })
-  ])
-  .then(responses => Promise.all(responses.map(response => response.json())))
-  .then(jsonResponses => {
-    if (LOG_LEVEL == LOG_LEVELS.DEBUG)
-      log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
-        `${jsonResponses[0].profile.status_emoji} / ` +
-        `${jsonResponses[0].profile.status_text} / ` +
-        `${jsonResponses[0].profile.status_expiration} / ` +
-        `${jsonResponses[1].presence}`);
-
-    // Huddles don't set an emoji, they only set "huddle_state" property. For
-    // my purposes, changing the emoji to the same as a Slack call is fine.
-    if (jsonResponses[0].profile.huddle_state == "in_a_huddle")
-      jsonResponses[0].profile.status_emoji = SLACK_CALL_STATUS_EMOJI;
-
+  if (!securityToken) {
     return Promise.resolve({
-      emoji:      jsonResponses[0].profile.status_emoji,
-      text:       jsonResponses[0].profile.status_text,
-      expiration: jsonResponses[0].profile.status_expiration || 0,
-      presence:   jsonResponses[1].presence
+      emoji:      null,
+      text:       null,
+      expiration: 0,
+      presence:   null
     });
-  })
-  .catch(ex => {
-    log(LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
-  });
+  } else {
+    let headers = {
+      "Content-Type":  "application/x-www-form-urlencoded",
+      "Authorization": `Bearer ${securityToken}`  
+    };
+    return Promise.all([
+      fetch("https://slack.com/api/users.profile.get", { method: "GET", headers: headers }),
+      fetch("https://slack.com/api/users.getPresence", { method: "GET", headers: headers })
+    ])
+    .then(responses => Promise.all(responses.map(response => response.json())))
+    .then(jsonResponses => {
+      if (LOG_LEVEL == LOG_LEVELS.DEBUG)
+        log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
+          `${jsonResponses[0].profile.status_emoji} / ` +
+          `${jsonResponses[0].profile.status_text} / ` +
+          `${jsonResponses[0].profile.status_expiration} / ` +
+          `${jsonResponses[1].presence}`);
+
+      // Huddles don't set an emoji, they only set "huddle_state" property. For
+      // my purposes, changing the emoji to the same as a Slack call is fine.
+      if (jsonResponses[0].profile.huddle_state == "in_a_huddle")
+        jsonResponses[0].profile.status_emoji = SLACK_CALL_STATUS_EMOJI;
+
+      return Promise.resolve({
+        emoji:      jsonResponses[0].profile.status_emoji,
+        text:       jsonResponses[0].profile.status_text,
+        expiration: jsonResponses[0].profile.status_expiration || 0,
+        presence:   jsonResponses[1].presence
+      });
+    })
+    .catch(ex => {
+      log(LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
+    });
+  }
 };
 
 
