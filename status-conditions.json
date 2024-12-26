@@ -7,23 +7,23 @@
   //   - Slack automatically sets users "away" after some amount of inactivity, although
   //     I've seen differing statements of how long that is.
   //
-  //                                |                       Conditions                                        |                         What to Display at Home                         |
-  //                                |                Work                |               Home                 |                                                                         |
-  // Status Name                    | Emoji                    Presence  | Emoji                    Presence  | Emoji                  Text                   Times                     |
-  // ------------------------------ | -----------------------  --------- | -----------------------  --------- | ---------------------  ---------------------  ------------------------- |
-  [  "At lunch",                      ":hamburger:",           "",         "",                      "",         "hamburger",           "Lunch",               "TIME_TEXT_START"         ],
-  [  "At dinner",                     ":poultry_leg:",         "",         "",                      "",         "poultry_leg",         "Dinner",              "TIME_TEXT_START"         ],
-  [  "Unavailable",                   ":no_entry:",            "",         "",                      "",         "no_entry",            "(work_status_text)",  "TIME_TEXT_START_TO_END"  ],
-  [  "Be right back",                 ":brb:",                 "",         "",                      "",         "brb",                 "Be right back",       "TIME_TEXT_START"         ],
-  [  "Commuting",                     ":blue_car:",            "",         "",                      "",         "blue_car",            "Commuting",           "TIME_TEXT_START"         ],
-  [  "In a non-work meeting",         "",                      "away",     ":no_work_meeting:",     "",         "no_work_meeting",     "Non-Work Meeting",    "TIME_TEXT_START_TO_END"  ],
-  [  "Goofing off",                   "",                      "away",     ":8bit:",                "",         "8bit",                "Playing",             ""                        ],
-  [  "Away from my desk",             "",                      "away",     "",                      "",         "",                    "",                    ""                        ],
-  [  "On PTO",                        ":palm_tree:",           "",         "",                      "",         "",                    "",                    ""                        ],
-  [  "On a Slack call",               ":slack_call:",          "",         "",                      "",         "telephone_receiver",  "On a call",           "TIME_TEXT_START"         ],
-  [  "Heads down, focused",           ":heads-down:",          "",         "",                      "",         "heads_down",          "Focusing",            "TIME_TEXT_START_TO_END"  ],
-  [  "In Pittsburgh",                 ":cityscape:",           "",         "",                      "",         "cityscape",           "In Pittsburgh",       ""                        ],
-  [  "In a meeting",                  ":spiral_calendar_pad:", "",         "",                      "",         "spiral_calendar",     "Meeting",             "TIME_TEXT_START_TO_END"  ],
-  [  "Studying",                      ":books:",               "",         "",                      "",         "books",               "Studying",            "TIME_TEXT_START_TO_END"  ],
-  [  "Working",                       "",                      "active",   "",                      "",         "keyboard",            "Working",             ""                        ]
+  //                                |                       Conditions                                        |                     What to Display at Home                    |
+  //                                |                Work                |               Home                 |                                                                |
+  // Status Name                    | Emoji                    Presence  | Emoji                    Presence  | Emoji                  Text                   Times            |
+  // ------------------------------ | -----------------------  --------- | -----------------------  --------- | ---------------------  ---------------------  ---------------- |
+  [  "At lunch",                      ":hamburger:",           "",         "",                      "",         "hamburger",           "Lunch",               "START"         ],
+  [  "At dinner",                     ":poultry_leg:",         "",         "",                      "",         "poultry_leg",         "Dinner",              "START"         ],
+  [  "Unavailable",                   ":no_entry:",            "",         "",                      "",         "no_entry",            "(work_status_text)",  "START_TO_END"  ],
+  [  "Be right back",                 ":brb:",                 "",         "",                      "",         "brb",                 "Be right back",       "START"         ],
+  [  "Commuting",                     ":blue_car:",            "",         "",                      "",         "blue_car",            "Commuting",           "START"         ],
+  [  "In a non-work meeting",         "",                      "away",     ":no_work_meeting:",     "",         "no_work_meeting",     "Non-Work Meeting",    "START_TO_END"  ],
+  [  "Playing",                       "",                      "away",     ":8bit:",                "",         "8bit",                "Playing",             ""              ],
+  [  "Away from my desk",             "",                      "away",     "",                      "",         "",                    "",                    ""              ],
+  [  "On PTO",                        ":palm_tree:",           "",         "",                      "",         "",                    "",                    ""              ],
+  [  "On a Slack call",               ":slack_call:",          "",         "",                      "",         "telephone_receiver",  "On a call",           "START"         ],
+  [  "Heads down, focused",           ":heads-down:",          "",         "",                      "",         "heads_down",          "Focusing",            "START_TO_END"  ],
+  [  "In Pittsburgh",                 ":cityscape:",           "",         "",                      "",         "cityscape",           "In Pittsburgh",       ""              ],
+  [  "In a meeting",                  ":spiral_calendar_pad:", "",         "",                      "",         "spiral_calendar",     "Meeting",             "START_TO_END"  ],
+  [  "Studying",                      ":books:",               "",         "",                      "",         "books",               "Studying",            "START_TO_END"  ],
+  [  "Working",                       "",                      "active",   "",                      "",         "keyboard",            "Working",             ""              ]
 ]
