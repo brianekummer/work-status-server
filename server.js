@@ -54,7 +54,7 @@ const { DateTime } = require("luxon");
 // Constants for working with the array of conditions for each status
 const STATUS_CONDITIONS = {
   FILENAME: "status-conditions.csv",
-  TIME_TEXT: {
+  TIMES_TEMPLATES: {
     START: "Started @ (start)",
     START_TO_END: "(start) - (status_expiration)"
   }
@@ -134,7 +134,7 @@ const getStatusConditions = () => {
   .pipe(csv(
     { separator: "|",
       skipComments: true,
-      mapHeaders: ({ header, index }) => header === "" ? null : header.trim(),   // ignore '' header from the row starting with |
+      mapHeaders: ({ header, index }) => header === "" ? null : header.trim(),   // ignore '' header from each row starting with |
       mapValues: ({ header, index, value }) => value.trim()
      }
   ))
@@ -368,34 +368,8 @@ const buildLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, home
           }
         };
 
-        // If we matched the home emoji, then we need to use the home expiration.
-        // I am intentionally checking the home emoji (instead of work) because
-        //   - It's possible that I'd be on PTO for work and have an expiration in
-        //     a couple of days, and also be on a non-work meeting with an expiration 
-        //     of an hour or so. In this case, I want to use the home expiration.
-        //   - Similarly, I can be on PTO and have a home status with no expiration,
-        //     where I want to use the no-expiration of my home status instead of the
-        //     expiration of my PTO at work.
-        //   - It's highly unlikely I'd have a home status with an expiration while 
-        //     I'm working, where I'd want to use the work status's expiration.
-        const statusExpirationSeconds = 
-          homeSlackStatus.emoji && matchesCriteria(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) 
-            ? homeSlackStatus.expiration 
-            : workSlackStatus.expiration;
-
-        // Select the appropriate template for displaying the status time for this status
-        let statusTimesTemplate = 
-          (evaluatingStatus.display_times || "")
-            .replace("START_TO_END", STATUS_CONDITIONS.TIME_TEXT.START_TO_END)
-            .replace("START",        STATUS_CONDITIONS.TIME_TEXT.START);
-        if (statusTimesTemplate === STATUS_CONDITIONS.TIME_TEXT.START_TO_END && statusExpirationSeconds === 0) {
-          // When we're supposed to display both the start and end time, but we only
-          // have the start time
-          statusTimesTemplate = STATUS_CONDITIONS.TIME_TEXT.START;
-        }
-
-        // Update the status time
-        updateSlackStatusTimes(currentStatus, latestStatus, statusTimesTemplate, statusExpirationSeconds);
+        // Determine and set the the status time
+        updateSlackStatusTimes(evaluatingStatus, homeSlackStatus, workSlackStatus, currentStatus, latestStatus);
 
         break;
       }
@@ -409,16 +383,44 @@ const buildLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, home
 
 
 /******************************************************************************
-  Format the times of the Slack status
+  Determine and set the times of the Slack status in latestStatus
 ******************************************************************************/
-const updateSlackStatusTimes = (currentStatus, latestStatus, statusTimesTemplate, statusExpirationSeconds) => {
+const updateSlackStatusTimes = (evaluatingStatus, homeSlackStatus, workSlackStatus, currentStatus, latestStatus) => {
   // The start time only changes when the status text changes, so that if I
   // add minutes to my focus time, only the end time changes. We're adding it
   // to latestStatus so that we can use it the next time we check the status.
   latestStatus.slack.statusStartTime = currentStatus.slack.text !== latestStatus.slack.text
     ? DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
     : currentStatus.slack.statusStartTime;
-    
+
+  // Determine the expiration time of the status
+  // 
+  // If we matched the home emoji, then we need to use the home expiration.
+  // I am intentionally checking the home emoji (instead of work) because
+  //   - It's possible that I'd be on PTO for work and have an expiration in
+  //     a couple of days, and also be on a non-work meeting with an expiration 
+  //     of an hour or so. In this case, I want to use the home expiration.
+  //   - Similarly, I can be on PTO and have a home status with no expiration,
+  //     where I want to use the no-expiration of my home status instead of the
+  //     expiration of my PTO at work.
+  //   - It's highly unlikely I'd have a home status with an expiration while 
+  //     I'm working, where I'd want to use the work status's expiration.
+  const statusExpirationSeconds = 
+    homeSlackStatus.emoji && matchesCriteria(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) 
+      ? homeSlackStatus.expiration 
+      : workSlackStatus.expiration;
+
+  // Select the appropriate template for displaying the status time for this status
+  let statusTimesTemplate = 
+    (evaluatingStatus.display_times || "")
+      .replace("START_TO_END", STATUS_CONDITIONS.TIMES_TEMPLATES.START_TO_END)
+      .replace("START",        STATUS_CONDITIONS.TIMES_TEMPLATES.START);
+  if (statusTimesTemplate === STATUS_CONDITIONS.TIMES_TEMPLATES.START_TO_END && statusExpirationSeconds === 0) {
+    // When we're supposed to display both the start and end time, but we only
+    // have the start time
+    statusTimesTemplate = STATUS_CONDITIONS.TIMES_TEMPLATES.START;
+  }
+
   let statusExpiration = DateTime
     .fromSeconds(statusExpirationSeconds)
     .toLocaleString(DateTime.TIME_SIMPLE);
