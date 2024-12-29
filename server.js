@@ -13,9 +13,7 @@
     NPM Packages
       express..................For coding simple web pages
       node-fetch...............For simplifying http commands
-      node-json-minify.........Since comments are invalid syntax in JSON, they
-                               need to be stripped out of the status conditions 
-                               matrix
+      csv-parser...............For parsing status-conditions.csv
       luxon....................For date formatting, instead of momentJS
       mustache-express.........For implementing Mustache templates with Express
       node-watch...............For watching if the status conditions file changes,
@@ -50,27 +48,30 @@ const fs = require("fs");
 const fetch = require("node-fetch");
 const watch = require("node-watch");
 const app = express();
+const csv = require('csv-parser')
 const { DateTime } = require("luxon");
-JSON.minify = require("node-json-minify");
 
-// Constants for working with the matrix of conditions for each status
+// Constants for working with the array of conditions for each status
 const STATUS_CONDITIONS = {
-  FILENAME: "status-conditions.json",
-  COLUMNS: {
-    STATUS_NAME:                0,
-    CRITERIA_WORK_STATUS_EMOJI: 1,
-    CRITERIA_WORK_PRESENCE:     2,
-    CRITERIA_HOME_STATUS_EMOJI: 3,
-    CRITERIA_HOME_PRESENCE:     4,
-    RESULT_NEW_STATUS_EMOJI:    5,
-    RESULT_NEW_STATUS_TEXT:     6,
-    RESULT_NEW_STATUS_TIMES:    7
-  },
+  FILENAME: "status-conditions.csv",
   TIME_TEXT: {
     START: "Started @ (start)",
     START_TO_END: "(start) - (status_expiration)"
   }
 };
+
+// Empty status objects
+const EMPTY_SLACK_STATUS = {
+  emoji:      null,
+  text:       null,
+  expiration: 0,
+  presence:   null
+};
+const EMPTY_HOME_ASSISTANT_STATUS = {
+  washerText: null,
+  dryerText: null,
+  temperatureText: null
+}
 
 const SLACK_CALL_STATUS_EMOJI = ":slack_call:";
 
@@ -80,6 +81,7 @@ let HOME = 1;
 let SLACK_TOKENS = process.env.SLACK_TOKENS.split(",");
 if (SLACK_TOKENS.length === 1) SLACK_TOKENS.push("");
 
+// 
 let HOME_ASSISTANT_URL = process.env.HOME_ASSISTANT_URL;
 let HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
 
@@ -100,17 +102,6 @@ let log = (level, message) => {
 };
 log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEVELS[key] == LOG_LEVEL)}`);
 
-const EMPTY_SLACK_STATUS = {
-  emoji:      null,
-  text:       null,
-  expiration: 0,
-  presence:   null
-};
-const EMPTY_HOME_ASSISTANT_STATUS = {
-  washerText: null,
-  dryerText: null,
-  temperatureText: null
-}
 
 // Keep the status conditions and current status in memory
 let statusConditions = {};
@@ -136,10 +127,21 @@ app.use(express.static(`${__dirname}/public`));
 // but ok for me here. https://github.com/node-fetch/node-fetch/issues/568
 process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
-// Read status conditions from a file, strip out comments, and parse it into a usable
-// JSON object
+// Read status conditions from a CSV into a usable JSON object
 const getStatusConditions = () => {
-  return JSON.parse(JSON.minify(fs.readFileSync(STATUS_CONDITIONS.FILENAME, "utf8")));
+  let results = [];
+  fs.createReadStream(STATUS_CONDITIONS.FILENAME)
+  .pipe(csv(
+    { separator: "|",
+      skipComments: true,
+      mapHeaders: ({ header, index }) => header === "" ? null : header.trim(),   // ignore '' header from the row starting with |
+      mapValues: ({ header, index, value }) => value.trim()
+     }
+  ))
+  .on('data', (data) => {
+    results.push(data);
+  })
+  return results;
 };
 
 // Get the conditions to determine the status. Whenever they change, get the changes
@@ -258,24 +260,22 @@ const getSlackStatus = securityToken => {
     ])
     .then(responses => Promise.all(responses.map(response => response.json())))
     .then(jsonResponses => {
-      if (LOG_LEVEL === LOG_LEVELS.DEBUG)
-        log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken === SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
-          `${jsonResponses[0].profile.status_emoji} / ` +
-          `${jsonResponses[0].profile.status_text} / ` +
-          `${jsonResponses[0].profile.status_expiration} / ` +
-          `${jsonResponses[1].presence}`);
-
-      // Huddles don't set an emoji, they only set "huddle_state" property. For
-      // my purposes, changing the emoji to the same as a Slack call is fine.
-      if (jsonResponses[0].profile.huddle_state == "in_a_huddle")
-        jsonResponses[0].profile.status_emoji = SLACK_CALL_STATUS_EMOJI;
-
-      return Promise.resolve({
-        emoji:      jsonResponses[0].profile.status_emoji,
+      let slackStatus = {
+        // Huddles don't set an emoji, they only set "huddle_state" property. For
+        // my purposes, changing the emoji to the same as a Slack call is fine.
+        emoji:      jsonResponses[0].profile.huddle_state === "in_a_huddle" 
+                      ? SLACK_CALL_STATUS_EMOJI 
+                      : jsonResponses[0].profile.status_emoji,
         text:       jsonResponses[0].profile.status_text,
         expiration: jsonResponses[0].profile.status_expiration || 0,
         presence:   jsonResponses[1].presence
-      });
+      };
+
+      if (LOG_LEVEL === LOG_LEVELS.DEBUG)
+        log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken === SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
+          `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
+
+      return Promise.resolve(slackStatus);
     })
     .catch(ex => {
       log(LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
@@ -329,13 +329,13 @@ const matchesCriteria = (criteriaValue, actualValue) => {
 
 
 /******************************************************************************
-  Decide if all the criteria match.
+  Decide if all the criteria match
 ******************************************************************************/
 const matchesAllCriteria = (evaluatingStatus, workSlackStatus, homeSlackStatus) => {
-  return (matchesCriteria(evaluatingStatus[STATUS_CONDITIONS.COLUMNS.CRITERIA_WORK_STATUS_EMOJI], workSlackStatus.emoji) &&
-          matchesCriteria(evaluatingStatus[STATUS_CONDITIONS.COLUMNS.CRITERIA_WORK_PRESENCE],     workSlackStatus.presence) &&
-          matchesCriteria(evaluatingStatus[STATUS_CONDITIONS.COLUMNS.CRITERIA_HOME_STATUS_EMOJI], homeSlackStatus.emoji) &&
-          matchesCriteria(evaluatingStatus[STATUS_CONDITIONS.COLUMNS.CRITERIA_HOME_PRESENCE],     homeSlackStatus.presence));
+  return (matchesCriteria(evaluatingStatus.conditions_work_emoji, workSlackStatus.emoji) &&
+          matchesCriteria(evaluatingStatus.conditions_work_presence, workSlackStatus.presence) &&
+          matchesCriteria(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) &&
+          matchesCriteria(evaluatingStatus.conditions_home_presence, homeSlackStatus.presence));
 };
 
 
@@ -356,8 +356,8 @@ const buildLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, home
         // Build the latest status
         latestStatus = {
           slack: {
-            emoji:  evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_EMOJI],
-            text:   (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TEXT] || "")
+            emoji:  evaluatingStatus.display_emoji,
+            text:   (evaluatingStatus.display_text || "")
                       .replace("(WORK_STATUS_TEXT)", workSlackStatus.text)
                       .replace("(HOME_STATUS_TEXT)", homeSlackStatus.text)
           },
@@ -379,13 +379,13 @@ const buildLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, home
         //   - It's highly unlikely I'd have a home status with an expiration while 
         //     I'm working, where I'd want to use the work status's expiration.
         const statusExpirationSeconds = 
-          homeSlackStatus.emoji && matchesCriteria(evaluatingStatus[STATUS_CONDITIONS.COLUMNS.CRITERIA_HOME_STATUS_EMOJI], homeSlackStatus.emoji) 
-          ? homeSlackStatus.expiration 
-          : workSlackStatus.expiration;
+          homeSlackStatus.emoji && matchesCriteria(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) 
+            ? homeSlackStatus.expiration 
+            : workSlackStatus.expiration;
 
         // Select the appropriate template for displaying the status time for this status
         let statusTimesTemplate = 
-          (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TIMES] || "")
+          (evaluatingStatus.display_times || "")
             .replace("START_TO_END", STATUS_CONDITIONS.TIME_TEXT.START_TO_END)
             .replace("START",        STATUS_CONDITIONS.TIME_TEXT.START);
         if (statusTimesTemplate === STATUS_CONDITIONS.TIME_TEXT.START_TO_END && statusExpirationSeconds === 0) {
