@@ -100,20 +100,23 @@ let log = (level, message) => {
 };
 log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEVELS[key] == LOG_LEVEL)}`);
 
+const EMPTY_SLACK_STATUS = {
+  emoji:      null,
+  text:       null,
+  expiration: 0,
+  presence:   null
+};
+const EMPTY_HOME_ASSISTANT_STATUS = {
+  washerText: null,
+  dryerText: null,
+  temperatureText: null
+}
+
 // Keep the status conditions and current status in memory
 let statusConditions = {};
 let currentStatus = {
-  slack: {
-    emoji: null,
-    text: null,
-    statusStartTime: null,
-    times: null
-  },
-  homeAssistant: { 
-    washerText: null,
-    dryerText: null,
-    temperatureText: null
-  }
+  slack: EMPTY_SLACK_STATUS,
+  homeAssistant: EMPTY_HOME_ASSISTANT_STATUS
 };
 
 
@@ -155,22 +158,13 @@ app.get('/favicon.ico', (request, response) => response.status(204).end());
 // Since we have them now, we'll pass the URLs for the Home Assistant icons that will
 // be displayed if showDesk=true
 app.get("/", (request, response) => {
-  // Default payload
-  let payload = { 
-    SHOW_DESK: false,
-    CLIENT_REFRESH_MS: CLIENT_REFRESH_MS
+  payload = {
+    SHOW_DESK: request.query.showDesk?.toLowerCase() === "true",
+    CLIENT_REFRESH_MS,
+    WASHER_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/mdi-washing-machine-light.png` : "",
+    DRYER_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/mdi-tumble-dryer-light.png` : "",
+    TEMPERATURE_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/thermometer.png` : ""
   };
-  
-  if (typeof request.query.showDesk === "string") {
-    // User passed showDesk as a query param
-    payload = {
-      SHOW_DESK: (request.query.showDesk.toLowerCase() == "true"),
-      CLIENT_REFRESH_MS: CLIENT_REFRESH_MS,
-      WASHER_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/mdi-washing-machine-light.png` : "",
-      DRYER_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/mdi-tumble-dryer-light.png` : "",
-      TEMPERATURE_ICON_URL: HOME_ASSISTANT_URL ? `${HOME_ASSISTANT_URL}/local/icon/thermometer.png` : ""
-    };
-  }
   
   response.render("status", payload);
 });
@@ -212,20 +206,6 @@ const getStatusForClient = () => {
 
 
 /******************************************************************************
-  Decide if the status has changed
-******************************************************************************/
-const statusHasChanged = (currentStatus, latestStatus) => {
-  return (currentStatus == null || 
-          currentStatus.slack.text != latestStatus.slack.text || 
-          currentStatus.slack.workStatusExpiration != latestStatus.slack.workStatusExpiration ||
-          currentStatus.slack.homeStatusExpiration != latestStatus.slack.homeStatusExpiration ||
-          currentStatus.homeAssistant.washerText != latestStatus.homeAssistant.washerText ||
-          currentStatus.homeAssistant.dryerText != latestStatus.homeAssistant.dryerText ||
-          currentStatus.homeAssistant.temperatureText != latestStatus.homeAssistant.temperatureText);
-};
-
-
-/******************************************************************************
   Process any status change. This is executed on the server every x seconds.
 
   It gets my Slack status for my work and home accounts, as well as statuses of
@@ -240,7 +220,7 @@ const processAnyStatusChange = () => {
   .then(statuses => {
     let latestStatus = buildLatestStatus(currentStatus, statuses[WORK], statuses[HOME], statuses[2]);
 
-    if (statusHasChanged(currentStatus, latestStatus)) {
+    if (JSON.stringify(currentStatus) !== JSON.stringify(latestStatus)) {
       log(LOG_LEVELS.INFO, 
         `Changed status\n` +
         `   from Slack: ${currentStatus.slack.emoji}/${currentStatus.slack.text}/${currentStatus.slack.times} --- HA: ${currentStatus.homeAssistant.washerText}/${currentStatus.homeAssistant.dryerText}/${currentStatus.homeAssistant.temperatureText}\n` +
@@ -265,12 +245,8 @@ const processAnyStatusChange = () => {
 ******************************************************************************/
 const getSlackStatus = securityToken => {
   if (!securityToken) {
-    return Promise.resolve({
-      emoji:      null,
-      text:       null,
-      expiration: 0,
-      presence:   null
-    });
+    // We do not have a token for this Slack account, so return an empty object
+    return Promise.resolve(EMPTY_SLACK_STATUS);
   } else {
     let headers = {
       "Content-Type":  "application/x-www-form-urlencoded",
@@ -282,8 +258,8 @@ const getSlackStatus = securityToken => {
     ])
     .then(responses => Promise.all(responses.map(response => response.json())))
     .then(jsonResponses => {
-      if (LOG_LEVEL == LOG_LEVELS.DEBUG)
-        log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken == SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
+      if (LOG_LEVEL === LOG_LEVELS.DEBUG)
+        log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken === SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
           `${jsonResponses[0].profile.status_emoji} / ` +
           `${jsonResponses[0].profile.status_text} / ` +
           `${jsonResponses[0].profile.status_expiration} / ` +
@@ -317,11 +293,7 @@ const getSlackStatus = securityToken => {
 ******************************************************************************/
 const getHomeAssistantStatus = () => {
   if (!HOME_ASSISTANT_URL && !HOME_ASSISTANT_TOKEN) {
-    return {
-      washerText: null,
-      dryerText: null,
-      temperatureText: null
-    };
+    return EMPTY_HOME_ASSISTANT_STATUS;
   } else {
     let headers = {
       "Authorization": `Bearer ${HOME_ASSISTANT_TOKEN}`
@@ -386,8 +358,8 @@ const buildLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, home
           slack: {
             emoji:  evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_EMOJI],
             text:   (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TEXT] || "")
-                      .replace("(work_status_text)", workSlackStatus.text)
-                      .replace("(home_status_text)", homeSlackStatus.text)
+                      .replace("(WORK_STATUS_TEXT)", workSlackStatus.text)
+                      .replace("(HOME_STATUS_TEXT)", homeSlackStatus.text)
           },
           homeAssistant: {          
             washerText: homeAssistantData.washerText,
@@ -412,10 +384,11 @@ const buildLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, home
           : workSlackStatus.expiration;
 
         // Select the appropriate template for displaying the status time for this status
-        let statusTimesTemplate = (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TIMES] || "")
-          .replace("START_TO_END", STATUS_CONDITIONS.TIME_TEXT.START_TO_END)
-          .replace("START",        STATUS_CONDITIONS.TIME_TEXT.START);
-        if (statusTimesTemplate == STATUS_CONDITIONS.TIME_TEXT.START_TO_END && statusExpirationSeconds == 0) {
+        let statusTimesTemplate = 
+          (evaluatingStatus[STATUS_CONDITIONS.COLUMNS.RESULT_NEW_STATUS_TIMES] || "")
+            .replace("START_TO_END", STATUS_CONDITIONS.TIME_TEXT.START_TO_END)
+            .replace("START",        STATUS_CONDITIONS.TIME_TEXT.START);
+        if (statusTimesTemplate === STATUS_CONDITIONS.TIME_TEXT.START_TO_END && statusExpirationSeconds === 0) {
           // When we're supposed to display both the start and end time, but we only
           // have the start time
           statusTimesTemplate = STATUS_CONDITIONS.TIME_TEXT.START;
@@ -442,7 +415,7 @@ const updateSlackStatusTimes = (currentStatus, latestStatus, statusTimesTemplate
   // The start time only changes when the status text changes, so that if I
   // add minutes to my focus time, only the end time changes. We're adding it
   // to latestStatus so that we can use it the next time we check the status.
-  latestStatus.slack.statusStartTime = currentStatus.slack.text != latestStatus.slack.text
+  latestStatus.slack.statusStartTime = currentStatus.slack.text !== latestStatus.slack.text
     ? DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
     : currentStatus.slack.statusStartTime;
     
@@ -451,9 +424,10 @@ const updateSlackStatusTimes = (currentStatus, latestStatus, statusTimesTemplate
     .toLocaleString(DateTime.TIME_SIMPLE);
 
   // Set the times of this status
-  latestStatus.slack.times = statusTimesTemplate
-    .replace("(start)", latestStatus.slack.statusStartTime)
-    .replace("(status_expiration)", statusExpiration);
+  latestStatus.slack.times = 
+    statusTimesTemplate
+      .replace("(start)", latestStatus.slack.statusStartTime)
+      .replace("(status_expiration)", statusExpiration);
 };
 
 
