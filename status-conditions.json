@@ -7,13 +7,13 @@
   //   - Slack automatically sets users "away" after some amount of inactivity, although
   //     I've seen differing statements of how long that is.
   //
-  //                                |                       Conditions                                        |                     What to Display at Home                    |
+  //                                |                                Conditions                               |                     What to Display at Home                    |
   //                                |                Work                |               Home                 |                                                                |
   // Status Name                    | Emoji                    Presence  | Emoji                    Presence  | Emoji                  Text                   Times            |
   // ------------------------------ | -----------------------  --------- | -----------------------  --------- | ---------------------  ---------------------  ---------------- |
   [  "At lunch",                      ":hamburger:",           "",         "",                      "",         "hamburger",           "Lunch",               "START"         ],
   [  "At dinner",                     ":poultry_leg:",         "",         "",                      "",         "poultry_leg",         "Dinner",              "START"         ],
-  [  "Unavailable",                   ":no_entry:",            "",         "",                      "",         "no_entry",            "(work_status_text)",  "START_TO_END"  ],
+  [  "Unavailable",                   ":no_entry:",            "",         "",                      "",         "no_entry",            "(WORK_STATUS_TEXT)",  "START_TO_END"  ],
   [  "Be right back",                 ":brb:",                 "",         "",                      "",         "brb",                 "Be right back",       "START"         ],
   [  "Commuting",                     ":blue_car:",            "",         "",                      "",         "blue_car",            "Commuting",           "START"         ],
   [  "In a non-work meeting",         "",                      "away",     ":no_work_meeting:",     "",         "no_work_meeting",     "Non-Work Meeting",    "START_TO_END"  ],

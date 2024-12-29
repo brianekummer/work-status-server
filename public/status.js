@@ -8,15 +8,14 @@ function displaySlackStatus() {
     .then(response => {
       response.json()
       .then(jsonResponse => {
-        // Setup page visibility and showing the correct mode
+        // Set page visibility and the correct mode
         let showStatus = jsonResponse.slack.emoji || jsonResponse.slack.text;
-        let visibilityClass = `page--${showStatus ? "visible" : "invisible"}`;
+        let visibilityClass = `body--${showStatus ? "visible" : "invisible"}`;
         let mode = SHOW_DESK ? "desk" : "wall";
         document.body.className = `${visibilityClass} ${mode}`;
 
         if (showStatus) {
           if (SHOW_DESK) {
-            // Set the times
             let now = luxon.DateTime.now();
             let timeZoneAbbreviation = now.toFormat("ZZZZ");
             $("local12").innerHTML = now.toLocaleString(luxon.DateTime.TIME_SIMPLE);;
@@ -25,21 +24,18 @@ function displaySlackStatus() {
             $("local24TimeZoneAbbreviation").innerHTML = timeZoneAbbreviation;
             $("utc").innerHTML = now.toUTC().toFormat("HH:mm");
 
-            // Display Home Assistant data
             $("washer-text").innerHTML = jsonResponse.homeAssistant.washerText;
             $("dryer-text").innerHTML = jsonResponse.homeAssistant.dryerText;
             $("temperature-text").innerHTML = jsonResponse.homeAssistant.temperatureText;
           }
 
-          // Load the data into the web page
           $("status-emoji").src = jsonResponse.slack.emoji;
           $("status-text").innerHTML = jsonResponse.slack.text;
           $("status-times").innerHTML = jsonResponse.slack.times;
 
-          // Set the size of the status text
           $("status-text").className = jsonResponse.slack.text.length > 13 
             ? "status--font-size__small" 
-            : "status--font-size";
+            : "status--font-size";    // Adjust the size of the status text
 
           // Get the last updated time from the response header. I am intentionally not 
           // including a timestamp in the server payload because that'd cause every
@@ -60,6 +56,6 @@ function $(id) {
 }
 
 
-// Display the status and then refresh every 15 seconds
+// Display the status and then refresh every CLIENT_REFRESH_MS
 setTimeout(displaySlackStatus, 1);
 setInterval(displaySlackStatus, CLIENT_REFRESH_MS);
