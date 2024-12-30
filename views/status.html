@@ -46,9 +46,11 @@
             </br>
             <span id="status-times" class="times--font-size"></span></br>
             </br>
+            </br>
+            <span class="last-updated-time--font-size">Last updated <span id="last-updated-time" /></span>
           </td>
-          <td rowspan="2">
-            <span id="home-assistant-data" class="invisible">
+          <td rowspan="2" id="home-assistant-data" class="invisible">
+            <span>
               <span class="ha-status-cell">
                 <img id="washer-image" src="{{ WASHER_ICON_URL }}">
                 <span id="washer-text" class="ha--font"></span>
@@ -66,14 +68,8 @@
             </span>
           </td>
         </tr>
-
-        <tr>
-          <td class="text-padding">
-            <span class="last-updated-time--font-size">Last updated <span id="last-updated-time" /></span>
-          </td>
-        </tr>
       </table>
-      
+
     </div>
   </body>
 </html>

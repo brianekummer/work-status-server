@@ -24,6 +24,12 @@ function displaySlackStatus() {
             $("local24TimeZoneAbbreviation").innerHTML = timeZoneAbbreviation;
             $("utc").innerHTML = now.toUTC().toFormat("HH:mm");
 
+            // Only adjust size for desk mode, since wall mode can expand the whole width 
+            // of the screen
+            $("status-text").className = jsonResponse.slack.text.length > 13 
+              ? "status--font-size__small" 
+              : "status--font-size";    // Adjust the size of the status text
+
             $("home-assistant-data").className = "visible";
             $("washer-text").innerHTML = jsonResponse.homeAssistant.washerText;
             $("dryer-text").innerHTML = jsonResponse.homeAssistant.dryerText;
@@ -33,10 +39,6 @@ function displaySlackStatus() {
           $("status-emoji").src = jsonResponse.slack.emoji;
           $("status-text").innerHTML = jsonResponse.slack.text;
           $("status-times").innerHTML = jsonResponse.slack.times;
-
-          $("status-text").className = jsonResponse.slack.text.length > 13 
-            ? "status--font-size__small" 
-            : "status--font-size";    // Adjust the size of the status text
 
           // Get the last updated time from the response header. I am intentionally not 
           // including a timestamp in the server payload because that'd cause every
