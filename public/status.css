@@ -42,7 +42,7 @@ table                                         { table-layout:          fixed;
 .wall .current-times-table                    { display:                none; }
 .wall .status-table .emoji                    { width:                 150px; }
 .wall .status-table .ha                       { width:                     0; }
-.wall .status-table .status--font-size        { font-size:              400%; }
+.wall .status-table .status--font-size        { font-size:              375%; }
 .wall .status-table .times--font-size         { font-size:              200%; }
 
 
