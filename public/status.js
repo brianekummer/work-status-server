@@ -10,7 +10,7 @@ function displaySlackStatus() {
       .then(jsonResponse => {
         // Set page visibility and the correct mode
         let showStatus = jsonResponse.slack.emoji || jsonResponse.slack.text;
-        let visibilityClass = `body--${showStatus ? "visible" : "invisible"}`;
+        let visibilityClass = `${showStatus ? "visible" : "invisible"}`;
         let mode = SHOW_DESK ? "desk" : "wall";
         document.body.className = `${visibilityClass} ${mode}`;
 
@@ -24,6 +24,7 @@ function displaySlackStatus() {
             $("local24TimeZoneAbbreviation").innerHTML = timeZoneAbbreviation;
             $("utc").innerHTML = now.toUTC().toFormat("HH:mm");
 
+            $("home-assistant-data").className = "visible";
             $("washer-text").innerHTML = jsonResponse.homeAssistant.washerText;
             $("dryer-text").innerHTML = jsonResponse.homeAssistant.dryerText;
             $("temperature-text").innerHTML = jsonResponse.homeAssistant.temperatureText;

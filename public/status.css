@@ -14,9 +14,8 @@
 .right                                        { text-align:            right; }
 
 .page                                         { background-color:    Black; }
-.body--visible                                { height:                 auto;
-                                                display:               block; }
-.body--invisible                              { display:                none; }
+.visible                                      { display:               block; }
+.invisible                                    { display:                none; }
 
 /* For both times and status tables */
 table                                         { table-layout:          fixed;
