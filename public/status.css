@@ -12,6 +12,7 @@
 .left                                         { text-align:             left; }
 .center                                       { text-align:           center; }
 .right                                        { text-align:            right; }
+.block                                        { display:               block; }
 
 .page                                         { background-color:    Black; }
 .visible                                      { display:               block; }
@@ -34,13 +35,14 @@ table                                         { table-layout:          fixed;
 .status-table .text-padding                   { padding:            0px 10px; }
 .status-table .emoji--size                    { width:                  100%;
                                                 height:                 auto; }
-.status-table .last-updated-time--font-size   { font-size:              100%; }
+.status-table .last-updated-time--font-size   { font-size:              125%; }
 
 .wall .vertical-center                        { width: 90%;
                                                 justify-items: center;
-                                                box-shadow: inset 0 0 0 5px DarkGray, inset 0 0 0 6px black; }
+                                                box-shadow: inset 0 0 0 5px DarkGray,
+                                                            inset 0 0 0 6px black; }
 .wall .current-times-table                    { display:                none; }
-.wall .status-table .emoji                    { width:                 150px; }
+.wall .status-table .emoji                    { width:                 200px; }
 .wall .status-table .ha                       { width:                     0; }
 .wall .status-table .status--font-size        { font-size:              375%; }
 .wall .status-table .times--font-size         { font-size:              200%; }
