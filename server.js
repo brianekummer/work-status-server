@@ -33,11 +33,10 @@
     Command Line Parameters
       argument 2.............The logging level- can be DEBUG|INFO|ERROR
 
-  TO DO
-    - Why is the browser calling Home Assistant to get that information?
-      Can't this app do that? Yes, it can, but the browser makes a call every 10 
-      seconds or so, meaning it will get the most up-to-date information from
-      Home Assistant.
+
+  TODO - Displaying other statuses
+    - 
+    - 
 
 ******************************************************************************/
 
@@ -320,11 +319,19 @@ const getHomeAssistantStatus = () => {
 
 
 /******************************************************************************
-  Decide if an actual value matches the criteria. Criteria values of null and
-  empty string match everything. 
+  Decide if an actual value matches the criteria
+    - Criteria value of null and empty string match any value
+    - Criteria value of * matches any non-empty value
 ******************************************************************************/
 const matchesCriteria = (criteriaValue, actualValue) => {
-  return (criteriaValue == null || criteriaValue === "" || criteriaValue === actualValue);
+  return (criteriaValue == null || criteriaValue === "" || criteriaValue === actualValue) ||
+         (criteriaValue === "*" && actualValue != null && actualValue !== "");
+  // TODO: remove commented code
+  //let matchesA = (criteriaValue == null || criteriaValue === "" || criteriaValue === actualValue);
+  //let matchesB = (criteriaValue === "*" && actualValue != null && actualValue !== "");
+  //let matches = matchesA || matchesB;
+  //console.log(`    matchesCriteria. criteriaValue=${criteriaValue}, actualValue=${actualValue}, matchesA=${matchesA}, matchesB=${matchesB}=>${matches}`);
+  //return matchesA || matchesB;
 };
 
 
@@ -332,10 +339,19 @@ const matchesCriteria = (criteriaValue, actualValue) => {
   Decide if all the criteria match
 ******************************************************************************/
 const matchesAllCriteria = (evaluatingStatus, workSlackStatus, homeSlackStatus) => {
+  // TODO: remove commented code
+  //console.log(`>> matchesAllCriteria. ${evaluatingStatus.status_name}`);
   return (matchesCriteria(evaluatingStatus.conditions_work_emoji, workSlackStatus.emoji) &&
           matchesCriteria(evaluatingStatus.conditions_work_presence, workSlackStatus.presence) &&
           matchesCriteria(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) &&
           matchesCriteria(evaluatingStatus.conditions_home_presence, homeSlackStatus.presence));
+  //let matchesWorkEmoji = matchesCriteria(evaluatingStatus.conditions_work_emoji, workSlackStatus.emoji);
+  //let matchesWorkPresence = matchesCriteria(evaluatingStatus.conditions_work_presence, workSlackStatus.presence);
+  //let matchesHomeEmoji = matchesCriteria(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji);
+  //let matchesHomePresence = matchesCriteria(evaluatingStatus.conditions_home_presence, homeSlackStatus.presence);
+  //let matches = matchesWorkEmoji && matchesWorkPresence && matchesHomeEmoji && matchesHomePresence;
+  //console.log(`    matchesWorkEmoji=${matchesWorkEmoji}, matchesWorkPresence=${matchesWorkPresence}, matchesHomeEmoji=${matchesHomeEmoji}, matchesHomePresence=${matchesHomePresence} => ${matches}`);
+  //return matches;
 };
 
 
