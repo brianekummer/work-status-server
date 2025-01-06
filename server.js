@@ -24,7 +24,7 @@
       SLACK_TOKENS.............Must be the Slack security tokens for my work and
                                home accounts in a csv, like this: 
                                <work_token>,<home_token>
-      HOME_ASSISTANT_URL.......URL for Home Assistant
+      HOME_ASSISTANT_BASE_URL..Base URL for Home Assistant
       HOME_ASSISTANT_TOKEN.....Security token for accessing Home Assistant
       SERVER_REFRESH_SECONDS...Refresh time on the server side, defaults to 30
       CLIENT_REFRESH_SECONDS...Refresh time on the client side, defaults to 15
@@ -35,11 +35,11 @@
 
 
   TODO
-  - Rename statusController.js => status-controller.js, etc.
   - Initial version, upon page request, reads the status conditions file, then gets status from Slack and HA, builds response and responds
-     - Read conditions file only at startup and refresh when it changes
      - Read Slack and HA status and refresh when it changes
+  - Try to make all services into classes
   - Can I use mustache for fetch call to get-status?
+  - style changes from here: https://google.github.io/styleguide/jsguide.html
 
   LINKS TO RESEARCH
     - https://www.inngest.com/blog/no-workers-necessary-nodejs-express
@@ -58,6 +58,8 @@ const logService = require("./services/log-service");
 logService.setLogLevel(process.argv.length > 2 ? process.argv[2] : "ERROR");
 
 
+// TODO- this is needed for server side refresh
+const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 
 
 /***********************  Start of Node Configuration  ***********************/
@@ -79,8 +81,10 @@ app.use(express.static(`./public`));
 process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
 
-const router = require("./routes/allRoutes");
+const router = require("./routes/all-routes");
 app.use(router);
+
+
 
 
 

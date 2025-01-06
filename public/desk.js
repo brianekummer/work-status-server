@@ -6,7 +6,7 @@ function displaySlackStatus() {
       response.json()
       .then(jsonResponse => {
         // Set page visibility
-        let showStatus = jsonResponse.slack.emoji || jsonResponse.slack.text;
+        let showStatus = jsonResponse.emoji || jsonResponse.text;
         let visibilityClass = `${showStatus ? "visible" : "invisible"}`;
         document.body.className = `${visibilityClass} desk`;
 
@@ -21,7 +21,7 @@ function displaySlackStatus() {
 
           // Only adjust size for desk mode, since wall mode can expand the whole width 
           // of the screen
-          $("status-text").className = jsonResponse.slack.text.length > 13 
+          $("status-text").className = jsonResponse.text.length > 13 
             ? "status--font-size__small" 
             : "status--font-size";    // Adjust the size of the status text
 
@@ -30,9 +30,9 @@ function displaySlackStatus() {
           $("dryer-text").innerHTML = jsonResponse.homeAssistant.dryerText;
           $("temperature-text").innerHTML = jsonResponse.homeAssistant.temperatureText;
 
-          $("status-emoji").src = jsonResponse.slack.emoji;
-          $("status-text").innerHTML = jsonResponse.slack.text;
-          $("status-times").innerHTML = jsonResponse.slack.times;
+          $("status-emoji").src = jsonResponse.emoji;
+          $("status-text").innerHTML = jsonResponse.text;
+          $("status-times").innerHTML = jsonResponse.times;
 
           // Get the last updated time from the response header. I am intentionally not 
           // including a timestamp in the server payload because that'd cause every
