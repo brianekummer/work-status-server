@@ -80,15 +80,31 @@ app.use(express.static(`./public`));
 process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
 
-const router = require("./routes/all-routes");
+const router = require("./routes/all-routes")(app);
 app.use(router);
 
-
-
+// TODO- clean this up
+const slackService = new (require("./services/slack-service"));
+const homeAssistantService = new (require("./services/home-assistant-service"));
+app.locals.currentStatus = {
+  slack: slackService.EMPTY_SLACK_STATUS,
+  homeAssistant: homeAssistantService.EMPTY_HOME_ASSISTANT_STATUS
+};;
 
 
 
 app.listen(port, () => logService.log(logService.LOG_LEVELS.INFO, `Listening on port ${port}`));
+
+
+const { Worker } = require('worker_threads');
+const worker = new Worker('./services/worker.js');
+
+worker.on('message', (currentStatus) => {
+  console.log('SERVER. onMessage() from worker:', JSON.stringify(currentStatus));
+  console.log('');
+  app.locals.currentStatus = currentStatus;
+});
+
 /************************  End of Node Configuration  ************************/
 
 
@@ -97,9 +113,9 @@ app.listen(port, () => logService.log(logService.LOG_LEVELS.INFO, `Listening on 
 
 
 
-
-
-
-
-// TODO- have this run in the background and pass data to the main thread
-//setInterval(processAnyStatusChange, SERVER_REFRESH_MS);
+setInterval(() => {
+  // Pass the currentStatus down to the worker, it will pass back an updated version in the message
+  console.log(`SERVER.postMessage() sending : ${JSON.stringify(app.locals.currentStatus)}`);
+  console.log('');
+  worker.postMessage(app.locals.currentStatus); 
+}, SERVER_REFRESH_MS); 
