@@ -1,25 +1,28 @@
 const logService = new (require("../services/log-service"));
 
 class HomeAssistantService {
-  #HOME_ASSISTANT_BASE_URL = process.env.HOME_ASSISTANT_BASE_URL;
-  #HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
-
-
+  // Public constants and variables
   EMPTY_HOME_ASSISTANT_STATUS = {
     washerText: null,
     dryerText: null,
     temperatureText: null
   };
+
+  // Private constants and variables
+  #HOME_ASSISTANT_BASE_URL = process.env.HOME_ASSISTANT_BASE_URL;
+  #HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
+
+
     
 
   haveHomeAssistantIntegration = () => {
     return this.#HOME_ASSISTANT_BASE_URL && this.#HOME_ASSISTANT_TOKEN;
   };
 
+
   buildHomeAssistantUrl = (urlPath) => {
     return new URL(urlPath, this.#HOME_ASSISTANT_BASE_URL);
   };
-
 
 
   /******************************************************************************
@@ -37,7 +40,9 @@ class HomeAssistantService {
         "Authorization": `Bearer ${this.#HOME_ASSISTANT_TOKEN}`
       };
     
-      return fetch(this.buildHomeAssistantUrl("/api/states/sensor.work_status_phone_info"), { method: "GET", headers: headers })
+      return fetch(
+          this.buildHomeAssistantUrl("/api/states/sensor.work_status_phone_info"), 
+          { method: "GET", headers: headers })
         .then(response => response.json())
         .then(jsonResponse => {
           const state = JSON.parse(jsonResponse.state);
@@ -56,7 +61,6 @@ class HomeAssistantService {
     }
   }
 };
-
 
 
 module.exports = HomeAssistantService;

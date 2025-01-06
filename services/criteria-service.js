@@ -6,7 +6,6 @@ const logService = new (require("../services/log-service"));
 
 
 class CriteriaService {
-  // Constants for working with the array of conditions for each status
   #STATUS_CONDITIONS_FILENAME = "status-conditions.csv";
 
 

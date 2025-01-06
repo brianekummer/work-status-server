@@ -19,8 +19,8 @@ class LogService {
     LogService.instance = this;
   }
 
-  setLogLevel = (levelAsString) => {
-    this.logLevel = this.LOG_LEVELS[ levelAsString.toUpperCase() ];
+  setLogLevel = (logLevelAsString) => {
+    this.logLevel = this.LOG_LEVELS[ logLevelAsString.toUpperCase() ];
     this.log(this.LOG_LEVELS.INFO, `Log level is ${Object.keys(this.LOG_LEVELS).find(key => this.LOG_LEVELS[key] == this.logLevel)}/${this.logLevel}`);
   };
 
