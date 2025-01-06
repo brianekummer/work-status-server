@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html class="page">
+  <head>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.5.0/luxon.min.js"></script>
+    <script type="text/javascript">
+      var CLIENT_REFRESH_MS = {{ CLIENT_REFRESH_MS }};
+    </script>
+    <script type="text/javascript" src="wall.js"></script>
+    <link type="text/css" href="./status.css" rel="stylesheet">
+  </head>
+
+  <body class="visible wall">
+    <div class="vertical-center">
+      <table id="status-table" class="status-table">
+        <colgroup>
+        <col class="emoji">
+        <col> <!-- No specific styling, will fill the remaining space -->
+        <col class="ha">
+        </colgroup>
+        <tr>
+          <td rowspan="2">
+            <img id="status-emoji" class="emoji--size" src=""/>
+          </td>
+          <td class="text-padding">
+            <span id="status-text" class="center block status--font-size"></span></br>
+            </br>
+            <span id="status-times" class="center block times--font-size"></span></br>
+            </br>
+            </br>
+            <span class="center block last-updated-time--font-size">Last updated <span id="last-updated-time" /></span>
+          </td>
+        </tr>
+      </table>
+
+    </div>
+  </body>
+</html>
