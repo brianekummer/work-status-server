@@ -2,19 +2,19 @@ const fs = require("fs");
 const csv = require('csv-parser');
 const watch = require("node-watch");
 
-const logService = require("../services/log-service");
+const logService = new (require("../services/log-service"));
 
 
 class CriteriaService {
   // Constants for working with the array of conditions for each status
-  STATUS_CONDITIONS_FILENAME = "status-conditions.csv";
+  #STATUS_CONDITIONS_FILENAME = "status-conditions.csv";
 
 
   constructor() {
     this.statusConditions = this.getStatusConditions();
 
     // Watch for file to change, if it does, then re-read it and changes will take effect on the next polling cycle
-    watch(this.STATUS_CONDITIONS_FILENAME, (evt, name) => {
+    watch(this.#STATUS_CONDITIONS_FILENAME, (evt, name) => {
       logService.log(logService.LOG_LEVELS.DEBUG, `${name} changed, so am re-reading it`);
       this.statusConditions = this.getStatusConditions();
     });
@@ -23,7 +23,7 @@ class CriteriaService {
   // Read status conditions from a CSV into a usable JSON object
   getStatusConditions = () => {
     let results = [];
-    fs.createReadStream(this.STATUS_CONDITIONS_FILENAME)
+    fs.createReadStream(this.#STATUS_CONDITIONS_FILENAME)
     .pipe(csv(
       { separator: "|",
         skipComments: true,

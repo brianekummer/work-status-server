@@ -1,24 +1,34 @@
-const LOG_LEVELS = {
-  DEBUG: 0,
-  INFO:  1,
-  ERROR: 2
-};
+// Singleton
 
-let _logLevel;
+class LogService {
+  static instance;
 
-const setLogLevel = (levelAsString) => {
-  _logLevel = LOG_LEVELS[ levelAsString.toUpperCase() ];
-  log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEVELS[key] == _logLevel)}`);
-};
+  LOG_LEVELS = {
+    DEBUG: 0,
+    INFO:  1,
+    ERROR: 2
+  };
 
-const log = (level, message) => {
-  if (level >= _logLevel) {
-    console.log(message);
-  }   
-};
+  constructor() {
+    if (LogService.instance) {
+      return LogService.instance;
+    }
 
-module.exports = {
-  LOG_LEVELS,
-  setLogLevel,
-  log
+    this.logLevel = this.LOG_LEVELS.ERROR;
+  
+    LogService.instance = this;
+  }
+
+  setLogLevel = (levelAsString) => {
+    this.logLevel = this.LOG_LEVELS[ levelAsString.toUpperCase() ];
+    this.log(this.LOG_LEVELS.INFO, `Log level is ${Object.keys(this.LOG_LEVELS).find(key => this.LOG_LEVELS[key] == this.logLevel)}/${this.logLevel}`);
+  };
+
+  log = (level, message) => {
+    if (level >= this.logLevel) {
+      console.log(message);
+    }   
+  };
 }
+
+module.exports = LogService;

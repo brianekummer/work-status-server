@@ -37,7 +37,6 @@
   TODO
   - Initial version, upon page request, reads the status conditions file, then gets status from Slack and HA, builds response and responds
      - Read Slack and HA status and refresh when it changes
-  - Try to make all services into classes
   - Can I use mustache for fetch call to get-status?
   - style changes from here: https://google.github.io/styleguide/jsguide.html
 
@@ -54,7 +53,7 @@
 const express = require("express");
 const mustacheExpress = require("mustache-express");
 
-const logService = require("./services/log-service");
+const logService = new (require("./services/log-service"));
 logService.setLogLevel(process.argv.length > 2 ? process.argv[2] : "ERROR");
 
 
