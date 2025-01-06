@@ -35,9 +35,11 @@
 
 
   TODO
-  Initial version, upon page request, reads the status conditions file, then gets status from Slack and HA, builds response and responds
-    - Read conditions file only at startup and refresh when it changes
-    - Read Slack and HA status and refresh when it changes
+  - Rename statusController.js => status-controller.js, etc.
+  - Initial version, upon page request, reads the status conditions file, then gets status from Slack and HA, builds response and responds
+     - Read conditions file only at startup and refresh when it changes
+     - Read Slack and HA status and refresh when it changes
+  - Can I use mustache for fetch call to get-status?
 
   LINKS TO RESEARCH
     - https://www.inngest.com/blog/no-workers-necessary-nodejs-express
@@ -51,52 +53,15 @@
 // Require packages
 const express = require("express");
 const mustacheExpress = require("mustache-express");
-const fetch = require("node-fetch");
-const watch = require("node-watch");
 
-
-const LOG_LEVELS = {
-  DEBUG: 0,
-  INFO:  1,
-  ERROR: 2
-};
-const LOG_LEVEL = LOG_LEVELS[ ( process.argv.length > 2 ? process.argv[2].toUpperCase() : "ERROR")];
-
-/*
-// My simple home-grown logging
-// TODO- move this into it';s own log service
-const LOG_LEVELS = {
-  DEBUG: 0,
-  INFO:  1,
-  ERROR: 2
-};
-var LOG_LEVEL = LOG_LEVELS[ ( process.argv.length > 2 ? process.argv[2].toUpperCase() : "ERROR")];
-let log = (level, message) => {
-  if (level >= LOG_LEVEL) {
-    console.log(message);
-  }   
-};
-log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEVELS[key] == LOG_LEVEL)}`);
-*/
-
-/*
-// Keep the status conditions and current status in memory
-let statusConditions = {};
-let currentStatus = {
-  slack: EMPTY_SLACK_STATUS,
-  homeAssistant: EMPTY_HOME_ASSISTANT_STATUS
-};
-*/
-
-
-
+const logService = require("./services/log-service");
+logService.setLogLevel(process.argv.length > 2 ? process.argv[2] : "ERROR");
 
 
 
 
 /***********************  Start of Node Configuration  ***********************/
 const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
-
 
 
 // Register mustache extension withe mustache express
@@ -114,28 +79,13 @@ app.use(express.static(`./public`));
 process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
 
-// Get the conditions to determine the status. Whenever they change, get the changes
-// and re-evaluate our status, because it might be different because of those changes.
-//statusConditions = getStatusConditions();
-//watch(STATUS_CONDITIONS.FILENAME, {}, function(evt, name) {
-//  log(LOG_LEVELS.DEBUG, `${name} changed, so am re-reading it`);
-//  statusConditions = getStatusConditions();
-//  processAnyStatusChange();
-//});
-
-
-
-/***** Routes *****/
 const router = require("./routes/allRoutes");
 app.use(router);
 
 
-const logService = require("./services/log-service");
-logService.log(LOG_LEVELS.INFO, `Log level is ${Object.keys(LOG_LEVELS).find(key => LOG_LEVELS[key] == LOG_LEVEL)}`);
 
 
-
-app.listen(port, () => logService.log(LOG_LEVELS.INFO, `Listening on port ${port}`));
+app.listen(port, () => logService.log(logService.LOG_LEVELS.INFO, `Listening on port ${port}`));
 /************************  End of Node Configuration  ************************/
 
 

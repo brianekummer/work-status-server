@@ -3,13 +3,6 @@ const fs = require("fs");
 const csv = require('csv-parser');
 const { DateTime } = require("luxon");
 
-// TODO- not duplicate this everywhere
-const LOG_LEVELS = {
-  DEBUG: 0,
-  INFO:  1,
-  ERROR: 2
-};
-var LOG_LEVEL = LOG_LEVELS[ ( process.argv.length > 2 ? process.argv[2].toUpperCase() : "ERROR")];
 
 // Constants for working with the array of conditions for each status
 const STATUS_CONDITIONS = {
@@ -125,7 +118,7 @@ const processAnyStatusChange = () => {
     let latestStatus = buildLatestStatus(currentStatus, statuses[WORK], statuses[HOME], statuses[2]);
 
     if (JSON.stringify(currentStatus) !== JSON.stringify(latestStatus)) {
-      logService.log(LOG_LEVELS.INFO, 
+      logService.log(logService.LOG_LEVELS.INFO, 
         `Changed status\n` +
         `   from Slack: ${currentStatus.slack.emoji}/${currentStatus.slack.text}/${currentStatus.slack.times} --- HA: ${currentStatus.homeAssistant.washerText}/${currentStatus.homeAssistant.dryerText}/${currentStatus.homeAssistant.temperatureText}\n` +
         `     to Slack: ${latestStatus.slack.emoji}/${latestStatus.slack.text}/${latestStatus.slack.times} --- HA: ${latestStatus.homeAssistant.washerText}/${latestStatus.homeAssistant.dryerText}/${latestStatus.homeAssistant.temperatureText}`);
@@ -134,7 +127,7 @@ const processAnyStatusChange = () => {
     currentStatus = latestStatus;
   })
   .catch(ex => {
-    logService.log(LOG_LEVELS.ERROR, `ERROR in processAnyStatusChange: ${ex}`);
+    logService.log(logService.LOG_LEVELS.ERROR, `ERROR in processAnyStatusChange: ${ex}`);
   });
 };
 
@@ -173,14 +166,13 @@ const getSlackStatus = (securityToken) => {
         presence:   jsonResponses[1].presence
       };
 
-      if (LOG_LEVEL === LOG_LEVELS.DEBUG)
-        logService.log(LOG_LEVELS.INFO, `Got SLACK for ${securityToken === SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
-          `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
+      logService.log(logService.LOG_LEVELS.DEBUG, `Got SLACK for ${securityToken === SLACK_TOKENS[WORK] ? "WORK" : "HOME"}: ` +
+        `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
 
       return Promise.resolve(slackStatus);
     })
     .catch(ex => {
-      logService.log(LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
+      logService.log(logService.LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
     });
   }
 };
@@ -213,7 +205,7 @@ const getHomeAssistantStatus = () => {
         };
       })
       .catch(ex => {
-        logService.log(LOG_LEVELS.ERROR, `ERROR in getHomeAssistantData: ${ex}`);
+        logService.log(logService.LOG_LEVELS.ERROR, `ERROR in getHomeAssistantData: ${ex}`);
         return null;     // Explicitly handle the error case
       });
   
@@ -296,7 +288,7 @@ const buildLatestStatus = (currentStatus, workSlackStatus, homeSlackStatus, home
     
     return latestStatus;
   } catch (ex) {
-    logService.log(LOG_LEVELS.ERROR, `ERROR in calculateLatestStatus: ${ex}`);
+    logService.log(logService.LOG_LEVELS.ERROR, `ERROR in calculateLatestStatus: ${ex}`);
   }
 };
 
