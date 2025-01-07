@@ -19,24 +19,25 @@ class StatusController {
     Returns the status as a JSON object
   ******************************************************************************/
   getStatusForClient = () => {
-    // TEMP CODE
     let currentStatus = this.app.locals.currentStatus;
     console.log(`StatusController.getStatusForClient(), currentStatus=${currentStatus}`);
-    // END OF TEMP CODE
 
-    let status = {
-      emoji: slackService.buildEmojiUrl(currentStatus.slack.emoji),
-      text: currentStatus.slack.text,
-      times: currentStatus.slack.times
-    };
-    // TODO- do not return HA data if is wall
-    status.homeAssistant = {
-      washerText: currentStatus.homeAssistant.washerText,
-      dryerText: currentStatus.homeAssistant.dryerText,
-      temperatureText: currentStatus.homeAssistant.temperatureText
-    };
+    // TODO- remove this if check, should be unnecessary
+    if (currentStatus) {
+      let status = {
+        emoji: slackService.buildEmojiUrl(currentStatus.slack.emoji),
+        text: currentStatus.slack.text,
+        times: currentStatus.slack.times
+      };
+      // TODO- do not return HA data if is wall
+      status.homeAssistant = {
+        washerText: currentStatus.homeAssistant.washerText,
+        dryerText: currentStatus.homeAssistant.dryerText,
+        temperatureText: currentStatus.homeAssistant.temperatureText
+      };
 
-    return status;
+      return status;
+    };
   };
 }
 

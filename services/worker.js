@@ -20,7 +20,12 @@ parentPort.on('message', (currentStatus) => {
 
 
   // TODO- this is happening ASYNC- I NEED IT TO BE SYNC
-  currentStatus = processAnyStatusChange(parentPort, currentStatus);
+  Promise.resolve(processAnyStatusChange(parentPort, currentStatus))
+  .then((currentStatus) => {
+    console.log('WORKER.postMessage() sending :', currentStatus);
+    console.log('');
+    parentPort.postMessage(currentStatus);
+  });
 
 
 
@@ -51,6 +56,7 @@ processAnyStatusChange = (parentPort, currentStatus) => {
     HOME_ASSISTANT: 2
   }
 
+  return Promise.resolve(
   Promise.all([
     slackService.getSlackStatus(slackService.ACCOUNTS.WORK),
     slackService.getSlackStatus(slackService.ACCOUNTS.HOME),
@@ -68,15 +74,23 @@ processAnyStatusChange = (parentPort, currentStatus) => {
         `     to Slack: ${latestStatus.slack.emoji}/${latestStatus.slack.text}/${latestStatus.slack.times} --- HA: ${latestStatus.homeAssistant.washerText}/${latestStatus.homeAssistant.dryerText}/${latestStatus.homeAssistant.temperatureText}`);
     }
     
-    console.log('WORKER.processAnyStatusChange().postMessage() sending :', latestStatus);
-    console.log('');
-    parentPort.postMessage(latestStatus);
+    //console.log('WORKER.processAnyStatusChange().postMessage() sending :', latestStatus);
+    //console.log('');
+    //parentPort.postMessage(latestStatus);
+    
+    //return latestStatus;
+
+    return Promise.resolve(latestStatus);
+
+    //return new Promise((resolve, reject) => {
+    //  resolve(latestStatus);
+    //});
   })
   .catch(ex => {
     logService.log(logService.LOG_LEVELS.ERROR, `ERROR in processAnyStatusChange: ${ex}`);
     // TODO- what should I do here?
     return slackService.EMPTY_SLACK_STATUS;
-  });
+  }));
 };
 
 
