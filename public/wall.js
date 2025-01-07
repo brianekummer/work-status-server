@@ -1,23 +1,13 @@
-//   - Wall mode is used by the phone on my wall, or if Jodi opens the page
-//     on her phone. This is the default.
-function displaySlackStatus() {
-  fetch("/get-status")
-    .then(response => {
-      response.json()
-      .then(jsonResponse => {
-        // Set page visibility
-        let showStatus = jsonResponse.emoji || jsonResponse.text;
-        document.body.className = `${showStatus ? "visible" : "invisible"} wall`;
+const eventSource = new EventSource('/api/get-updates');
 
-        if (showStatus) {
-          setCommonElements(response, jsonResponse);
-        }
-      })
-      .catch(err => console.log(`ERROR: ${err}`));
-    });
-}
+eventSource.onmessage = (event) => {
+  console.log(`>>> onmessage, data=${event.data}`);
+  const currentStatus = JSON.parse(event.data);
 
+  let showStatus = currentStatus.emoji || currentStatus.text;
+  document.body.className = `${showStatus ? 'visible' : 'invisible'} wall`;
 
-// Display the status and then refresh every CLIENT_REFRESH_MS
-setTimeout(displaySlackStatus, 1);
-setInterval(displaySlackStatus, CLIENT_REFRESH_MS);
+  if (showStatus) {
+    setCommonElements(currentStatus);
+  }
+};

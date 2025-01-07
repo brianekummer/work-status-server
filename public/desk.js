@@ -1,40 +1,31 @@
-//   - Desk mode is for the phone on my desk, which displays the time in ET
-//     and UTC, as well as some data from Home Assistant.
-function displaySlackStatus() {
-  fetch("/get-status")
-    .then(response => {
-      response.json()
-      .then(jsonResponse => {
-        // Set page visibility
-        let showStatus = jsonResponse.emoji || jsonResponse.text;
-        document.body.className = `${showStatus ? "visible" : "invisible"} desk`;
+// TODO- remove CLIENT_REFRESH_MS from client and move it to server side
+const eventSource = new EventSource('/api/get-updates');
 
-        if (showStatus) {
-          let now = luxon.DateTime.now();
-          let timeZoneAbbreviation = now.toFormat("ZZZZ");
-          $("local12").innerHTML = now.toLocaleString(luxon.DateTime.TIME_SIMPLE);;
-          $("local12TimeZoneAbbreviation").innerHTML = timeZoneAbbreviation;
-          $("local24").innerHTML = now.toLocaleString(luxon.DateTime.TIME_24_SIMPLE);
-          $("local24TimeZoneAbbreviation").innerHTML = timeZoneAbbreviation;
-          $("utc").innerHTML = now.toUTC().toFormat("HH:mm");
+eventSource.onmessage = (event) => {
+  console.log(`>>> onmessage, data=${event.data}`);
+  const currentStatus = JSON.parse(event.data);
 
-          $("status-text").className = jsonResponse.text.length > 13 
-            ? "status--font-size__small" 
-            : "status--font-size";    // Adjust the size of the status text
+  let showStatus = currentStatus.emoji || currentStatus.text;
+  document.body.className = `${showStatus ? 'visible' : 'invisible'} wall`;
 
-          $("home-assistant-data").className = "visible";
-          $("washer-text").innerHTML = jsonResponse.homeAssistant.washerText;
-          $("dryer-text").innerHTML = jsonResponse.homeAssistant.dryerText;
-          $("temperature-text").innerHTML = jsonResponse.homeAssistant.temperatureText;
+  if (showStatus) {
+    let now = luxon.DateTime.now();
+    let timeZoneAbbreviation = now.toFormat("ZZZZ");
+    $("local12").innerHTML = now.toLocaleString(luxon.DateTime.TIME_SIMPLE);;
+    $("local12TimeZoneAbbreviation").innerHTML = timeZoneAbbreviation;
+    $("local24").innerHTML = now.toLocaleString(luxon.DateTime.TIME_24_SIMPLE);
+    $("local24TimeZoneAbbreviation").innerHTML = timeZoneAbbreviation;
+    $("utc").innerHTML = now.toUTC().toFormat("HH:mm");
 
-          setCommonElements(response, jsonResponse);
-        }
-      })
-      .catch(err => console.log(`ERROR: ${err}`));
-    });
-}
+    $("status-text").className = currentStatus.text.length > 13 
+      ? "status--font-size__small" 
+      : "status--font-size";    // Adjust the size of the status text
 
-
-// Display the status and then refresh every CLIENT_REFRESH_MS
-setTimeout(displaySlackStatus, 1);
-setInterval(displaySlackStatus, CLIENT_REFRESH_MS);
+    $("home-assistant-data").className = "visible"; // TODO remove is redundant
+    $("washer-text").innerHTML = currentStatus.homeAssistant.washerText;
+    $("dryer-text").innerHTML = currentStatus.homeAssistant.dryerText;
+    $("temperature-text").innerHTML = currentStatus.homeAssistant.temperatureText;
+    
+    setCommonElements(currentStatus);
+  }
+};

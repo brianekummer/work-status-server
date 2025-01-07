@@ -1,3 +1,4 @@
+const { DateTime } = require("luxon");
 let slackService = new (require("../services/slack-service"));
 let homeAssistantService = new (require("../services/home-assistant-service"));
 
@@ -51,7 +52,8 @@ class StatusController {
       let status = {
         emoji: slackService.buildEmojiUrl(currentStatus.slack.emoji),
         text: currentStatus.slack.text,
-        times: currentStatus.slack.times
+        times: currentStatus.slack.times,
+        lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
       };
       // TODO- do not return HA data if is wall
       status.homeAssistant = {
