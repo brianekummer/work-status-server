@@ -17,16 +17,9 @@ class StatusController {
     homeAssistant: homeAssistantService.EMPTY_HOME_ASSISTANT_STATUS
   };
 
-  getWallPayload = () => {
-    return {
-      CLIENT_REFRESH_MS
-    };
-  };
-
 
   getDeskPayload = () => {
     return {
-      CLIENT_REFRESH_MS,
       WASHER_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-washing-machine-light.png"),
       DRYER_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-tumble-dryer-light.png"),
       TEMPERATURE_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/thermometer.png")

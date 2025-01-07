@@ -35,6 +35,7 @@
 
 
   TODO
+  - does mustache really add any value any more? only urls of HA icons
   - style changes from here: https://google.github.io/styleguide/jsguide.html
   - Clean up css
   - documentation
