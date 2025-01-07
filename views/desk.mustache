@@ -2,11 +2,6 @@
 <html class="page">
   <head>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/luxon/3.5.0/luxon.min.js"></script>
-    <script type="text/javascript">
-      var WASHER_ICON_URL = "{{ WASHER_ICON_URL }}";
-      var DRYER_ICON_URL = "{{ DRYER_ICON_URL }}";
-      var TEMPERATURE_ICON_URL = "{{ TEMPERATURE_ICON_URL }}";
-    </script>
     <script type="text/javascript" src="common.js"></script>
     <script type="text/javascript" src="desk.js"></script>
     <link type="text/css" href="desk.css" rel="stylesheet">
@@ -51,17 +46,17 @@
           <td rowspan="2" id="home-assistant-data">
             <span>
               <span class="ha-status-cell">
-                <img id="washer-image" src="{{ WASHER_ICON_URL }}">
+                <img id="washer-image">
                 <span id="washer-text" class="ha--font"></span>
               </span>
               </br>
               <span class="ha-status-cell">
-                <img id="dryer-image" src="{{ DRYER_ICON_URL }}">
+                <img id="dryer-image">
                 <span id="dryer-text" class="ha--font"></span>
               </span>
               </br>
               <span class="ha-status-cell">
-                <img id="thermometer-image" src="{{ TEMPERATURE_ICON_URL }}">
+                <img id="thermometer-image">
                 <span id="temperature-text" class="ha--font"></span>
               </span>
             </span>

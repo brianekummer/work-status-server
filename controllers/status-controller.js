@@ -50,8 +50,11 @@ class StatusController {
       };
       // TODO- do not return HA data if is wall
       status.homeAssistant = {
+        washerIcon: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-washing-machine-light.png"),
         washerText: currentStatus.homeAssistant.washerText,
+        dryerIcon: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-tumble-dryer-light.png"),
         dryerText: currentStatus.homeAssistant.dryerText,
+        temperatureIcon: homeAssistantService.buildHomeAssistantUrl("/local/icon/thermometer.png"),
         temperatureText: currentStatus.homeAssistant.temperatureText
       };
 

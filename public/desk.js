@@ -1,10 +1,13 @@
-// TODO- remove CLIENT_REFRESH_MS from client and move it to server side
 let eventSource = new EventSource('/api/get-updates');
 eventSource.onmessage = (event) => {
   let currentStatus = JSON.parse(event.data);
 
   let showStatus = currentStatus.emoji || currentStatus.text;
   document.body.className = `${showStatus ? 'visible' : 'invisible'} wall`;
+
+  $("washer-image").src = $("washer-image").src || currentStatus.homeAssistant.washerIcon;
+  $("dryer-image").src = $("dryer-image").src || currentStatus.homeAssistant.dryerIcon;
+  $("thermometer-image").src = $("thermometer-image").src || currentStatus.homeAssistant.temperatureIcon;
 
   if (showStatus) {
     let now = luxon.DateTime.now();
