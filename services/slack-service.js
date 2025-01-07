@@ -1,4 +1,4 @@
-const logService = new (require("../services/log-service"));
+const logService = require("../services/log-service");
 
 
 class SlackService {
@@ -18,7 +18,7 @@ class SlackService {
 
   // Get the Slack security tokens, assumes "work_token,home_token", and if there is only one Slack token, set the home token to blank
   #SLACK_TOKENS = 
-    (process.env.SLACK_TOKENS.includes(",") ? process.env.SLACK_TOKENS : `${process.env.SLACK_TOKENS},`)
+    (process.env.SLACK_TOKENS + (process.env.SLACK_TOKENS.includes(",") ? "" : ","))
     .split(",");
   #SLACK_CALL_STATUS_EMOJI = ":slack_call:";
 

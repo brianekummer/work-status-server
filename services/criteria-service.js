@@ -2,7 +2,7 @@ const fs = require("fs");
 const csv = require('csv-parser');
 const watch = require("node-watch");
 
-const logService = new (require("../services/log-service"));
+let logService = require("../services/log-service");
 
 
 class CriteriaService {

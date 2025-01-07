@@ -1,0 +1,69 @@
+/*
+  I intentionally don't use CSS nesting, because that is only available on modern
+  browsers, and the phones I'm using to display my work status are typically
+  several years old.
+  
+  https://caniuse.com/css-nesting says phone must have WebView version >= 131
+
+  I could look into using a polyfill or SASS, or logging the status phones into
+  Google so I can update the webview, but it's not currently worth it to me.
+*/
+
+.left                                         { text-align:             left; }
+.center                                       { text-align:           center; }
+.right                                        { text-align:            right; }
+.block                                        { display:               block; }
+
+.page                                         { background-color:    Black; }
+.visible                                      { display:               block; }
+.invisible                                    { display:                none; }
+
+
+
+/* Common between desk and wall mode */
+table                                         { table-layout:          fixed;
+                                                margin:                  8px; }
+.vertical-center                              { position:           absolute;
+                                                top:                     50%;
+                                                margin:              auto 5%;
+                                                transform:  translateY(-50%); 
+                                                background-color: DarkGray; }
+
+/* For status table */
+.status-table                                 { padding:                10px;
+                                                border-spacing:     10px 0px; }
+.status-table .text-padding                   { padding:            0px 10px; }
+.status-table .emoji--size                    { width:                  100%;
+                                                height:                 auto; }
+.status-table .last-updated-time--font-size   { font-size:              125%; }
+
+.wall .vertical-center                        { width: 90%;
+                                                justify-items: center;
+                                                box-shadow: inset 0 0 0 5px DarkGray,
+                                                            inset 0 0 0 6px black; }
+.wall .current-times-table                    { display:                none; }
+.wall .status-table .emoji                    { width:                 200px; }
+.wall .status-table .ha                       { width:                     0; }
+.wall .status-table .status--font-size        { font-size:              375%; }
+.wall .status-table .times--font-size         { font-size:              200%; }
+
+
+
+
+
+.desk table                                   { table-layout:          fixed;
+                                                width:     calc(100% - 16px);
+                                                border:    1px solid Black;
+                                                margin:                  8px; }
+.desk .current-times-table                    { display:               table; }
+.desk .current-times-table .time              { font-size:              200%; }
+.desk .status-table .emoji                    { width:                 100px; }
+.desk .status-table .ha                       { width:                   25%; }
+.desk .status-table .status--font-size        { font-size:              300%; }
+.desk .status-table .status--font-size__small { font-size:              200%; }
+.desk .status-table .times--font-size         { font-size:              125%; }
+.desk .status-table .ha-status-cell           { display:         inline-flex;
+                                                height:                 45px; }
+.desk .status-table .ha-status-cell .ha--font { font-size:              100%;
+                                                display:                flex;
+                                                align-items:          center; }

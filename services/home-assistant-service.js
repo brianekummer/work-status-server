@@ -1,4 +1,4 @@
-const logService = new (require("../services/log-service"));
+const logService = require("../services/log-service");
 
 class HomeAssistantService {
   // Public constants and variables
@@ -45,7 +45,7 @@ class HomeAssistantService {
           { method: "GET", headers: headers })
         .then(response => response.json())
         .then(jsonResponse => {
-          const state = JSON.parse(jsonResponse.state);
+          let state = JSON.parse(jsonResponse.state);
     
           return {
             washerText: state.Washer,

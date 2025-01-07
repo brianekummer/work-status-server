@@ -1,12 +1,37 @@
-const slackService = new (require("../services/slack-service"));
+let slackService = new (require("../services/slack-service"));
+let homeAssistantService = new (require("../services/home-assistant-service"));
+
+const CLIENT_REFRESH_MS = (process.env.CLIENT_REFRESH_SECONDS || 30) * 1000;
 
 
 class StatusController {
+  // TODO- explain why I need app object here, so I can get currentStatus from app global variables
   constructor(app) {
     this.app = app;
   }
 
 
+  EMPTY_STATUS = {
+    slack: slackService.EMPTY_SLACK_STATUS,
+    homeAssistant: homeAssistantService.EMPTY_HOME_ASSISTANT_STATUS
+  };
+
+  getWallPayload = () => {
+    return {
+      CLIENT_REFRESH_MS
+    };
+  };
+
+
+  getDeskPayload = () => {
+    return {
+      CLIENT_REFRESH_MS,
+      WASHER_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-washing-machine-light.png"),
+      DRYER_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-tumble-dryer-light.png"),
+      TEMPERATURE_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/thermometer.png")
+    };
+  };
+  
 
   /******************************************************************************
     Get status to send to the client, making any necessary changes, such as
@@ -19,10 +44,9 @@ class StatusController {
     Returns the status as a JSON object
   ******************************************************************************/
   getStatusForClient = () => {
+    // Get current status from global variable
     let currentStatus = this.app.locals.currentStatus;
-    console.log(`StatusController.getStatusForClient(), currentStatus=${currentStatus}`);
 
-    // TODO- remove this if check, should be unnecessary
     if (currentStatus) {
       let status = {
         emoji: slackService.buildEmojiUrl(currentStatus.slack.emoji),
