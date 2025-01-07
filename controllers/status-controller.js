@@ -1,8 +1,6 @@
-const { DateTime } = require("luxon");
-let slackService = new (require("../services/slack-service"));
-let homeAssistantService = new (require("../services/home-assistant-service"));
-
-const CLIENT_REFRESH_MS = (process.env.CLIENT_REFRESH_SECONDS || 30) * 1000;
+const { DateTime } = require('luxon');
+let slackService = new (require('../services/slack-service'));
+let homeAssistantService = new (require('../services/home-assistant-service'));
 
 
 class StatusController {
@@ -17,15 +15,6 @@ class StatusController {
     homeAssistant: homeAssistantService.EMPTY_HOME_ASSISTANT_STATUS
   };
 
-
-  getDeskPayload = () => {
-    return {
-      WASHER_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-washing-machine-light.png"),
-      DRYER_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-tumble-dryer-light.png"),
-      TEMPERATURE_ICON_URL: homeAssistantService.buildHomeAssistantUrl("/local/icon/thermometer.png")
-    };
-  };
-  
 
   /******************************************************************************
     Get status to send to the client, making any necessary changes, such as
@@ -50,13 +39,15 @@ class StatusController {
       };
       // TODO- do not return HA data if is wall
       status.homeAssistant = {
-        washerIcon: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-washing-machine-light.png"),
         washerText: currentStatus.homeAssistant.washerText,
-        dryerIcon: homeAssistantService.buildHomeAssistantUrl("/local/icon/mdi-tumble-dryer-light.png"),
         dryerText: currentStatus.homeAssistant.dryerText,
-        temperatureIcon: homeAssistantService.buildHomeAssistantUrl("/local/icon/thermometer.png"),
         temperatureText: currentStatus.homeAssistant.temperatureText
       };
+      if (!status.homeAssistant.washerIcon) {
+        status.homeAssistant.washerIcon = homeAssistantService.buildHomeAssistantUrl('/local/icon/mdi-washing-machine-light.png');
+        status.homeAssistant.dryerIcon = homeAssistantService.buildHomeAssistantUrl('/local/icon/mdi-tumble-dryer-light.png');        dryerText: currentStatus.homeAssistant.dryerText,
+        status.homeAssistant.temperatureIcon = homeAssistantService.buildHomeAssistantUrl('/local/icon/thermometer.png');
+      }
 
       return status;
     };

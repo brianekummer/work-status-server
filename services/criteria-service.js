@@ -1,12 +1,12 @@
-const fs = require("fs");
+const fs = require('fs');
 const csv = require('csv-parser');
-const watch = require("node-watch");
+const watch = require('node-watch');
 
-let logService = require("../services/log-service");
+let logService = require('../services/log-service');
 
 
 class CriteriaService {
-  #STATUS_CONDITIONS_FILENAME = "status-conditions.csv";
+  #STATUS_CONDITIONS_FILENAME = 'status-conditions.csv';
 
 
   constructor() {
@@ -24,9 +24,9 @@ class CriteriaService {
     let results = [];
     fs.createReadStream(this.#STATUS_CONDITIONS_FILENAME)
     .pipe(csv(
-      { separator: "|",
+      { separator: '|',
         skipComments: true,
-        mapHeaders: ({ header, index }) => header === "" ? null : header.trim(),   // ignore '' header from each row starting with |
+        mapHeaders: ({ header, index }) => header === '' ? null : header.trim(),   // ignore '' header from each row starting with |
         mapValues: ({ header, index, value }) => value.trim()
         }
     ))
@@ -44,8 +44,8 @@ class CriteriaService {
       - Criteria value of * matches any non-empty value
   ******************************************************************************/
   matchesCriteria = (criteriaValue, actualValue) => {
-    return (criteriaValue == null || criteriaValue === "" || criteriaValue === actualValue) ||
-            (criteriaValue === "*" && actualValue != null && actualValue !== "");
+    return (criteriaValue == null || criteriaValue === '' || criteriaValue === actualValue) ||
+            (criteriaValue === '*' && actualValue != null && actualValue !== '');
   };
 
 

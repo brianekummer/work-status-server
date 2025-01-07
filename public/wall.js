@@ -3,7 +3,7 @@ eventSource.onmessage = (event) => {
   let currentStatus = JSON.parse(event.data);
 
   let showStatus = currentStatus.emoji || currentStatus.text;
-  document.body.className = `${showStatus ? 'visible' : 'invisible'} wall`;
+  document.body.className = `${showStatus ? 'visible' : 'invisible'}`;
 
   if (showStatus) {
     setCommonElements(currentStatus);

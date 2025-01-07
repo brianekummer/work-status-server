@@ -1,4 +1,4 @@
-const logService = require("../services/log-service");
+const logService = require('../services/log-service');
 
 
 class SlackService {
@@ -16,16 +16,16 @@ class SlackService {
 
   // Private constants and variables
 
-  // Get the Slack security tokens, assumes "work_token,home_token", and if there is only one Slack token, set the home token to blank
+  // Get the Slack security tokens, assumes 'work_token,home_token', and if there is only one Slack token, set the home token to blank
   #SLACK_TOKENS = 
-    (process.env.SLACK_TOKENS + (process.env.SLACK_TOKENS.includes(",") ? "" : ","))
-    .split(",");
-  #SLACK_CALL_STATUS_EMOJI = ":slack_call:";
+    (process.env.SLACK_TOKENS + (process.env.SLACK_TOKENS.includes(',') ? '' : ','))
+    .split(',');
+  #SLACK_CALL_STATUS_EMOJI = ':slack_call:';
 
 
 
   buildEmojiUrl = (emoji) => {
-    return emoji ? `/images/${emoji}.png` : "";
+    return emoji ? `/images/${emoji}.png` : '';
   };
 
 
@@ -43,19 +43,19 @@ class SlackService {
       return Promise.resolve(this.EMPTY_SLACK_STATUS);
     } else {
       let headers = {
-        "Content-Type":  "application/x-www-form-urlencoded",
-        "Authorization": `Bearer ${this.#SLACK_TOKENS[accountKey]}`  
+        'Content-Type':  'application/x-www-form-urlencoded',
+        'Authorization': `Bearer ${this.#SLACK_TOKENS[accountKey]}`  
       };
       return Promise.all([
-        fetch("https://slack.com/api/users.profile.get", { method: "GET", headers: headers }),
-        fetch("https://slack.com/api/users.getPresence", { method: "GET", headers: headers })
+        fetch('https://slack.com/api/users.profile.get', { method: 'GET', headers: headers }),
+        fetch('https://slack.com/api/users.getPresence', { method: 'GET', headers: headers })
       ])
       .then(responses => Promise.all(responses.map(response => response.json())))
       .then(jsonResponses => {
         let slackStatus = {
-          // Huddles don't set an emoji, they only set "huddle_state" property. For
+          // Huddles don't set an emoji, they only set 'huddle_state' property. For
           // my purposes, changing the emoji to the same as a Slack call is fine.
-          emoji:      jsonResponses[0].profile.huddle_state === "in_a_huddle" 
+          emoji:      jsonResponses[0].profile.huddle_state === 'in_a_huddle' 
                         ? this.#SLACK_CALL_STATUS_EMOJI 
                         : jsonResponses[0].profile.status_emoji,
           text:       jsonResponses[0].profile.status_text,
@@ -63,7 +63,7 @@ class SlackService {
           presence:   jsonResponses[1].presence
         };
 
-        logService.log(logService.LOG_LEVELS.DEBUG, `Got SLACK for ${accountKey === this.ACCOUNTS.WORK ? "WORK" : "HOME"}: ` +
+        logService.log(logService.LOG_LEVELS.DEBUG, `Got SLACK for ${accountKey === this.ACCOUNTS.WORK ? 'WORK' : 'HOME'}: ` +
           `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
 
         return Promise.resolve(slackStatus);

@@ -1,4 +1,4 @@
-const logService = require("../services/log-service");
+const logService = require('../services/log-service');
 
 class HomeAssistantService {
   // Public constants and variables
@@ -37,12 +37,12 @@ class HomeAssistantService {
       return this.EMPTY_HOME_ASSISTANT_STATUS;
     } else {
       let headers = {
-        "Authorization": `Bearer ${this.#HOME_ASSISTANT_TOKEN}`
+        'Authorization': `Bearer ${this.#HOME_ASSISTANT_TOKEN}`
       };
     
       return fetch(
-          this.buildHomeAssistantUrl("/api/states/sensor.work_status_phone_info"), 
-          { method: "GET", headers: headers })
+          this.buildHomeAssistantUrl('/api/states/sensor.work_status_phone_info'), 
+          { method: 'GET', headers: headers })
         .then(response => response.json())
         .then(jsonResponse => {
           let state = JSON.parse(jsonResponse.state);

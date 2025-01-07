@@ -1,17 +1,17 @@
 // For worker thread
 
-const { DateTime } = require("luxon");
+const { DateTime } = require('luxon');
 
-let logService = require("../services/log-service");
-let slackService = new (require("../services/slack-service"));
-let homeAssistantService = new (require("../services/home-assistant-service"));
-let criteriaService = new (require("../services/criteria-service"));
+let logService = require('../services/log-service');
+let slackService = new (require('../services/slack-service'));
+let homeAssistantService = new (require('../services/home-assistant-service'));
+let criteriaService = new (require('../services/criteria-service'));
 
 const { parentPort, workerData } = require('worker_threads');
 
 const TIMES_TEMPLATES = {
-  START: "Started @ (start)",
-  START_TO_END: "(start) - (status_expiration)"
+  START: 'Started @ (start)',
+  START_TO_END: '(start) - (status_expiration)'
 }
 
 
@@ -92,9 +92,9 @@ buildNewStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistant
       newStatus = {
         slack: {
           emoji:  matchingStatus.display_emoji,
-          text:   (matchingStatus.display_text || "")
-                    .replace("(WORK_STATUS_TEXT)", workSlackStatus.text)
-                    .replace("(HOME_STATUS_TEXT)", homeSlackStatus.text)
+          text:   (matchingStatus.display_text || '')
+                    .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
+                    .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text)
         },
         homeAssistant: {          
           washerText: homeAssistantData.washerText,
@@ -144,9 +144,9 @@ updateSlackStatusTimes = (evaluatingStatus, homeSlackStatus, workSlackStatus, cu
 
   // Select the appropriate template for displaying the status time for this status
   let statusTimesTemplate = 
-    (evaluatingStatus.display_times || "")
-      .replace("START_TO_END", TIMES_TEMPLATES.START_TO_END)
-      .replace("START",        TIMES_TEMPLATES.START);
+    (evaluatingStatus.display_times || '')
+      .replace('START_TO_END', TIMES_TEMPLATES.START_TO_END)
+      .replace('START',        TIMES_TEMPLATES.START);
   if (statusTimesTemplate === TIMES_TEMPLATES.START_TO_END && statusExpirationSeconds === 0) {
     // When we're supposed to display both the start and end time, but we only
     // have the start time
@@ -160,6 +160,6 @@ updateSlackStatusTimes = (evaluatingStatus, homeSlackStatus, workSlackStatus, cu
   // Set the times of this status
   newStatus.slack.times = 
     statusTimesTemplate
-      .replace("(start)", newStatus.slack.statusStartTime)
-      .replace("(status_expiration)", statusExpiration);
+      .replace('(start)', newStatus.slack.statusStartTime)
+      .replace('(status_expiration)', statusExpiration);
 };

@@ -35,18 +35,22 @@
 
 
   TODO
-  - does mustache really add any value any more? only urls of HA icons
-  - style changes from here: https://google.github.io/styleguide/jsguide.html
-  - Clean up css
+  - no mustache version
+      - save branch as refactor-no-mustache
+  
+  - re-add mustache
+      - redo with mustache and do partials, etc.
+      - save branch as refactor-mvc
+  
+  - compare two approaches
+  
   - documentation
-
 
 
 ******************************************************************************/
 
 // Require packages
 const express = require("express");
-const mustacheExpress = require("mustache-express");
 
 const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 
@@ -61,9 +65,6 @@ const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
 
 // Register mustache extension withe mustache express
 let app = express();
-app.engine("mustache", mustacheExpress());
-app.set("view engine", "mustache");
-app.set("views", "./views");
 
 // Expose only the necessary files
 app.use(express.static(`./public`));
@@ -72,7 +73,7 @@ app.use(express.static(`./public`));
 // but ok for me here. https://github.com/node-fetch/node-fetch/issues/568
 process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
-let router = require("./routes/all-routes")(app);
+let router = require("./routes/routes")(app);
 app.use(router);
 
 app.listen(port, () => logService.log(logService.LOG_LEVELS.INFO, `Listening on port ${port}`));
@@ -85,11 +86,10 @@ let statusController = new (require("./controllers/status-controller"));
 app.locals.currentStatus = statusController.EMPTY_STATUS;
 
 const { Worker, workerData } = require('worker_threads');
-let worker = new Worker(
-  './controllers/status-worker.js', 
+let worker = new Worker('./controllers/status-worker.js', 
   { workerData: { logLevelText: logLevelText }});
 worker.on('message', (updatedStatus) => {
-  // We got an updated status from our worker thread, so save it
+  // We got an updated status from our worker thread, so save it to our global variable
   app.locals.currentStatus = updatedStatus;
 });
 
