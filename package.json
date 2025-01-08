@@ -1,8 +1,8 @@
 {
-  "name": "work-status",
+  "name": "work-status-server",
   "version": "1.0.0",
   "description": "Work Status web server",
-  "homepage": "http://192.168.1.200:3000",
+  "homepage": "http://192.168.1.202:3000",
   "main": "server.js",
   "dependencies": {
     "csv-parser": "^3.1.0",

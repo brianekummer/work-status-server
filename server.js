@@ -1,4 +1,4 @@
-/******************************************************************************
+/**
  * Server side code for Home Working Status
  *
  *
@@ -30,15 +30,7 @@
  *     CLIENT_REFRESH_SECONDS....Refresh time on the client side, defaults to 15
  *     LOG_LEVEL.................The logging level- can be DEBUG|INFO|ERROR
  *
-
-  TODO
-  - does moving to Winston for logging solve my issue with passing log level to worker thread?
-     - no. using an env var for log level instead of a command-line param
-       works great inside status-worker
-     - but winston still might be worthwhile
-  - documentation of logging
-
- *****************************************************************************/
+ */
 
 // Require packages
 const express = require("express");

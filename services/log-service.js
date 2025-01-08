@@ -1,12 +1,14 @@
 /**
  * Log Service
  * 
+ * My exceptionally basic log service
+ * 
  * This is intentionally a module and not a class so that it acts like a
  * singleton, and it works inside status-worker, which runs in a different
- * thread.
- * 
- * Setting the log level by an environment variable means the log level
- * gets set properly no matter which process this is run from.
+ * thread. 
+ *   - Setting the log level by an environment variable makes it easy for 
+ *     the log level to get set for the instance of the logger instantiated 
+ *     by status-worker.
  */
 
 LOG_LEVELS = {
@@ -20,7 +22,7 @@ logLevel = LOG_LEVELS[ logLevelText ];
 
 
 /**
- * TODO- document if keeping this
+ * Log a message when the specified level is >= the log level
  */
 log = (level, message) => {
   if (level >= logLevel) {
@@ -29,6 +31,7 @@ log = (level, message) => {
 };
 
 
+// When this is used, log the log level
 log(LOG_LEVELS.INFO, `Log level is ${logLevelText}/${logLevel}`);
 
 
