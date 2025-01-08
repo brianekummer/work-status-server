@@ -27,15 +27,8 @@ const TIMES_TEMPLATES = {
  * This event is fired when the main thread sends us the current status
  *
  * It is a signal to go get updates and to return the updated status
- * 
- * Because the worker thread runs in a child process, its instance of 
- * LogService is separate from the LogService used by the main thread. 
- * So the worker thread needs to explicitly set the log level, so the
- * log level is being passed in using WorkerData.
  */
 parentPort.on('message', (currentStatus) => {
-  logService.setLogLevelByText(workerData.logLevelText);
-  
   processAnyStatusChange(currentStatus)
   .then((updatedStatus) => {
     parentPort.postMessage(updatedStatus);

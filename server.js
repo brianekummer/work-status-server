@@ -28,26 +28,24 @@
  *     HOME_ASSISTANT_TOKEN......Security token for accessing Home Assistant
  *     SERVER_REFRESH_SECONDS....Refresh time on the server side, defaults to 30
  *     CLIENT_REFRESH_SECONDS....Refresh time on the client side, defaults to 15
- *
- * OPTIONAL
- *   Command Line Parameters
- *     argument 2.............The logging level- can be DEBUG|INFO|ERROR
+ *     LOG_LEVEL.................The logging level- can be DEBUG|INFO|ERROR
  *
 
   TODO
   - does moving to Winston for logging solve my issue with passing log level to worker thread?
+     - no. using an env var for log level instead of a command-line param
+       works great inside status-worker
+     - but winston still might be worthwhile
   - documentation of logging
 
  *****************************************************************************/
 
 // Require packages
 const express = require("express");
+const logService = require("./services/log-service");
 
 const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 
-let logLevelText = process.argv.length > 2 ? process.argv[2] : "ERROR";
-let logService = require("./services/log-service");
-logService.setLogLevelByText(logLevelText);
 
 
 /***********************  Start of Node Configuration  ***********************/
@@ -78,18 +76,12 @@ app.listen(port, () => logService.log(logService.LOG_LEVELS.INFO, `Listening on 
  * So that the global variable is available to other modules (namely 
  * StatusController), "app" is passed into the router and then passed to
  * StatusController.
- * 
- * Also note that because the worker thread runs in a child process, its instance
- * of LogService is separate from the LogService used by the main thread. So the
- * worker thread needs to explicitly set the log level, which is being passed in
- * using WorkerData.
  */
 let statusController = new (require("./controllers/status-controller"))(app);
 app.locals.currentStatus = statusController.EMPTY_STATUS;
 
 const { Worker, workerData } = require('worker_threads');
-let worker = new Worker('./controllers/status-worker.js', 
-  { workerData: { logLevelText: logLevelText }});
+let worker = new Worker('./controllers/status-worker.js');
 
 // Periodically send the currentStatus to the worker thread, which will check
 // for updates, and then send the updated status back in a message

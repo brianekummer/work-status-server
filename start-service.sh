@@ -13,6 +13,7 @@ case "$OSTYPE" in
     # Windows, running in Git Bash
     ##########################################################################
     source .env
+    export LOG_LEVEL="$1"
     node --watch server.js $1
     ;;
 esac
