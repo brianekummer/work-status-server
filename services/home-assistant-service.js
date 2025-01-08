@@ -1,6 +1,16 @@
 const logService = require('../services/log-service');
 
+
+/**
+ * Home Assistant Service
+ * 
+ * Gets status info about a couple of devices from Home Assistant
+ */
 class HomeAssistantService {
+  // Private constants and variables
+  #HOME_ASSISTANT_BASE_URL = process.env.HOME_ASSISTANT_BASE_URL;
+  #HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
+
   // Public constants and variables
   EMPTY_HOME_ASSISTANT_STATUS = {
     washerText: null,
@@ -8,40 +18,30 @@ class HomeAssistantService {
     temperatureText: null
   };
 
-  // Private constants and variables
-  #HOME_ASSISTANT_BASE_URL = process.env.HOME_ASSISTANT_BASE_URL;
-  #HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
+
+  /**
+   * Returns true if there is Home Assistant integration
+   */
+  haveHomeAssistantIntegration = () => 
+    this.#HOME_ASSISTANT_BASE_URL && this.#HOME_ASSISTANT_TOKEN;
 
 
-    
-
-  haveHomeAssistantIntegration = () => {
-    return this.#HOME_ASSISTANT_BASE_URL && this.#HOME_ASSISTANT_TOKEN;
-  };
-
-
-  buildHomeAssistantUrl = (urlPath) => {
-    return new URL(urlPath, this.#HOME_ASSISTANT_BASE_URL);
-  };
-
-
-  /******************************************************************************
-    Get status of Home Assistant devices
-    
-    If there is no security token, then just return nulls
-
-    Returns a JSON object with status of those Home Assistant entities
-  ******************************************************************************/
+  /**
+   * Get status of Home Assistant devices
+   * 
+   * If there is no known URL or security token, then just return an empty status
+   * object.
+   *
+   * Returns a JSON object with status of the relevant Home Assistant entities
+   */
   getHomeAssistantStatus = () => {
-    if (!this.haveHomeAssistantIntegration()) {
-      return this.EMPTY_HOME_ASSISTANT_STATUS;
-    } else {
-      let headers = {
+    if (this.haveHomeAssistantIntegration()) {
+      const headers = {
         'Authorization': `Bearer ${this.#HOME_ASSISTANT_TOKEN}`
       };
     
       return fetch(
-          this.buildHomeAssistantUrl('/api/states/sensor.work_status_phone_info'), 
+          new URL('/api/states/sensor.work_status_phone_info', this.#HOME_ASSISTANT_BASE_URL),
           { method: 'GET', headers: headers })
         .then(response => response.json())
         .then(jsonResponse => {
@@ -57,7 +57,8 @@ class HomeAssistantService {
           logService.log(logService.LOG_LEVELS.ERROR, `ERROR in getHomeAssistantData: ${ex}`);
           return null;     // Explicitly handle the error case
         });
-    
+    } else {
+      return this.EMPTY_HOME_ASSISTANT_STATUS;
     }
   }
 };

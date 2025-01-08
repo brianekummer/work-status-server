@@ -1,13 +1,21 @@
-// For worker thread
-
 const { DateTime } = require('luxon');
-
-let logService = require('../services/log-service');
-let slackService = new (require('../services/slack-service'));
-let homeAssistantService = new (require('../services/home-assistant-service'));
-let criteriaService = new (require('../services/criteria-service'));
-
 const { parentPort, workerData } = require('worker_threads');
+
+
+/**
+ * Status Worker
+ *
+ * This is a worker thread for collecting up-to-date status information and 
+ * returning it back to the caller.
+ * 
+ * Reminder that this runs in a separate process and that all of the services
+ * are new instances, separate from those of the main thread.
+ */
+const logService = require('../services/log-service');
+const slackService = new (require('../services/slack-service'));
+const homeAssistantService = new (require('../services/home-assistant-service'));
+const statusConditionService = new (require('../services/status-condition-service'));
+
 
 const TIMES_TEMPLATES = {
   START: 'Started @ (start)',
@@ -15,12 +23,19 @@ const TIMES_TEMPLATES = {
 }
 
 
-
+/**
+ * This event is fired when the main thread sends us the current status
+ *
+ * It is a signal to go get updates and to return the updated status
+ * 
+ * Because the worker thread runs in a child process, its instance of 
+ * LogService is separate from the LogService used by the main thread. 
+ * So the worker thread needs to explicitly set the log level, so the
+ * log level is being passed in using WorkerData.
+ */
 parentPort.on('message', (currentStatus) => {
-  // TODO- explain why must set log level again-= because in a diff thread so is a new instance of logService
   logService.setLogLevelByText(workerData.logLevelText);
   
-  // Update the status and send it back
   processAnyStatusChange(currentStatus)
   .then((updatedStatus) => {
     parentPort.postMessage(updatedStatus);
@@ -28,23 +43,13 @@ parentPort.on('message', (currentStatus) => {
 });
 
 
-
-
-
-/******************************************************************************
-  Process any status change. This is executed on the server every x seconds.
-
-  It gets my Slack status for my work and home accounts, as well as statuses of
-  things in Home Assistant. Then it builds the latest status to display at home.
-******************************************************************************/
+/**
+ * Process any status change
+ *
+ * It gets my Slack status for my work and home accounts, as well as statuses of
+ * things in Home Assistant. Then it builds the latest status to display.
+ */
 processAnyStatusChange = (currentStatus) => {
-  // TODO- find better way of specifying which statuses[] record is which
-  const STATUS_KEYS = {
-    SLACK_WORK: 0,
-    SLACK_HOME: 1,
-    HOME_ASSISTANT: 2
-  }
-
   return Promise.resolve(
     Promise.all([
       slackService.getSlackStatus(slackService.ACCOUNTS.WORK),
@@ -52,10 +57,11 @@ processAnyStatusChange = (currentStatus) => {
       homeAssistantService.getHomeAssistantStatus()
     ])
     .then(statuses => {
+      // Statuses are returned in the same order they were called in Promises.all() 
       let latestStatus = buildNewStatus(currentStatus, 
-        statuses[STATUS_KEYS.SLACK_WORK], 
-        statuses[STATUS_KEYS.SLACK_HOME], 
-        statuses[STATUS_KEYS.HOME_ASSISTANT]);
+        statuses[0],   // Slack work
+        statuses[1],   // Slack home
+        statuses[2]);  // Home Assistant
     
       if (JSON.stringify(currentStatus) !== JSON.stringify(latestStatus)) {
         logService.log(logService.LOG_LEVELS.INFO, 
@@ -74,25 +80,22 @@ processAnyStatusChange = (currentStatus) => {
 };
 
 
-
-
-/******************************************************************************
-  Builds the latest status
-
-  It needs the current (about to be previous) status, as well as the latest
-  Slack statuses for work and home, as well as the Home Assistant data.
-******************************************************************************/
+/**
+ * Build the new status
+ *
+ * It needs the current (about to be previous) status, as well as the latest
+ * Slack statuses for work and home, as well as the Home Assistant data.
+ */
 buildNewStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistantData) => {
   try {
     let newStatus = currentStatus;
 
-    let matchingStatus = criteriaService.getMatchingCondition(workSlackStatus, homeSlackStatus);
-    if (matchingStatus) {
-      // Build the latest status
+    let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
+    if (matchingCondition) {
       newStatus = {
         slack: {
-          emoji:  matchingStatus.display_emoji,
-          text:   (matchingStatus.display_text || '')
+          emoji:  matchingCondition.display_emoji,
+          text:   (matchingCondition.display_text || '')
                     .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
                     .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text)
         },
@@ -103,8 +106,8 @@ buildNewStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistant
         }
       };
 
-      // Determine and set the the status time
-      updateSlackStatusTimes(matchingStatus, homeSlackStatus, workSlackStatus, currentStatus, newStatus);
+      // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM")
+      updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, currentStatus, newStatus);
     }
     
     return newStatus;
@@ -114,9 +117,9 @@ buildNewStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistant
 };
 
 
-/******************************************************************************
-  Determine and set the times of the Slack status in newStatus
-******************************************************************************/
+/**
+ * Determine the times of the Slack status and update that in newStatus
+ */
 updateSlackStatusTimes = (evaluatingStatus, homeSlackStatus, workSlackStatus, currentStatus, newStatus) => {
   // The start time only changes when the status text changes, so that if I
   // add minutes to my focus time, only the end time changes. We're adding it
@@ -138,7 +141,7 @@ updateSlackStatusTimes = (evaluatingStatus, homeSlackStatus, workSlackStatus, cu
   //   - It's highly unlikely I'd have a home status with an expiration while 
   //     I'm working, where I'd want to use the work status's expiration.
   let statusExpirationSeconds = 
-    homeSlackStatus.emoji && criteriaService.matchesCriteria(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) 
+    homeSlackStatus.emoji && statusConditionService.matchesCondition(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) 
       ? homeSlackStatus.expiration 
       : workSlackStatus.expiration;
 

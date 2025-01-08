@@ -1,6 +1,11 @@
 const logService = require('../services/log-service');
 
 
+/**
+ * Slack Service
+ * 
+ * Gets the 
+ */
 class SlackService {
   // Public constants and variables
   ACCOUNTS = {
@@ -16,27 +21,22 @@ class SlackService {
 
   // Private constants and variables
 
-  // Get the Slack security tokens, assumes 'work_token,home_token', and if there is only one Slack token, set the home token to blank
+  // Get the Slack security tokens, assumes they are a list of tokens in the 
+  // order of my work account, comma, then my home account. If there is only 
+  // one token, set the home account's token to blank.
   #SLACK_TOKENS = 
     (process.env.SLACK_TOKENS + (process.env.SLACK_TOKENS.includes(',') ? '' : ','))
     .split(',');
   #SLACK_CALL_STATUS_EMOJI = ':slack_call:';
 
 
-
-  buildEmojiUrl = (emoji) => {
-    return emoji ? `/images/${emoji}.png` : '';
-  };
-
-
-  /******************************************************************************
-    Get my Slack status for the given account, which includes my status and 
-    presence
-    
-    If there is no security token, then just return nulls
-
-    Returns a JSON object with my Slack status
-  ******************************************************************************/
+  /**
+   * Get my Slack status for the given account, which includes my status and 
+   * presence
+   *   - If there is no security token, then just return an object with empty values
+   *
+   * Returns a JSON object with my Slack status
+   */
   getSlackStatus = (accountKey) => {
     if (!this.#SLACK_TOKENS[accountKey]) {
       // We do not have a token for this Slack account, so return an empty object

@@ -1,13 +1,13 @@
-/*
-  I intentionally don't use CSS nesting, because that is only available on modern
-  browsers, and the phones I'm using to display my work status are typically
-  several years old.
-  
-  https://caniuse.com/css-nesting says phone must have WebView version >= 131
-
-  I could look into using a polyfill or SASS, or logging the status phones into
-  Google so I can update the webview, but it's not currently worth it to me.
-*/
+/**
+ * I intentionally don't use CSS nesting, because that is only available on modern
+ * browsers, and the phones I'm using to display my work status are typically
+ * several years old.
+ * 
+ * https://caniuse.com/css-nesting says phone must have WebView version >= 131
+ *
+ * I could look into using a polyfill or SASS, or logging the status phones into
+ * Google so I can update the webview, but it's not currently worth it to me.
+ */
 
 .left {
   text-align: left;

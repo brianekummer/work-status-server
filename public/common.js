@@ -1,8 +1,8 @@
-function setCommonElements(jsonResponse) {
-  $('status-emoji').src = jsonResponse.emoji;
-  $('status-text').innerHTML = jsonResponse.text;
-  $('status-times').innerHTML = jsonResponse.times;
-  $('last-updated-time').innerHTML = jsonResponse.lastUpdatedTime;
+function setCommonElements(status) {
+  $('status-emoji').src = status.emoji;
+  $('status-text').innerHTML = status.text;
+  $('status-times').innerHTML = status.times;
+  $('last-updated-time').innerHTML = status.lastUpdatedTime;
 }
 
 

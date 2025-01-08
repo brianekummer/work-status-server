@@ -1,11 +1,11 @@
 # This matrix defines the conditions for each status to display as well as what to display for that status.
-#   - These entries are evaluated in order so the order is important. For example, if my home status is :8bit: then I'm playing even if my work status is PTO
+#   - These entries are evaluated in order, so the order is important. For example, if my home status is :8bit: then I'm playing even if my work status is PTO
 #   - If a condition
 #      - Is null or an empty string, then it matches everything
 #      - Is *, then it matches only non-empty values
 #   - Slack automatically sets users away after some amount of inactivity although I've seen differing statements of how long that is.
 #
-# The following line defines how this file is parsed into a JSON array
+# The following line defines how this file is parsed
 | status_name | conditions_work_emoji | conditions_work_presence | conditions_home_emoji | conditions_home_presence | display_emoji | display_text | display_times |
 #
 #                                |                               Conditions                              |                       What to Display                        |
