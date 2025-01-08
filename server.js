@@ -36,6 +36,8 @@
 
   TODO
   - get rid of Time template in status-conditions?
+     - Stop using it
+     - remove it from CSV
   - does moving to Winston for logging solve my issue with passing log level to worker thread?
   - documentation
 

@@ -10,22 +10,18 @@ const logService = require('./log-service');
  * Maintains an up-to-date copy of the conditions file and provides logic
  * for determining which condition matches.
  */
-
-
 class StatusConditionService {
   #STATUS_CONDITIONS_FILENAME = 'status-conditions.csv';
 
   /**
    * Constructor
    * 
-   * Reads the conditions from file and re-reads that file every time it 
-   * changes.
+   * Reads the conditions from file. The file is watched and is re-read every
+   * time it changes, with changes taking effect the next polling cycle.
    */
   constructor() {
     this.statusConditions = this.getStatusConditions();
 
-    // Watch for the file of conditions to change. If it does, then re-read it
-    // and the changes will take effect the next polling cycle.
     watch(this.#STATUS_CONDITIONS_FILENAME, (evt, name) => {
       logService.log(logService.LOG_LEVELS.DEBUG, `${name} changed, so re-reading it`);
       this.statusConditions = this.getStatusConditions();
