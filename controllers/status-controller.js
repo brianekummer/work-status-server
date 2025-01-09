@@ -38,7 +38,7 @@ class StatusController {
     let currentStatus = this.app.locals.currentStatus;
 
     if (currentStatus) {
-      let status = {
+      return {
         emoji: currentStatus.slack.emoji ? `/images/${currentStatus.slack.emoji}.png` : '',
         text: currentStatus.slack.text,
         times: currentStatus.slack.times,
@@ -49,8 +49,6 @@ class StatusController {
           temperatureText: currentStatus.homeAssistant.temperatureText
         }
       };
-
-      return status;
     };
   };
 }
