@@ -4,6 +4,7 @@ case "$OSTYPE" in
     # Proxmox server
     ##########################################################################
     source /root/.env
+    export LOG_LEVEL="$1"
     cd /opt/work-status-server/
     node server.js
     ;;
