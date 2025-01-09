@@ -26,6 +26,6 @@
 | In a meeting                   | :spiral_calendar_pad:  |          |                        |          | spiral_calendar      | Meeting              |
 | Studying                       | :books:                |          |                        |          | books                | Studying             |
 | Home- some other emoji         |                        | away     | *                      |          |                      | (HOME_STATUS_TEXT)   |
-| Work- some other emoji         | *                      |          |                        | away     |                      | (WORK_STATUS_TEXT)   |
+| Work- some other emoji         | *                      |          |                        |          |                      | (WORK_STATUS_TEXT)   |
 | No status                      |                        | away     |                        |          |                      |                      |
 | Working                        |                        | active   |                        |          | keyboard             | Working              |

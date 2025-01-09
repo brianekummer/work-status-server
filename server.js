@@ -75,8 +75,10 @@ app.locals.currentStatus = statusController.EMPTY_STATUS;
 const { Worker, workerData } = require('worker_threads');
 let worker = new Worker('./controllers/status-worker.js');
 
-// Periodically send the currentStatus to the worker thread, which will check
-// for updates, and then send the updated status back in a message
+// Immediately send the currentStatus to the worker thread, which will check
+// for updates, and then send the updated status back in a message. Then
+// repeatedly do that every SERVER_REFRESH_MS.
+worker.postMessage(app.locals.currentStatus);
 setInterval(() => {
   worker.postMessage(app.locals.currentStatus); 
 }, SERVER_REFRESH_MS); 

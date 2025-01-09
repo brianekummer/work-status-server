@@ -18,15 +18,29 @@ module.exports = function(app) {
 
   const router = express.Router(); 
 
-  // This route is called by the clients to start receiving status updates
+  /**
+   * Get the latest status and push it to the client
+   */
+  const getLatestStatusAndPush = (response) => {
+    response.write(`data: ${JSON.stringify(statusController.getStatusForClient())}\n\n`);
+  };
+
+  /**
+   * This route is called by the clients to start receiving status updates 
+   * 
+   * Use Server Sent Events to continually push updates to the browser every
+   * CLIENT_REFRESH_MS.
+   *
+   * FYI, request.get('Referrer') returns the full URL of the referring/
+   * requesting site
+   */
   router.get('/api/get-updates', (request, response) => {
-    // Use Server Sent Events to continually push updates to the browser every CLIENT_REFRESH_MS
     response.writeHead(200, SSE_HEADER);
 
-    let intervalId = setInterval(() => {
-      // FYI, request.get('Referrer') returns the full URL of the referring/requesting site
-      response.write(`data: ${JSON.stringify(statusController.getStatusForClient())}\n\n`);},
-    CLIENT_REFRESH_MS); 
+    // Immediately push the status to the client, then repeatedly do that every
+    // SERVER_REFRESH_MS.
+    getLatestStatusAndPush(response);
+    let intervalId = setInterval(() => getLatestStatusAndPush(response), CLIENT_REFRESH_MS); 
 
     request.on('close', () => clearInterval(intervalId));
   });
