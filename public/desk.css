@@ -28,6 +28,7 @@ table {
 
 .current-times-table {
   display: table;
+  border-spacing: 5px;
 }
 .current-times-table .time {
   font-size: 200%;
@@ -37,38 +38,38 @@ table {
   padding: 10px;
   border-spacing: 10px 0px;
 }
-.status-table .text-padding {
+.text-padding {
   padding: 0px 10px;
 }
-.status-table .emoji--size {
+.emoji--size {
   width: 100%;
   height: auto;
 }
-.status-table .last-updated-time--font-size {
-  font-size: 125%;
+.last-updated-time--font-size {
+  font-size: 110%;
 }
-.status-table .emoji {
+.emoji {
   width: 100px;
 }
-.status-table .status--font-size {
+.status--font-size {
   font-size: 300%;
 }
-.status-table .status--font-size__small {
-  font-size: 200%;
+.status--font-size__small {
+  font-size: 225%;
 }
-.status-table .times--font-size {
-  font-size: 125%;
+.times--font-size {
+  font-size: 165%;
 }
 
-.status-table .ha {
-  width: 25%;
+.ha {
+  width: 28%;
 }
-.status-table .ha-status-cell {
+.ha-status-cell {
   display: inline-flex;
-  height: 45px;
+  height: 55px;
 }
-.status-table .ha-status-cell .ha--font {
-  font-size: 100%;
+.ha-status-cell .ha--font {
+  font-size: 110%;
   display: flex;
   align-items: center;
 }

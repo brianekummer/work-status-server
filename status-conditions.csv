@@ -17,10 +17,10 @@
 | At lunch                       | :hamburger:            |          |                        |          | hamburger            | Lunch                |
 | At dinner                      | :poultry_leg:          |          |                        |          | poultry_leg          | Dinner               |
 | Unavailable                    | :no_entry:             |          |                        |          | no_entry             | (WORK_STATUS_TEXT)   |
-| Be right back                  | :brb:                  |          |                        |          | brb                  | Be right back        |
+| Be right back                  | :brb:                  |          |                        |          | brb                  | Be Right Back        |
 | Commuting                      | :blue_car:             |          |                        |          | blue_car             | Commuting            |
 | On PTO                         | :palm_tree:            |          |                        |          |                      |                      |
-| On a Slack call                | :slack_call:           |          |                        |          | telephone_receiver   | On a call            |
+| On a Slack call                | :slack_call:           |          |                        |          | telephone_receiver   | On a Call            |
 | Heads down focused             | :heads-down:           |          |                        |          | heads_down           | Focusing             |
 | In Pittsburgh                  | :cityscape:            |          |                        |          | cityscape            | In Pittsburgh        |
 | In a meeting                   | :spiral_calendar_pad:  |          |                        |          | spiral_calendar      | Meeting              |
