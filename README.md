@@ -9,6 +9,20 @@ My repo [`work-status-android`](https://github.com/brianekummer/work-status-andr
     - The time in 12 hour, 24 hour, and UTC
     - The status of my washer, dryer, ands thermostat, read from my instance of Home Assistant
 
+## Getting Your Slack Security Token(s)
+(These steps are from memory and should be close to correct, but may be missing things)
+You need to define an app in Slack to get a security token which you can use to make calls to the Slack API via HTTP GET and POST. Slack has lots of good API documentation, and a "Tester" with each API command that lets you test the command and get real values back.
+  - The "User OAuth Token" you'll get will start with `xoxp-`
+  - You'll need to log into your work Slack and do this for your work account
+  - If you're also using a home account, you'll also need to login to that and repeat these steps
+  - I have been using Slack's "Web API" and not their newer "Events API", because the Events API doesn't provide for subscribing to user presence
+- First sign up for the Slack developer program at https://api.slack.com/docs/developer-sandbox
+- Go to https://api.slack.com/apps to define your app
+- On the left toolbar, under Features, is the "OAuth & Permissions" section
+    - Scroll down to the "User Token Scopes" section and add you need `users.profile:read` (to get your status) and `users:read` (to get your presence)
+    - At some point you'll get your "OAuth Tokens" at the top of the page - that's your security token
+    - Click the "Install to xxxxx" button to install it into the Slack workspace and make it active
+
 ## Technical Details
 - Endpoints
     - The wall phone is accessed by http://...:3000/wall.html
