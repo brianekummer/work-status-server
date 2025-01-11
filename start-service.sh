@@ -4,6 +4,7 @@ case "$OSTYPE" in
     # Proxmox server
     ##########################################################################
     source /root/.env
+    export LOG_LEVEL="$1"
     cd /opt/work-status-server/
     node server.js
     ;;
@@ -13,6 +14,7 @@ case "$OSTYPE" in
     # Windows, running in Git Bash
     ##########################################################################
     source .env
+    export LOG_LEVEL="$1"
     node --watch server.js $1
     ;;
 esac

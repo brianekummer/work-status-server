@@ -1,0 +1,75 @@
+/**
+ * I intentionally don't use CSS nesting, because that is only available on modern
+ * browsers, and the phones I'm using to display my work status are typically
+ * several years old.
+ * 
+ * https://caniuse.com/css-nesting says phone must have WebView version >= 131
+ *
+ * I could look into using a polyfill or SASS, or logging the status phones into
+ * Google so I can update the webview, but it's not currently worth it to me.
+ */
+
+table {
+  table-layout: fixed;
+  margin: 8px;
+  table-layout: fixed;
+  width: calc(100% - 16px);
+  border: 1px solid Black;
+  margin: 8px;
+}
+
+.vertical-center {
+  position: absolute;
+  top: 50%;
+  margin: auto 5%;
+  transform: translateY(-50%);
+  background-color: DarkGray;
+}
+
+.current-times-table {
+  display: table;
+  border-spacing: 5px;
+}
+.current-times-table .time {
+  font-size: 200%;
+}
+
+.status-table {
+  padding: 10px;
+  border-spacing: 10px 0px;
+}
+.text-padding {
+  padding: 0px 10px;
+}
+.emoji--size {
+  width: 100%;
+  height: auto;
+}
+.last-updated-time--font-size {
+  font-size: 110%;
+}
+.emoji {
+  width: 100px;
+}
+.status--font-size {
+  font-size: 300%;
+}
+.status--font-size__small {
+  font-size: 225%;
+}
+.times--font-size {
+  font-size: 165%;
+}
+
+.ha {
+  width: 28%;
+}
+.ha-status-cell {
+  display: inline-flex;
+  height: 55px;
+}
+.ha-status-cell .ha--font {
+  font-size: 110%;
+  display: flex;
+  align-items: center;
+}
