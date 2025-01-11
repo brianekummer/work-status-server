@@ -4,7 +4,7 @@ const logService = require('../services/log-service');
 /**
  * Slack Service
  * 
- * Gets the 
+ * Gets the status of a Slack account
  */
 class SlackService {
   // Public constants and variables
@@ -21,12 +21,8 @@ class SlackService {
 
   // Private constants and variables
 
-  // Get the Slack security tokens, assumes they are a list of tokens in the 
-  // order of my work account, comma, then my home account. If there is only 
-  // one token, set the home account's token to blank.
-  #SLACK_TOKENS = 
-    (process.env.SLACK_TOKENS + (process.env.SLACK_TOKENS.includes(',') ? '' : ','))
-    .split(',');
+  // Get the Slack security tokens
+  #SLACK_TOKENS = [process.env.SLACK_TOKEN_WORK, process.env.SLACK_TOKEN_HOME || ''];
   #SLACK_CALL_STATUS_EMOJI = ':slack_call:';
 
 
@@ -37,14 +33,14 @@ class SlackService {
    *
    * Returns a JSON object with my Slack status
    */
-  getSlackStatus = (accountKey) => {
-    if (!this.#SLACK_TOKENS[accountKey]) {
+  getSlackStatus = (account) => {
+    if (!this.#SLACK_TOKENS[account]) {
       // We do not have a token for this Slack account, so return an empty object
       return Promise.resolve(this.EMPTY_SLACK_STATUS);
     } else {
       let headers = {
         'Content-Type':  'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${this.#SLACK_TOKENS[accountKey]}`  
+        'Authorization': `Bearer ${this.#SLACK_TOKENS[account]}`  
       };
       return Promise.all([
         fetch('https://slack.com/api/users.profile.get', { method: 'GET', headers: headers }),
@@ -63,7 +59,7 @@ class SlackService {
           presence:   jsonResponses[1].presence
         };
 
-        logService.log(logService.LOG_LEVELS.DEBUG, `Got SLACK for ${accountKey === this.ACCOUNTS.WORK ? 'WORK' : 'HOME'}: ` +
+        logService.log(logService.LOG_LEVELS.DEBUG, `Got SLACK for ${account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME'}: ` +
           `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
 
         return Promise.resolve(slackStatus);

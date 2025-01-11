@@ -39,7 +39,8 @@ You need to define an app in Slack to get a security token which you can use to 
             - An example is CSS nesting
             - I could look into using a polyfill or SASS, or log those phones into a Google account so the WebView can be updated, but it's not currently worth it to me
 - Required environment variables
-    - `SLACK_TOKENS`, must be the Slack security tokens for my work and home accounts. The home account can be omitted. Example: `<work_token>,<home_token>`
+    - `SLACK_TOKEN_WORK`, is the Slack security token for my work account
+    - `SLACK_TOKEN_HOME`, is the Slack security token for my home account, optional
     - `HOME_ASSISTANT_BASE_URL`, is the base URL for Home Assistant. Optional.
     - `HOME_ASSISTANT_TOKEN`, is the security token for accessing Home Assistant. Optional.
     - `SERVER_REFRESH_SECONDS`, is the refresh time on the server side, defaults to 30 seconds

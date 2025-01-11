@@ -21,9 +21,8 @@
  *                               requiring an app restart
  *
  *   Environment Variables
- *     SLACK_TOKENS..............Must be the Slack security tokens for my work and
- *                               home accounts in a csv, like this: 
- *                               <work_token>,<home_token>
+ *     SLACK_TOKEN_WORK..........Slack security token for your work account
+ *     SLACK_TOKEN_HOME..........Slack security token for your home account, optional
  *     HOME_ASSISTANT_BASE_URL...Base URL for Home Assistant
  *     HOME_ASSISTANT_TOKEN......Security token for accessing Home Assistant
  *     SERVER_REFRESH_SECONDS....Refresh time on the server side, defaults to 30
