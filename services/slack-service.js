@@ -1,4 +1,4 @@
-const logService = require('../services/log-service');
+const logger = require('./logger');
 
 
 /**
@@ -59,13 +59,13 @@ class SlackService {
           presence:   jsonResponses[1].presence
         };
 
-        logService.log(logService.LOG_LEVELS.DEBUG, `Got SLACK for ${account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME'}: ` +
+        logger.debug(`Got SLACK for ${account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME'}: ` +
           `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
 
         return Promise.resolve(slackStatus);
       })
       .catch(ex => {
-        logService.log(logService.LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
+        logger.error(logger.LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
       });
     }
   };

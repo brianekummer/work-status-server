@@ -1,4 +1,5 @@
 const express = require('express')
+const logger = require('../services/logger');
 
 
 /**
@@ -21,8 +22,13 @@ module.exports = function(app) {
   /**
    * Get the latest status and push it to the client
    */
-  const getLatestStatusAndPush = (response) => {
-    response.write(`data: ${JSON.stringify(statusController.getStatusForClient())}\n\n`);
+  const getLatestStatusAndPush = (request, response) => {
+    let data = statusController.getStatusForClient();
+
+    let pageName = request.get('Referrer').split("/").pop();
+    logger.debug(`Pushing data to ${pageName}`);
+    
+    response.write(`data: ${JSON.stringify(data)}\n\n`);
   };
 
   /**
@@ -39,8 +45,8 @@ module.exports = function(app) {
 
     // Immediately push the status to the client, then repeatedly do that every
     // SERVER_REFRESH_MS.
-    getLatestStatusAndPush(response);
-    let intervalId = setInterval(() => getLatestStatusAndPush(response), CLIENT_REFRESH_MS); 
+    getLatestStatusAndPush(request, response);
+    let intervalId = setInterval(() => getLatestStatusAndPush(request, response), CLIENT_REFRESH_MS); 
 
     request.on('close', () => clearInterval(intervalId));
   });

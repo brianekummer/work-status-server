@@ -1,4 +1,4 @@
-const logService = require('../services/log-service');
+const logger = require('./logger');
 
 
 /**
@@ -54,7 +54,7 @@ class HomeAssistantService {
           };
         })
         .catch(ex => {
-          logService.log(logService.LOG_LEVELS.ERROR, `ERROR in getHomeAssistantData: ${ex}`);
+          logger.error(`ERROR in getHomeAssistantData: ${ex}`);
           return null;     // Explicitly handle the error case
         });
     } else {

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const csv = require('csv-parser');
 const watch = require('node-watch');
-const logService = require('./log-service');
+const logger = require('./logger');
 
 
 /**
@@ -23,7 +23,7 @@ class StatusConditionService {
     this.statusConditions = this.getStatusConditions();
 
     watch(this.#STATUS_CONDITIONS_FILENAME, (evt, name) => {
-      logService.log(logService.LOG_LEVELS.DEBUG, `${name} changed, so re-reading it`);
+      logger.debug(`${name} changed, so re-reading it`);
       this.statusConditions = this.getStatusConditions();
     });
   };
@@ -74,7 +74,7 @@ class StatusConditionService {
         this.matchesCondition(evaluatingStatus.conditions_home_presence, homeSlackStatus.presence));
 
     } catch (ex) {
-      logService.log(logService.LOG_LEVELS.ERROR, `ERROR in getMatchingCondition: ${ex}`);
+      logger.error(`ERROR in getMatchingCondition: ${ex}`);
     }
   }
 };
