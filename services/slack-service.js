@@ -12,11 +12,17 @@ class SlackService {
     WORK: 0,
     HOME: 1
   };
-  EMPTY_SLACK_STATUS = {
+  EMPTY_STATUS = {
     emoji:      null,
     text:       null,
     expiration: 0,
     presence:   null
+  };
+  ERROR_STATUS = {
+    emoji:      'ERROR',
+    text:       'ERROR',
+    expiration: 0,
+    presence:   'ERROR'
   };
 
   // Private constants and variables
@@ -34,14 +40,12 @@ class SlackService {
    * Returns a JSON object with my Slack status
    */
   getSlackStatus = (account) => {
-    if (!this.#SLACK_TOKENS[account]) {
-      // We do not have a token for this Slack account, so return an empty object
-      return Promise.resolve(this.EMPTY_SLACK_STATUS);
-    } else {
+    if (this.#SLACK_TOKENS[account]) {
       let headers = {
         'Content-Type':  'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${this.#SLACK_TOKENS[account]}`  
       };
+
       return Promise.all([
         fetch('https://slack.com/api/users.profile.get', { method: 'GET', headers: headers }),
         fetch('https://slack.com/api/users.getPresence', { method: 'GET', headers: headers })
@@ -65,8 +69,12 @@ class SlackService {
         return Promise.resolve(slackStatus);
       })
       .catch(ex => {
-        logger.error(logger.LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
+        logger.error(`SlackService.getSlackStatus(), ERROR: ${ex}`);
+        return Promise.resolve(this.ERROR_STATUS);
       });
+    } else {
+      // We do not have a token for this Slack account, so return an empty status
+      return Promise.resolve(this.EMPTY_STATUS);
     }
   };
 }

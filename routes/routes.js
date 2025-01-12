@@ -23,12 +23,14 @@ module.exports = function(app) {
    * Get the latest status and push it to the client
    */
   const getLatestStatusAndPush = (request, response) => {
-    let data = statusController.getStatusForClient();
-
-    let pageName = request.get('Referrer').split("/").pop();
-    logger.debug(`Pushing data to ${pageName}`);
-    
-    response.write(`data: ${JSON.stringify(data)}\n\n`);
+    try {
+      let pageName = request.get('Referrer').split("/").pop();
+      logger.debug(`Pushing data to ${pageName}`);
+      
+      response.write(`data: ${JSON.stringify(statusController.getStatusForClient())}\n\n`);
+    } catch (ex) {
+      logger.error(`routes.getLatestStatusAndPush(), ERROR: ${ex}`);
+    }
   };
 
   /**
@@ -48,7 +50,10 @@ module.exports = function(app) {
     getLatestStatusAndPush(request, response);
     let intervalId = setInterval(() => getLatestStatusAndPush(request, response), CLIENT_REFRESH_MS); 
 
-    request.on('close', () => clearInterval(intervalId));
+    request.on('close', () => {
+      clearInterval(intervalId);
+      logger.info('routes./api/get-updates, closed connection');
+    });
   });
 
   // I don't have a favicon, just return 204/NO-CONTENT

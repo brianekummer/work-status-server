@@ -55,7 +55,7 @@ processAnyStatusChange = (currentStatus) => {
         statuses[0],   // Slack work
         statuses[1],   // Slack home
         statuses[2]);  // Home Assistant
-    
+
       if (JSON.stringify(currentStatus) !== JSON.stringify(latestStatus)) {
         logger.info( 
           `Changed status\n` +
@@ -66,8 +66,8 @@ processAnyStatusChange = (currentStatus) => {
       return latestStatus;
     })
     .catch(ex => {
-      logger.error(`ERROR in processAnyStatusChange: ${ex}`);
-      return slackService.EMPTY_SLACK_STATUS;
+      logger.error(`status-worker.processAnyStatusChange(), ERROR: ${ex}`);
+      return slackService.ERROR_STATUS;
     })
   );
 };
@@ -105,7 +105,7 @@ buildNewStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistant
     
     return newStatus;
   } catch (ex) {
-    logger.error(`ERROR in buildNewStatus: ${ex}`);
+    logger.error(`status-worker.buildNewStatus(), ERROR: ${ex}`);
   }
 };
 
