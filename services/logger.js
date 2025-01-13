@@ -26,28 +26,32 @@
  */
 
 const winston = require('winston');
+require('winston-daily-rotate-file');
 const fs = require('fs');
 
 
+// Generate timestamp in New York timezone
 const timezonedTimestamp = () => 
   new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+
+// Determine log directory (defaults to the project folder if /var/log doesn't exist)
+const logDir = fs.existsSync('/var/log') ? '/var/log/' : '';
+const fileRotateTransport = new winston.transports.DailyRotateFile({
+  filename: `${logDir}work-server-status_%DATE%.log`,
+  datePattern: 'YYYY-MM-DD',
+  maxFiles: '10d',
+});
 
 
 const logger = winston.createLogger({
   level: (process.env.LOG_LEVEL || 'error').toLowerCase(),
   format: winston.format.combine(
-    winston.format.timestamp({
-      format: timezonedTimestamp 
-    }),
+    winston.format.timestamp({ format: timezonedTimestamp }),
     winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`)
   ),
   transports: [
     new winston.transports.Console(),
-
-    // Log to file, either in the linux folder /var/log, or the project folder
-    new winston.transports.File({ 
-      filename: (fs.existsSync('/var/log') ? '/var/log/' : '') + 'work-status-server.log' 
-    })
+    fileRotateTransport
   ]
 });
 
