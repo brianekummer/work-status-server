@@ -1,5 +1,5 @@
 const { DateTime } = require('luxon');
-const { parentPort, workerData } = require('worker_threads');
+const { parentPort } = require('worker_threads');
 
 
 /**
@@ -11,7 +11,7 @@ const { parentPort, workerData } = require('worker_threads');
  * Reminder that this runs in a separate process and that all of the services
  * are new instances, separate from those of the main thread.
  */
-const logService = require('../services/log-service');
+const logger = require('../services/logger');
 const slackService = new (require('../services/slack-service'));
 const homeAssistantService = new (require('../services/home-assistant-service'));
 const statusConditionService = new (require('../services/status-condition-service'));
@@ -55,9 +55,9 @@ processAnyStatusChange = (currentStatus) => {
         statuses[0],   // Slack work
         statuses[1],   // Slack home
         statuses[2]);  // Home Assistant
-    
+
       if (JSON.stringify(currentStatus) !== JSON.stringify(latestStatus)) {
-        logService.log(logService.LOG_LEVELS.INFO, 
+        logger.info( 
           `Changed status\n` +
           `   from Slack: ${currentStatus.slack.emoji}/${currentStatus.slack.text}/${currentStatus.slack.times} --- HA: ${currentStatus.homeAssistant.washerText}/${currentStatus.homeAssistant.dryerText}/${currentStatus.homeAssistant.temperatureText}\n` +
           `     to Slack: ${latestStatus.slack.emoji}/${latestStatus.slack.text}/${latestStatus.slack.times} --- HA: ${latestStatus.homeAssistant.washerText}/${latestStatus.homeAssistant.dryerText}/${latestStatus.homeAssistant.temperatureText}`);
@@ -66,8 +66,8 @@ processAnyStatusChange = (currentStatus) => {
       return latestStatus;
     })
     .catch(ex => {
-      logService.log(logService.LOG_LEVELS.ERROR, `ERROR in processAnyStatusChange: ${ex}`);
-      return slackService.EMPTY_SLACK_STATUS;
+      logger.error(`status-worker.processAnyStatusChange(), ERROR: ${ex}`);
+      return slackService.ERROR_STATUS;
     })
   );
 };
@@ -105,7 +105,7 @@ buildNewStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistant
     
     return newStatus;
   } catch (ex) {
-    logService.log(logService.LOG_LEVELS.ERROR, `ERROR in buildNewStatus: ${ex}`);
+    logger.error(`status-worker.buildNewStatus(), ERROR: ${ex}`);
   }
 };
 

@@ -1,4 +1,4 @@
-const logService = require('../services/log-service');
+const logger = require('./logger');
 
 
 /**
@@ -12,10 +12,15 @@ class HomeAssistantService {
   #HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
 
   // Public constants and variables
-  EMPTY_HOME_ASSISTANT_STATUS = {
+  EMPTY_STATUS = {
     washerText: null,
     dryerText: null,
     temperatureText: null
+  };
+  ERROR_STATUS = {
+    washerText: 'ERROR',
+    dryerText: 'ERROR',
+    temperatureText: 'ERROR'
   };
 
 
@@ -54,11 +59,11 @@ class HomeAssistantService {
           };
         })
         .catch(ex => {
-          logService.log(logService.LOG_LEVELS.ERROR, `ERROR in getHomeAssistantData: ${ex}`);
-          return null;     // Explicitly handle the error case
+          logger.error(`HomeAssistantService.getHomeAssistantStatus(), ERROR: ${ex}`);
+          return this.ERROR_STATUS;
         });
     } else {
-      return this.EMPTY_HOME_ASSISTANT_STATUS;
+      return this.EMPTY_STATUS;
     }
   }
 };

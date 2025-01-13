@@ -33,7 +33,8 @@
 
 // Require packages
 const express = require("express");
-const logService = require("./services/log-service");
+const winston = require('winston');
+const logger = require("./services/logger");
 
 const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 
@@ -54,7 +55,7 @@ app.use(express.static(`./public`));
 // but ok for me here. https://github.com/node-fetch/node-fetch/issues/568
 process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
-app.listen(port, () => logService.log(logService.LOG_LEVELS.INFO, `Listening on port ${port}`));
+app.listen(port, () => logger.info(`Listening on port ${port}`));
 /************************  End of Node Configuration  ************************/
 
 
@@ -71,7 +72,7 @@ app.listen(port, () => logService.log(logService.LOG_LEVELS.INFO, `Listening on 
 let statusController = new (require("./controllers/status-controller"))(app);
 app.locals.currentStatus = statusController.EMPTY_STATUS;
 
-const { Worker, workerData } = require('worker_threads');
+const { Worker } = require('worker_threads');
 let worker = new Worker('./controllers/status-worker.js');
 
 // Immediately send the currentStatus to the worker thread, which will check

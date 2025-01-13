@@ -1,4 +1,4 @@
-const logService = require('../services/log-service');
+const logger = require('./logger');
 
 
 /**
@@ -12,11 +12,17 @@ class SlackService {
     WORK: 0,
     HOME: 1
   };
-  EMPTY_SLACK_STATUS = {
+  EMPTY_STATUS = {
     emoji:      null,
     text:       null,
     expiration: 0,
     presence:   null
+  };
+  ERROR_STATUS = {
+    emoji:      'ERROR',
+    text:       'ERROR',
+    expiration: 0,
+    presence:   'ERROR'
   };
 
   // Private constants and variables
@@ -34,14 +40,13 @@ class SlackService {
    * Returns a JSON object with my Slack status
    */
   getSlackStatus = (account) => {
-    if (!this.#SLACK_TOKENS[account]) {
-      // We do not have a token for this Slack account, so return an empty object
-      return Promise.resolve(this.EMPTY_SLACK_STATUS);
-    } else {
+    if (this.#SLACK_TOKENS[account]) {
+      const accountName = account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME';
       let headers = {
         'Content-Type':  'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${this.#SLACK_TOKENS[account]}`  
       };
+
       return Promise.all([
         fetch('https://slack.com/api/users.profile.get', { method: 'GET', headers: headers }),
         fetch('https://slack.com/api/users.getPresence', { method: 'GET', headers: headers })
@@ -59,14 +64,18 @@ class SlackService {
           presence:   jsonResponses[1].presence
         };
 
-        logService.log(logService.LOG_LEVELS.DEBUG, `Got SLACK for ${account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME'}: ` +
+        logger.debug(`Got SLACK for ${accountName}: ` +
           `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
 
         return Promise.resolve(slackStatus);
       })
       .catch(ex => {
-        logService.log(logService.LOG_LEVELS.ERROR, `ERROR in getSlackStatus: ${ex}`);
+        logger.error(`SlackService.getSlackStatus(), ERROR for ${accountName}: ${ex}`);
+        return Promise.resolve(this.ERROR_STATUS);
       });
+    } else {
+      // We do not have a token for this Slack account, so return an empty status
+      return Promise.resolve(this.EMPTY_STATUS);
     }
   };
 }

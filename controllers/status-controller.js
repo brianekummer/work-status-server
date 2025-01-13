@@ -23,8 +23,8 @@ class StatusController {
 
   // The default, empty status
   EMPTY_STATUS = {
-    slack: slackService.EMPTY_SLACK_STATUS,
-    homeAssistant: homeAssistantService.EMPTY_HOME_ASSISTANT_STATUS
+    slack: slackService.EMPTY_STATUS,
+    homeAssistant: homeAssistantService.EMPTY_STATUS
   };
 
 
