@@ -1,6 +1,0 @@
-export SLACK_TOKEN_WORK="xoxp-aaaaaaaaaaaa"
-export SLACK_TOKEN_HOME="xoxp-bbbbbbbbbbbb"
-export HOME_ASSISTANT_BASE_URL="http://192.168.1.200:8123"
-export HOME_ASSISTANT_TOKEN="abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz"
-export SERVER_REFRESH_SECONDS="30"
-export CLIENT_REFRESH_SECONDS="30"
