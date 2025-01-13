@@ -41,6 +41,7 @@ class SlackService {
    */
   getSlackStatus = (account) => {
     if (this.#SLACK_TOKENS[account]) {
+      const accountName = account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME';
       let headers = {
         'Content-Type':  'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${this.#SLACK_TOKENS[account]}`  
@@ -63,13 +64,13 @@ class SlackService {
           presence:   jsonResponses[1].presence
         };
 
-        logger.debug(`Got SLACK for ${account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME'}: ` +
+        logger.debug(`Got SLACK for ${accountName}: ` +
           `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
 
         return Promise.resolve(slackStatus);
       })
       .catch(ex => {
-        logger.error(`SlackService.getSlackStatus(), ERROR: ${ex}`);
+        logger.error(`SlackService.getSlackStatus(), ERROR for ${accountName}: ${ex}`);
         return Promise.resolve(this.ERROR_STATUS);
       });
     } else {

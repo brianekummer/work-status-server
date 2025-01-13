@@ -28,10 +28,17 @@
 const winston = require('winston');
 const fs = require('fs');
 
+
+const timezonedTimestamp = () => 
+  new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+
+
 const logger = winston.createLogger({
   level: (process.env.LOG_LEVEL || 'error').toLowerCase(),
   format: winston.format.combine(
-    winston.format.timestamp(),
+    winston.format.timestamp({
+      format: timezonedTimestamp 
+    }),
     winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`)
   ),
   transports: [
