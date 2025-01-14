@@ -60,7 +60,7 @@ module.exports = function(app) {
    * FYI, request.get('Referrer') returns the full URL of the referring/
    * requesting site
    */
-  router.get('/api/get-updates', (request, response) => {
+  router.get('/api/status-updates', (request, response) => {
     response.writeHead(200, SSE_HEADER);
 
     // Immediately push the status to the client, then repeatedly do that every
