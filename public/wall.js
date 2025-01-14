@@ -1,4 +1,4 @@
-let eventSource = new EventSource('/api/get-updates');
+let eventSource = new EventSource('/api/status-updates');
 eventSource.onmessage = (event) => {
   let status = JSON.parse(event.data);
 
