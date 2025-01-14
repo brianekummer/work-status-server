@@ -10,30 +10,11 @@
  *     from the server (from that global variable), to the client, which then
  *     updates the elements on the page.
  *
- * REQUIREMENTS
- *   NPM Packages
- *     express...................For coding simple web pages
- *     node-fetch................For simplifying http commands
- *     csv-parser................For parsing status-conditions.csv
- *     luxon.....................For date formatting, instead of momentJS
- *     node-watch................For watching if the status conditions file changes,
- *                               so we can pickup any changes to that file without
- *                               requiring an app restart
- *
- *   Environment Variables
- *     SLACK_TOKEN_WORK..........Slack security token for your work account
- *     SLACK_TOKEN_HOME..........Slack security token for your home account, optional
- *     HOME_ASSISTANT_BASE_URL...Base URL for Home Assistant
- *     HOME_ASSISTANT_TOKEN......Security token for accessing Home Assistant
- *     SERVER_REFRESH_SECONDS....Refresh time on the server side, defaults to 30
- *     CLIENT_REFRESH_SECONDS....Refresh time on the client side, defaults to 15
- *     LOG_LEVEL.................The logging level- can be DEBUG|INFO|ERROR
- *
  */
 
 // Require packages
 const express = require("express");
-const winston = require('winston');
+const mustacheExpress = require("mustache-express");
 const logger = require("./services/logger");
 
 const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
@@ -44,6 +25,12 @@ const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
 
 let app = express();
+
+// Configure Mustache
+app.engine("mustache", mustacheExpress());
+app.set("view engine", "mustache");
+app.set("views", "./views");
+
 // Pass the app object to the router so it can pass it to the StatusController
 let router = require("./routes/routes")(app);
 app.use(router);

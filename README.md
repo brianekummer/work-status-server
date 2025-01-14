@@ -7,7 +7,7 @@ My repo [`work-status-android`](https://github.com/brianekummer/work-status-andr
     - This mapping of status/presence is stored in a csv file
 - I have two phones- one outside of my office and another on my office desk. The one on my desk also shows
     - The time in 12 hour, 24 hour, and UTC
-    - The status of my washer, dryer, ands thermostat, read from my instance of Home Assistant
+    - The status of my washer, dryer, ands thermostat, read from my instance of Home Assistant, including an icon to denote heating/cooling/fan
 
 ## Getting Your Slack Security Token(s)
 (These steps are from memory and should be close to correct, but may be missing things)
@@ -24,21 +24,30 @@ You need to define an app in Slack to get a security token which you can use to 
     - Click the "Install to xxxxx" button to install it into the Slack workspace and make it active
 
 ## Technical Details
+- Font Awesome
+    - Font Awesome is used to display the icon denoting heating/cooling/fan on the desk page
+    - Font Awesome now requires an id because there is a free tier, which I'm using
+    - I have an account id that must be included in the HTML's script tag
 - Endpoints
-    - The wall phone is accessed by http://...:3000/wall.html
-    - The desk phone is accessed by http://...:3000/desk.html
+    - The wall phone is accessed by http://...:3000/wall
+    - The desk phone is accessed by http://...:3000/desk
+        - Because I need to include my Font Awesome account id in the HTML, and I don't want to hard-code that and check it into GitHub, I must inject that into the HTML, so I'm using Mustache to do that
 - NPM packages
-    - `express`, for coding simple web pages
-    - `node-fetch`, for simplifying http commands
     - `csv-parser`, for parsing status-conditions.csv
+    - `express`, for coding simple web pages
     - `luxon`, for date formatting, instead of momentJS
+    - `mustache-express`, for templating HTML. I specifically need it to inject my Font Awesome account id into the desk phone's HTML.
+    - `node-fetch`, for simplifying http commands
     - `node-watch`, for watching if the status conditions file changes, so we can pickup any changes to that file without requiring an app restart
+    - `winston`, for logging
+    - `winston-daily-rotate-file`, for easily implementing rotating log files
 - HTML/CSS decisions
     - I am using old Android phones to display these web pages, and for simplicity, I am not even logging those phones into a Google account
         - This means the WebView component (embedded Chrome browser) doesn't have any updates, and it's the original stock version that shipped with the phone, which means many newer HTML and CSS features are unavailable
             - An example is CSS nesting
             - I could look into using a polyfill or SASS, or log those phones into a Google account so the WebView can be updated, but it's not currently worth it to me
 - Required environment variables
+    - `FONT_AWESOME_ACCOUNT_ID`, is my account id for Font Awesome, which is part of the URL for the script to include in my HTML
     - `SLACK_TOKEN_WORK`, is the Slack security token for my work account
     - `SLACK_TOKEN_HOME`, is the Slack security token for my home account, optional
     - `HOME_ASSISTANT_BASE_URL`, is the base URL for Home Assistant. Optional.

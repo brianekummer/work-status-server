@@ -6,18 +6,35 @@ const logger = require('../services/logger');
  * Routes
  */
 module.exports = function(app) {
-  // Pass the app object to StatusController so it can access the global 
-  // variable app.locals.currentStatus
-  const statusController = new (require('../controllers/status-controller'))(app);
-
   const CLIENT_REFRESH_MS = (process.env.CLIENT_REFRESH_SECONDS || 30) * 1000;
+  const FONT_AWESOME_ACCOUNT_ID = (process.env.FONT_AWESOME_ACCOUNT_ID || '');
   const SSE_HEADER = {
     'Content-Type': 'text/event-stream',
     'Cache-Control': 'no-cache',
     'Connection': 'keep-alive'
   };
 
+  // Pass the app object to StatusController so it can access the global 
+  // variable app.locals.currentStatus
+  const statusController = new (require('../controllers/status-controller'))(app);
+
+  // Define our router
   const router = express.Router(); 
+
+
+  /**
+   * Endpoint for desk phone
+   */
+  router.get("/desk", (request, response) => 
+    response.render("desk", { FONT_AWESOME_ACCOUNT_ID }));
+
+
+  /**
+   * Endpoint for wall phone
+   */
+  router.get("/wall", (request, response) =>
+    response.render("wall", {}));
+  
 
   /**
    * Get the latest status and push it to the client
@@ -32,6 +49,7 @@ module.exports = function(app) {
       logger.error(`routes.getLatestStatusAndPush(), ERROR: ${ex}`);
     }
   };
+
 
   /**
    * This route is called by the clients to start receiving status updates 
