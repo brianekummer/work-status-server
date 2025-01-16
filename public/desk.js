@@ -1,8 +1,13 @@
 const EVERY_FIVE_SECONDS = 5000;
 
 
+// Shorthand to select element by id
+const $ = (id) => document.getElementById(id);
+
+
 /**
- * The clocks should be updated more frequently than the statuses
+ * Update the clocks. This will be scheduled here on the client, and
+ * will happen every five seconds.
  */
 updateClocks = () => {
   if (document.body.className == 'visible') {
@@ -24,22 +29,25 @@ updateClocks = () => {
 let eventSource = new EventSource('/api/status-updates');
 eventSource.onmessage = (event) => {
   let status = JSON.parse(event.data);
+  let isVisible = status.emoji || status.text;
 
-  let showStatus = status.emoji || status.text;
-  document.body.className = `${showStatus ? 'visible' : 'invisible'}`;
+  document.body.className = isVisible ? 'visible' : 'invisible';
 
-  if (showStatus) {
+  if (isVisible) {
     updateClocks();   // Update clocks as soon as page becomes visible
 
     $('status-text').className = status.text.length > 13 
       ? 'status--font-size__small' 
       : 'status--font-size';    // Adjust the size of the status text
 
-    $('washer-text').innerHTML = status.homeAssistant.washerText;
-    $('dryer-text').innerHTML = status.homeAssistant.dryerText;
-    $('temperature-text').innerHTML = status.homeAssistant.temperatureText;
+    $('status-emoji').src = status.emoji || '';
+    $('status-text').innerHTML = status.text || '';
+    $('status-times').innerHTML = status.times || '';
+    $('last-updated-time').innerHTML = status.lastUpdatedTime || '';
     
-    setCommonElements(status);
+    $('washer-text').innerHTML = status.homeAssistant.washerText || '';
+    $('dryer-text').innerHTML = status.homeAssistant.dryerText || '';
+    $('temperature-text').innerHTML = status.homeAssistant.temperatureText || '';
   }
 };
 

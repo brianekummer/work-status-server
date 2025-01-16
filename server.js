@@ -49,7 +49,7 @@ app.listen(port, () => logger.info(`Listening on port ${port}`));
 
 /**
  * Periodic polling of Slack and Home Assistant for an up-to-date status is
- * being done in a worked thread (status-worker.js), and the results are stored in 
+ * being done in a worker thread (status-worker.js), and the results are stored in 
  * the global variable app.locals.currentStatus.
  * 
  * So that the global variable is available to other modules (namely 
