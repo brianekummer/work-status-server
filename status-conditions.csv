@@ -10,7 +10,7 @@
 #
 #                                |                               Conditions                              |               What to Display               |
 #                                |               Work                |               Home                |                                             |
-# Status Name                    | Emoji                    Presence | Emoji                    Presence | Emoji                  Text                 |
+# Status Name                    | Emoji                    Presence | Emoji                    Presence | Image                  Text                 |
 #--------------------------------|------------------------|----------|------------------------|----------|----------------------|----------------------|
 | In a non-work meeting          |                        | away     | :non_work_meeting:     |          | non_work_meeting     | Non-Work Meeting     |
 | Playing                        |                        | away     | :8bit:                 |          | 8bit                 | Playing              |
