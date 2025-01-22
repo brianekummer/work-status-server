@@ -31,6 +31,8 @@ const TIMES_TEMPLATES = {
 parentPort.on('message', (currentStatus) => {
   processAnyStatusChange(currentStatus)
   .then((updatedStatus) => {
+    // TODO- ONLY post message if there is a change!!
+    // here is where I log there was a change, not inside processAnyStatusChange()
     parentPort.postMessage(updatedStatus);
   });
 });
