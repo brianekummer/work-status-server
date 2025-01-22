@@ -20,7 +20,8 @@ module.exports = function(app) {
 
   // Define our router
   const router = express.Router(); 
-
+  let clients = new Set();
+  let previousStatus = '';
 
   /**
    * Endpoint for desk phone
@@ -36,6 +37,11 @@ module.exports = function(app) {
     response.render("wall", {}));
   
 
+  pushStatus = (client, status) => {
+    logger.debug(`Pushing data to ${client.req.get('Referrer')}`);
+    client.write(`data: ${status}\n\n`);
+  }
+
   /**
    * This route is called by the clients to start receiving status updates 
    * 
@@ -46,32 +52,43 @@ module.exports = function(app) {
    * requesting site
    */
   router.get('/api/status-updates', (request, response) => {
-    const pageName = request.get('Referrer').split("/").pop();
-    let previousStatus = '';
-    let currentStatus = '';
+    // Add the client to our list of who gets updates
+    response.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+    clients.add(response);
 
-    response.writeHead(200, SSE_HEADER);
+    // Push initial data
+    this.pushStatus(response, JSON.stringify(statusController.getStatusForClient()));
 
-    // TODO- can I set up a watch on something instead of this tight polling?
-
-    let intervalId = setInterval(() => {
-      currentStatus = JSON.stringify(statusController.getStatusForClient());
-      // Since lastUpdatedTime is in status, will happen at LEAST once per minute
-      if (currentStatus !== previousStatus) {
-        logger.debug(`Pushing data to ${pageName}`);
-        response.write(`data: ${currentStatus}\n\n`);
-        previousStatus = currentStatus;
-      }
-    }, CLIENT_REFRESH_MS); 
-
+    // Remove the client from our list when it closes the connection
     request.on('close', () => {
-      clearInterval(intervalId);
-      logger.info('routes /api/get-updates, closed connection');
+      clients.delete(response);
     });
   });
 
   // I don't have a favicon, just return 204/NO-CONTENT
   router.get('/favicon.ico', (request, response) => response.status(204).end());
+
+
+
+  // TODO- this is fired every SERVER_REFRESH_MS when worker thread is notified to look for changes
+  // Watch out for name updatedStatus, this named same as  what comes back from worker thread
+  // but its not
+  router.sendUpdateToClients = (updatedStatus) => {
+    let currentStatus = JSON.stringify(updatedStatus);
+
+    if (currentStatus !== previousStatus) {
+      clients.forEach(client => {
+        this.pushStatus(client, currentStatus);
+      });
+      previousStatus = currentStatus;
+    }
+  }
+
+
 
   return router;
 }

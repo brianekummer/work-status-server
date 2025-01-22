@@ -77,4 +77,8 @@ worker.on('message', (updatedStatus) => {
   // We got an updated status from our worker thread, so save it back into our 
   // global variable
   app.locals.currentStatus = updatedStatus;
+  
+  // POC
+  // This is ugly AF
+  router.sendUpdateToClients(updatedStatus);
 });
