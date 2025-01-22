@@ -37,21 +37,6 @@ module.exports = function(app) {
   
 
   /**
-   * Get the latest status and push it to the client
-   */
-  const getLatestStatusAndPush = (request, response) => {
-    try {
-      let pageName = request.get('Referrer').split("/").pop();
-      logger.debug(`Pushing data to ${pageName}`);
-      
-      response.write(`data: ${JSON.stringify(statusController.getStatusForClient())}\n\n`);
-    } catch (ex) {
-      logger.error(`routes.getLatestStatusAndPush(), ERROR: ${ex}`);
-    }
-  };
-
-
-  /**
    * This route is called by the clients to start receiving status updates 
    * 
    * Use Server Sent Events to continually push updates to the browser every
@@ -61,16 +46,27 @@ module.exports = function(app) {
    * requesting site
    */
   router.get('/api/status-updates', (request, response) => {
+    const pageName = request.get('Referrer').split("/").pop();
+    let previousStatus = '';
+    let currentStatus = '';
+
     response.writeHead(200, SSE_HEADER);
 
-    // Immediately push the status to the client, then repeatedly do that every
-    // CLIENT_REFRESH_MS.
-    getLatestStatusAndPush(request, response);
-    let intervalId = setInterval(() => getLatestStatusAndPush(request, response), CLIENT_REFRESH_MS); 
+    // TODO- can I set up a watch on something instead of this tight polling?
+
+    let intervalId = setInterval(() => {
+      currentStatus = JSON.stringify(statusController.getStatusForClient());
+      // Since lastUpdatedTime is in status, will happen at LEAST once per minute
+      if (currentStatus !== previousStatus) {
+        logger.debug(`Pushing data to ${pageName}`);
+        response.write(`data: ${currentStatus}\n\n`);
+        previousStatus = currentStatus;
+      }
+    }, CLIENT_REFRESH_MS); 
 
     request.on('close', () => {
       clearInterval(intervalId);
-      logger.info('routes./api/get-updates, closed connection');
+      logger.info('routes /api/get-updates, closed connection');
     });
   });
 

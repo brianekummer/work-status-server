@@ -59,6 +59,9 @@ app.listen(port, () => logger.info(`Listening on port ${port}`));
 let statusController = new (require("./controllers/status-controller"))(app);
 app.locals.currentStatus = statusController.EMPTY_STATUS;
 
+
+// TODO- think about how make status-worker exposed to routes.
+//       or move the main logic into a separate class and have the worker thread and routes both call that.
 const { Worker } = require('worker_threads');
 let worker = new Worker('./controllers/status-worker.js');
 

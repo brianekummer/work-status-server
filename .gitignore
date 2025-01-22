@@ -1,4 +1,5 @@
 *.log
+.*-audit.json
 *.env
 *.bak
 
