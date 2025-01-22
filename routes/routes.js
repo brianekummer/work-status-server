@@ -64,7 +64,7 @@ module.exports = function(app) {
     response.writeHead(200, SSE_HEADER);
 
     // Immediately push the status to the client, then repeatedly do that every
-    // SERVER_REFRESH_MS.
+    // CLIENT_REFRESH_MS.
     getLatestStatusAndPush(request, response);
     let intervalId = setInterval(() => getLatestStatusAndPush(request, response), CLIENT_REFRESH_MS); 
 
