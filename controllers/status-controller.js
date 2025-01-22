@@ -28,6 +28,11 @@ class StatusController {
   };
 
 
+  // TODO- I think this controller should be removed, and then I can eliminate the 
+  //       global variable. EXCEPT in routes where I push the status in the get /api//status-updates,
+  //       where I need the global var
+
+
   /**
    * Get status to send to the client, making any necessary changes, such as
    * converting an emoji to an actual filename.

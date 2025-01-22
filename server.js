@@ -80,5 +80,5 @@ worker.on('message', (updatedStatus) => {
   
   // POC
   // This is ugly AF
-  router.sendUpdateToClients(updatedStatus);
+  router.sendUpdateToClients(statusController.getStatusForClient());
 });

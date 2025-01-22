@@ -37,8 +37,8 @@ module.exports = function(app) {
     response.render("wall", {}));
   
 
-  pushStatus = (client, status) => {
-    logger.debug(`Pushing data to ${client.req.get('Referrer')}`);
+  pushStatus = (client, initialPush, status) => {
+    logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
     client.write(`data: ${status}\n\n`);
   }
 
@@ -61,7 +61,7 @@ module.exports = function(app) {
     clients.add(response);
 
     // Push initial data
-    this.pushStatus(response, JSON.stringify(statusController.getStatusForClient()));
+    this.pushStatus(response, true, JSON.stringify(statusController.getStatusForClient()));
 
     // Remove the client from our list when it closes the connection
     request.on('close', () => {
@@ -82,7 +82,7 @@ module.exports = function(app) {
 
     if (currentStatus !== previousStatus) {
       clients.forEach(client => {
-        this.pushStatus(client, currentStatus);
+        this.pushStatus(client, false, currentStatus);
       });
       previousStatus = currentStatus;
     }

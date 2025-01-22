@@ -28,12 +28,17 @@ const TIMES_TEMPLATES = {
  *
  * It is a signal to go get updates and to return the updated status
  */
-parentPort.on('message', (currentStatus) => {
-  processAnyStatusChange(currentStatus)
-  .then((updatedStatus) => {
-    // TODO- ONLY post message if there is a change!!
-    // here is where I log there was a change, not inside processAnyStatusChange()
-    parentPort.postMessage(updatedStatus);
+parentPort.on('message', (oldStatus) => {
+  buildNewStatus(oldStatus)
+  .then((newStatus) => {
+    // Only send the new status back if there has been a change
+    if (JSON.stringify(oldStatus) !== JSON.stringify(newStatus)) {
+      logger.info( 
+        `Changed status\n` +
+        `   from Slack: ${oldStatus.slack.emoji}/${oldStatus.slack.text}/${oldStatus.slack.times} --- HA: ${oldStatus.homeAssistant.washerText}/${oldStatus.homeAssistant.dryerText}/${oldStatus.homeAssistant.temperatureText}\n` +
+        `     to Slack: ${newStatus.slack.emoji}/${newStatus.slack.text}/${newStatus.slack.times} --- HA: ${newStatus.homeAssistant.washerText}/${newStatus.homeAssistant.dryerText}/${newStatus.homeAssistant.temperatureText}`);
+        parentPort.postMessage(newStatus);
+      }
   });
 });
 
@@ -44,7 +49,7 @@ parentPort.on('message', (currentStatus) => {
  * It gets my Slack status for my work and home accounts, as well as statuses of
  * things in Home Assistant. Then it builds the latest status to display.
  */
-processAnyStatusChange = (currentStatus) => {
+buildNewStatus = (oldStatus) => {
   return Promise.resolve(
     Promise.all([
       slackService.getSlackStatus(slackService.ACCOUNTS.WORK),
@@ -53,22 +58,18 @@ processAnyStatusChange = (currentStatus) => {
     ])
     .then(statuses => {
       // Statuses are returned in the same order they were called in Promises.all() 
-      let latestStatus = buildNewStatus(currentStatus, 
-        statuses[0],   // Slack work
-        statuses[1],   // Slack home
-        statuses[2]);  // Home Assistant
+      let [ workSlackStatus, homeSlackStatus, homeAssistantData ] = statuses;
+      let newStatus = oldStatus;
 
-      if (JSON.stringify(currentStatus) !== JSON.stringify(latestStatus)) {
-        logger.info( 
-          `Changed status\n` +
-          `   from Slack: ${currentStatus.slack.emoji}/${currentStatus.slack.text}/${currentStatus.slack.times} --- HA: ${currentStatus.homeAssistant.washerText}/${currentStatus.homeAssistant.dryerText}/${currentStatus.homeAssistant.temperatureText}\n` +
-          `     to Slack: ${latestStatus.slack.emoji}/${latestStatus.slack.text}/${latestStatus.slack.times} --- HA: ${latestStatus.homeAssistant.washerText}/${latestStatus.homeAssistant.dryerText}/${latestStatus.homeAssistant.temperatureText}`);
+      let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
+      if (matchingCondition) {
+        newStatus = mapDataIntoNewStatus(oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData);
       }
       
-      return latestStatus;
+      return newStatus;
     })
     .catch(ex => {
-      logger.error(`status-worker.processAnyStatusChange(), ERROR: ${ex}`);
+      logger.error(`status-worker.buildNewStatus(), ERROR: ${ex}`);
       return slackService.ERROR_STATUS;
     })
   );
@@ -76,39 +77,27 @@ processAnyStatusChange = (currentStatus) => {
 
 
 /**
- * Build the new status
- *
- * It needs the current (about to be previous) status, as well as the latest
- * Slack statuses for work and home, as well as the Home Assistant data.
+ * Map data into the new status
  */
-buildNewStatus = (currentStatus, workSlackStatus, homeSlackStatus, homeAssistantData) => {
-  try {
-    let newStatus = currentStatus;
-
-    let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
-    if (matchingCondition) {
-      newStatus = {
-        slack: {
-          emoji:  matchingCondition.display_emoji,
-          text:   (matchingCondition.display_text || '')
-                    .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
-                    .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text)
-        },
-        homeAssistant: {          
-          washerText: homeAssistantData.washerText,
-          dryerText: homeAssistantData.dryerText,
-          temperatureText: homeAssistantData.temperatureText
-        }
-      };
-
-      // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM")
-      updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, currentStatus, newStatus);
+mapDataIntoNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData) => {
+  let newStatus =  {
+    slack: {
+      emoji:  matchingCondition.display_emoji,
+      text:   (matchingCondition.display_text || '')
+                .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
+                .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text)
+    },
+    homeAssistant: {          
+      washerText: homeAssistantData.washerText,
+      dryerText: homeAssistantData.dryerText,
+      temperatureText: homeAssistantData.temperatureText
     }
-    
-    return newStatus;
-  } catch (ex) {
-    logger.error(`status-worker.buildNewStatus(), ERROR: ${ex}`);
-  }
+  };
+
+  // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM")
+  updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, oldStatus, newStatus);
+
+  return newStatus;
 };
 
 
