@@ -76,9 +76,10 @@ setInterval(() => {
 worker.on('message', (updatedStatus) => {
   // We got an updated status from our worker thread, so save it back into our 
   // global variable
+  console.log(`server.worker.message()`);
   app.locals.currentStatus = updatedStatus;
   
   // POC
   // This is ugly AF
-  router.sendUpdateToClients(statusController.getStatusForClient());
+  router.sendUpdateToClients(updatedStatus);
 });

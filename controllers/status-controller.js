@@ -39,8 +39,8 @@ class StatusController {
    *
    * Returns the status as a JSON object
    */
-  getStatusForClient = () => {
-    let currentStatus = this.app.locals.currentStatus;
+  getStatusForClient = (currentStatus) => {
+    //let currentStatus = this.app.locals.currentStatus;
 
     if (currentStatus) {
       return {

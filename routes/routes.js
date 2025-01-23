@@ -6,13 +6,7 @@ const logger = require('../services/logger');
  * Routes
  */
 module.exports = function(app) {
-  const CLIENT_REFRESH_MS = (process.env.CLIENT_REFRESH_SECONDS || 30) * 1000;
   const FONT_AWESOME_ACCOUNT_ID = (process.env.FONT_AWESOME_ACCOUNT_ID || '');
-  const SSE_HEADER = {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
-  };
 
   // Pass the app object to StatusController so it can access the global 
   // variable app.locals.currentStatus
@@ -61,7 +55,7 @@ module.exports = function(app) {
     clients.add(response);
 
     // Push initial data
-    this.pushStatus(response, true, JSON.stringify(statusController.getStatusForClient()));
+    this.pushStatus(response, true, JSON.stringify(statusController.getStatusForClient(app.locals.currentStatus)));
 
     // Remove the client from our list when it closes the connection
     request.on('close', () => {
@@ -78,7 +72,8 @@ module.exports = function(app) {
   // Watch out for name updatedStatus, this named same as  what comes back from worker thread
   // but its not
   router.sendUpdateToClients = (updatedStatus) => {
-    let currentStatus = JSON.stringify(updatedStatus);
+    console.log(`>>> routes.sendUpdateToClients()`);
+    let currentStatus = JSON.stringify(statusController.getStatusForClient(updatedStatus));
 
     if (currentStatus !== previousStatus) {
       clients.forEach(client => {
