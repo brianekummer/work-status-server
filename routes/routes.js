@@ -1,78 +1,22 @@
 const express = require('express')
-const logger = require('../services/logger');
 
 
 /**
  * Routes
  */
 module.exports = function(app) {
-  const CLIENT_REFRESH_MS = (process.env.CLIENT_REFRESH_SECONDS || 30) * 1000;
   const FONT_AWESOME_ACCOUNT_ID = (process.env.FONT_AWESOME_ACCOUNT_ID || '');
-  const SSE_HEADER = {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    'Connection': 'keep-alive'
-  };
 
   // Pass the app object to StatusController so it can access the global 
   // variable app.locals.currentStatus
   const statusController = new (require('../controllers/status-controller'))(app);
 
-  // Define our router
+  // Define our router and routes
   const router = express.Router(); 
 
-
-  /**
-   * Endpoint for desk phone
-   */
-  router.get("/desk", (request, response) => 
-    response.render("desk", { FONT_AWESOME_ACCOUNT_ID }));
-
-
-  /**
-   * Endpoint for wall phone
-   */
-  router.get("/wall", (request, response) =>
-    response.render("wall", {}));
-  
-
-  /**
-   * Get the latest status and push it to the client
-   */
-  const getLatestStatusAndPush = (request, response) => {
-    try {
-      let pageName = request.get('Referrer').split("/").pop();
-      logger.debug(`Pushing data to ${pageName}`);
-      
-      response.write(`data: ${JSON.stringify(statusController.getStatusForClient())}\n\n`);
-    } catch (ex) {
-      logger.error(`routes.getLatestStatusAndPush(), ERROR: ${ex}`);
-    }
-  };
-
-
-  /**
-   * This route is called by the clients to start receiving status updates 
-   * 
-   * Use Server Sent Events to continually push updates to the browser every
-   * CLIENT_REFRESH_MS.
-   *
-   * FYI, request.get('Referrer') returns the full URL of the referring/
-   * requesting site
-   */
-  router.get('/api/status-updates', (request, response) => {
-    response.writeHead(200, SSE_HEADER);
-
-    // Immediately push the status to the client, then repeatedly do that every
-    // CLIENT_REFRESH_MS.
-    getLatestStatusAndPush(request, response);
-    let intervalId = setInterval(() => getLatestStatusAndPush(request, response), CLIENT_REFRESH_MS); 
-
-    request.on('close', () => {
-      clearInterval(intervalId);
-      logger.info('routes./api/get-updates, closed connection');
-    });
-  });
+  router.get("/desk", (request, response) => response.render("desk", { FONT_AWESOME_ACCOUNT_ID }));
+  router.get("/wall", (request, response) => response.render("wall", {}));
+  router.get('/api/status-updates', (request, response) => statusController.getStatusUpdates(request, response));
 
   // I don't have a favicon, just return 204/NO-CONTENT
   router.get('/favicon.ico', (request, response) => response.status(204).end());

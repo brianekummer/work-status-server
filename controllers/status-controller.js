@@ -1,6 +1,9 @@
 const { DateTime } = require('luxon');
 const slackService = new (require('../services/slack-service'));
 const homeAssistantService = new (require('../services/home-assistant-service'));
+const logger = require('../services/logger');
+
+const CLIENT_REFRESH_MS = (process.env.CLIENT_REFRESH_SECONDS || 30) * 1000;
 
 
 /**
@@ -51,7 +54,47 @@ class StatusController {
       };
     };
   };
-}
 
+
+  /**
+   * Get the latest status and push it to the client
+   */
+  getLatestStatusAndPush = (request, response) => {
+    try {
+      let pageName = request.get('Referrer').split("/").pop();
+      logger.debug(`Pushing data to ${pageName}`);
+      
+      response.write(`data: ${JSON.stringify(this.getStatusForClient())}\n\n`);
+    } catch (ex) {
+      logger.error(`StatusController.getLatestStatusAndPush(), ERROR: ${ex}`);
+    }
+  };
+
+
+  /**
+   * Use Server Sent Events to continually push updates to the browser every
+   * CLIENT_REFRESH_MS.
+   *
+   * FYI, request.get('Referrer') returns the full URL of the referring/
+   * requesting site
+   */
+  getStatusUpdates = (request, response) => {
+    response.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+
+    // Immediately push the status to the client, then repeatedly do that every
+    // CLIENT_REFRESH_MS.
+    this.getLatestStatusAndPush(request, response);
+    let intervalId = setInterval(() => this.getLatestStatusAndPush(request, response), CLIENT_REFRESH_MS); 
+
+    request.on('close', () => {
+      clearInterval(intervalId);
+      logger.info('StatusController.getStatusUpdates(), closed connection');
+    });
+  }
+}
 
 module.exports = StatusController;
