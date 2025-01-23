@@ -1,7 +1,7 @@
 const { DateTime } = require('luxon');
 const logger = require('../services/logger');
 const SlackStatus = require('../models/slack-status');
-const homeAssistantService = new (require('../services/home-assistant-service'));
+const HomeAssistantStatus = require('../models/home-assistant-status');
 
 const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 
@@ -15,7 +15,7 @@ class StatusController {
   // The default, empty status
   EMPTY_STATUS = {
     slack: SlackStatus.EMPTY_STATUS,
-    homeAssistant: homeAssistantService.EMPTY_STATUS
+    homeAssistant: HomeAssistantStatus.EMPTY_STATUS
   };
 
   // TODO- should I add models for SlackStatus, HomeAssistantStatus, CombinedStatus (currentStatus), and the output of getStatusForClient (StatusToClient)?
@@ -39,7 +39,6 @@ class StatusController {
     this.worker = worker;
     this.worker.on('message', (updatedStatus) => {
       this.currentStatus = updatedStatus;
-  
       this.sendUpdateToClients(updatedStatus);
     });
   

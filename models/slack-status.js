@@ -14,7 +14,7 @@ class SlackStatus {
   expiration = 0;
   presence = '';
 
-  
+
   constructor(emoji, text, expiration, presence) {
     this.emoji = emoji;
     this.text = text;
@@ -38,10 +38,8 @@ class SlackStatus {
     );
   }
 
-
-  toString() {
-    return `${this.emoji}/${this.text}/${this.expiration}/${this.presence}`;
-  }
+  // TODO- Having fns in my models causes issues passing status into worker.postMessage
+  //toStringDebug = () => `${this.emoji}/${this.text}/${this.expiration}/${this.presence}`;
 }
 
 

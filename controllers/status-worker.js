@@ -63,12 +63,12 @@ getLatestStatus = (oldStatus) => {
     ])
     .then(statuses => {
       // Statuses are returned in the same order they were called in Promises.all() 
-      let [ workSlackStatus, homeSlackStatus, homeAssistantData ] = statuses;
+      let [ workSlackStatus, homeSlackStatus, homeAssistantStatus ] = statuses;
       let newStatus = oldStatus;
 
       let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       if (matchingCondition) {
-        newStatus = buildNewStatus(oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData);
+        newStatus = buildNewStatus(oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus);
       }
       
       return newStatus;
@@ -84,7 +84,7 @@ getLatestStatus = (oldStatus) => {
 /**
  * Map data into the new status
  */
-buildNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData) => {
+buildNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus) => {
   let newStatus =  {
     slack: {
       emoji: matchingCondition.display_emoji,
@@ -95,9 +95,9 @@ buildNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus
       statusStartTime: null
     },
     homeAssistant: {          
-      washerText: homeAssistantData.washerText,
-      dryerText: homeAssistantData.dryerText,
-      temperatureText: homeAssistantData.temperatureText
+      washerText: homeAssistantStatus.washerText,
+      dryerText: homeAssistantStatus.dryerText,
+      temperatureText: homeAssistantStatus.temperatureText
     }
   };
 
