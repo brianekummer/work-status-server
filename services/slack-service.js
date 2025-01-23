@@ -1,5 +1,5 @@
 const logger = require('./logger');
-
+const SlackStatus = require('../models/slack-status');
 
 /**
  * Slack Service
@@ -11,18 +11,6 @@ class SlackService {
   ACCOUNTS = {
     WORK: 0,
     HOME: 1
-  };
-  EMPTY_STATUS = {
-    emoji:           null,
-    text:            null,
-    expiration:      0,
-    presence:        null
-  };
-  ERROR_STATUS = {
-    emoji:           'ERROR',
-    text:            'ERROR',
-    expiration:      0,
-    presence:        'ERROR'
   };
 
   // Private constants and variables
@@ -53,31 +41,18 @@ class SlackService {
       ])
       .then(responses => Promise.all(responses.map(response => response.json())))
       .then(jsonResponses => {
-        // Huddles don't set an emoji, they only set 'huddle_state' property. For
-        // my purposes, changing the emoji to the same as a Slack call is fine.
-        let emoji = jsonResponses[0].profile.huddle_state === 'in_a_huddle' 
-                      ? this.#SLACK_CALL_STATUS_EMOJI 
-                      : jsonResponses[0].profile.status_emoji;
-
-        let slackStatus = {
-          emoji:           emoji,
-          text:            jsonResponses[0].profile.status_text,
-          expiration:      jsonResponses[0].profile.status_expiration || 0,
-          presence:        jsonResponses[1].presence
-        };
-
-        logger.debug(`Got SLACK for ${accountName}: ` +
-          `${slackStatus.emoji} / ${slackStatus.text} / ${slackStatus.expiration} / ${slackStatus.presence}`);
+        let slackStatus = SlackStatus.fromApi(jsonResponses[0], jsonResponses[1]);
+        logger.debug(`Got SLACK for ${accountName}: ${slackStatus.toString()}`);
 
         return Promise.resolve(slackStatus);
       })
       .catch(ex => {
         logger.error(`SlackService.getSlackStatus(), ERROR for ${accountName}: ${ex}`);
-        return Promise.resolve(this.ERROR_STATUS);
+        return Promise.resolve(SlackStatus.ERROR_STATUS);
       });
     } else {
       // We do not have a token for this Slack account, so return an empty status
-      return Promise.resolve(this.EMPTY_STATUS);
+      return Promise.resolve(SlackStatus.EMPTY_STATUS);
     }
   };
 }

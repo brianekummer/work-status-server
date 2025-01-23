@@ -1,6 +1,6 @@
 const { DateTime } = require('luxon');
 const logger = require('../services/logger');
-const slackService = new (require('../services/slack-service'));
+const SlackStatus = require('../models/slack-status');
 const homeAssistantService = new (require('../services/home-assistant-service'));
 
 const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
@@ -14,7 +14,7 @@ const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 class StatusController {
   // The default, empty status
   EMPTY_STATUS = {
-    slack: slackService.EMPTY_STATUS,
+    slack: SlackStatus.EMPTY_STATUS,
     homeAssistant: homeAssistantService.EMPTY_STATUS
   };
 

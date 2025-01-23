@@ -10,6 +10,11 @@
  *     from the server (from that global variable), to the client, which then
  *     updates the elements on the page.
  *
+ * 
+ * 
+ * TO DO ITEMS
+ *   - rename in data sent to desk/wall "emoji" to "emoji-image" and change css classes etc
+ * 
  */
 
 // Require packages
