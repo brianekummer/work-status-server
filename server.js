@@ -37,7 +37,7 @@ app.set("views", "./views");
 
 // Start the worker thread and pass it to the status controller
 let worker = new Worker('./controllers/status-worker.js');
-let statusController = new StatusController(worker);
+let statusController = new StatusController(worker, logger);
 
 // Initialize the router, which needs the status controller
 let router = require("./routes/routes")(statusController);

@@ -1,7 +1,6 @@
 const { DateTime } = require('luxon');
-const logger = require('../services/logger');
-const SlackStatus = require('../models/slack-status');
-const HomeAssistantStatus = require('../models/home-assistant-status');
+//const logger = require('../services/logger');
+const CombinedStatus = require('../models/combined-status');
 
 const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 
@@ -13,16 +12,12 @@ const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
  */
 class StatusController {
   // The default, empty status
-  EMPTY_STATUS = {
-    slack: SlackStatus.EMPTY_STATUS,
-    homeAssistant: HomeAssistantStatus.EMPTY_STATUS
-  };
 
   // TODO- should I add models for SlackStatus, HomeAssistantStatus, CombinedStatus (currentStatus), and the output of getStatusForClient (StatusToClient)?
 
   // This variable is needed because it contains Slack.statusStartTime which this code adds to keep track of when the status started
   // It does not come from Slack, and when we set the status, we need the current value
-  currentStatus = null;
+  combinedStatus = CombinedStatus.EMPTY_STATUS;
 
 
   clients = new Set();
@@ -32,23 +27,24 @@ class StatusController {
   /**
    * Constructor
    */
-  constructor(worker) {
+  constructor(worker, logger) {
     // Immediately send the currentStatus to the worker thread, which will check
     // for updates, and then send the updated status back in a message. Then
     // repeatedly do that every SERVER_REFRESH_MS.
     this.worker = worker;
-    this.worker.on('message', (updatedStatus) => {
+    this.worker.on('message', (newCombinedStatus) => {
       console.log(`@@@@@`);
-      console.log(updatedStatus);
+      console.log(newCombinedStatus);
       console.log(`@@@@@`);
-      this.currentStatus = updatedStatus;
-      this.sendUpdateToClients(updatedStatus);
+      this.combinedStatus = newCombinedStatus;
+      this.sendUpdateToClients(newCombinedStatus);
     });
   
-    this.currentStatus = this.EMPTY_STATUS;
+    // PASSING in logger from server.js doesn't make it work either
+    this.logger = logger;
 
-    this.worker.postMessage(this.currentStatus);
-    setInterval(() => this.worker.postMessage(this.currentStatus), SERVER_REFRESH_MS); 
+    this.worker.postMessage(this.combinedStatus);
+    setInterval(() => this.worker.postMessage(this.combinedStatus), SERVER_REFRESH_MS); 
   }
 
 
@@ -68,7 +64,7 @@ class StatusController {
     this.clients.add(response);
   
     // Push initial data to this client
-    this.pushStatusToClient(response, true, this.currentStatus);
+    this.pushStatusToClient(response, true, this.combinedStatus);
 
     // Remove the client from our list when it closes the connection
     request.on('close', () => {
@@ -81,9 +77,9 @@ class StatusController {
    * 
    * @param {*} updatedStatus 
    */
-  sendUpdateToClients = (updatedStatus) => {
+  sendUpdateToClients = (newCombinedStatus) => {
     this.clients.forEach(client => {
-      this.pushStatusToClient(client, false, updatedStatus);
+      this.pushStatusToClient(client, false, newCombinedStatus);
     });
   }
 
@@ -92,9 +88,10 @@ class StatusController {
    * FYI, request.get('Referrer') returns the full URL of the referring/
    * requesting site
    */
-  pushStatusToClient = (client, initialPush, status) => {
-    logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
-    client.write(`data: ${JSON.stringify(this.getStatusForClient(status))}\n\n`);
+  pushStatusToClient = (client, initialPush, newCombinedStatus) => {
+    // TODO- logger statement is not working since moving it to status controller
+    this.logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
+    client.write(`data: ${JSON.stringify(this.getStatusForClient(newCombinedStatus))}\n\n`);
   }
 
 
@@ -104,17 +101,17 @@ class StatusController {
    *
    * Returns the status as a JSON object
    */
-  getStatusForClient = (currentStatus) => {
-    if (currentStatus) {
+  getStatusForClient = (combinedStatus) => {
+    if (combinedStatus) {
       return {
-        emoji: currentStatus.slack.emoji ? `/images/${currentStatus.slack.emoji}.png` : '',
-        text: currentStatus.slack.text,
-        times: currentStatus.slack.times,
+        emoji: combinedStatus.slack.emoji ? `/images/${combinedStatus.slack.emoji}.png` : '',
+        text: combinedStatus.slack.text,
+        times: combinedStatus.slack.times,
         lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE),
         homeAssistant: {
-          washerText: currentStatus.homeAssistant.washerText,
-          dryerText: currentStatus.homeAssistant.dryerText,
-          temperatureText: currentStatus.homeAssistant.temperatureText
+          washerText: combinedStatus.homeAssistant.washerText,
+          dryerText: combinedStatus.homeAssistant.dryerText,
+          temperatureText: combinedStatus.homeAssistant.temperatureText
         }
       };
     };
