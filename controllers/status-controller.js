@@ -38,6 +38,9 @@ class StatusController {
     // repeatedly do that every SERVER_REFRESH_MS.
     this.worker = worker;
     this.worker.on('message', (updatedStatus) => {
+      console.log(`@@@@@`);
+      console.log(updatedStatus);
+      console.log(`@@@@@`);
       this.currentStatus = updatedStatus;
       this.sendUpdateToClients(updatedStatus);
     });

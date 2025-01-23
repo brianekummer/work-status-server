@@ -12,15 +12,10 @@ const { parentPort } = require('worker_threads');
  * are new instances, separate from those of the main thread.
  */
 const logger = require('../services/logger');
+const CombinedStatus = require('../models/combined-status');
 const slackService = new (require('../services/slack-service'));
 const homeAssistantService = new (require('../services/home-assistant-service'));
 const statusConditionService = new (require('../services/status-condition-service'));
-
-
-const TIMES_TEMPLATES = {
-  START: 'Started @ (START)',
-  START_TO_END: '(START) - (STATUS_EXPIRATION)'
-}
 
 
 /**
@@ -28,21 +23,21 @@ const TIMES_TEMPLATES = {
  *
  * It is a signal to go get updates and to return the updated status
  */
-parentPort.on('message', (oldStatus) => {
-  getLatestStatus(oldStatus)
-  .then((newStatus) => {
+parentPort.on('message', (oldCombinedStatus) => {
+  getLatestStatus(oldCombinedStatus)
+  .then((newCombinedStatus) => {
     // Only send the new status back if there has been a change
     
     // TODO- this status does NOT include lastUpdatedTime, so it will
     //       ONLY return an update when the Slack or HA status changes.
     //       If I want it to update every minute, ONE SOLUTION is to add last updated
     //       time into this status
-    if (JSON.stringify(oldStatus) !== JSON.stringify(newStatus)) {
+    if (JSON.stringify(oldCombinedStatus) !== JSON.stringify(newCombinedStatus)) {
       logger.info( 
         `status-worker.on.message(), changed status\n` +
-        `   FROM Slack:${oldStatus.slack.emoji}/${oldStatus.slack.text}/${oldStatus.slack.times} ; HA:${oldStatus.homeAssistant.washerText}/${oldStatus.homeAssistant.dryerText}/${oldStatus.homeAssistant.temperatureText}\n` +
-        `     TO Slack:${newStatus.slack.emoji}/${newStatus.slack.text}/${newStatus.slack.times} ; HA:${newStatus.homeAssistant.washerText}/${newStatus.homeAssistant.dryerText}/${newStatus.homeAssistant.temperatureText}`);
-      parentPort.postMessage(newStatus);
+        `   FROM Slack:${oldCombinedStatus.slack.emoji}/${oldCombinedStatus.slack.text}/${oldCombinedStatus.slack.times} ; HA:${oldCombinedStatus.homeAssistant.washerText}/${oldCombinedStatus.homeAssistant.dryerText}/${oldCombinedStatus.homeAssistant.temperatureText}\n` +
+        `     TO Slack:${newCombinedStatus.slack.emoji}/${newCombinedStatus.slack.text}/${newCombinedStatus.slack.times} ; HA:${newCombinedStatus.homeAssistant.washerText}/${newCombinedStatus.homeAssistant.dryerText}/${newCombinedStatus.homeAssistant.temperatureText}`);
+      parentPort.postMessage(newCombinedStatus);
     }
   });
 });
@@ -54,7 +49,7 @@ parentPort.on('message', (oldStatus) => {
  * It gets my Slack status for my work and home accounts, as well as statuses of
  * things in Home Assistant. Then it builds the latest status to display.
  */
-getLatestStatus = (oldStatus) => {
+getLatestStatus = (oldCombinedStatus) => {
   return Promise.resolve(
     Promise.all([
       slackService.getSlackStatus(slackService.ACCOUNTS.WORK),
@@ -64,95 +59,15 @@ getLatestStatus = (oldStatus) => {
     .then(statuses => {
       // Statuses are returned in the same order they were called in Promises.all() 
       let [ workSlackStatus, homeSlackStatus, homeAssistantStatus ] = statuses;
-      let newStatus = oldStatus;
 
       let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
-      if (matchingCondition) {
-        newStatus = buildNewStatus(oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus);
-      }
-      
-      return newStatus;
+      return matchingCondition 
+        ? new CombinedStatus(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
+        : oldCombinedStatus;
     })
     .catch(ex => {
       logger.error(`status-worker.getLatestStatus(), ERROR: ${ex}`);
       return slackService.ERROR_STATUS;
     })
   );
-};
-
-
-/**
- * Map data into the new status
- */
-buildNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus) => {
-  let newStatus =  {
-    slack: {
-      emoji: matchingCondition.display_emoji,
-      text: (matchingCondition.display_text || '')
-              .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
-              .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text),
-      times: null,
-      statusStartTime: null
-    },
-    homeAssistant: {          
-      washerText: homeAssistantStatus.washerText,
-      dryerText: homeAssistantStatus.dryerText,
-      temperatureText: homeAssistantStatus.temperatureText
-    }
-  };
-
-  // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM")
-  updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, oldStatus, newStatus);
-
-  return newStatus;
-};
-
-
-/**
- * Determine the times of the Slack status and update that in newStatus
- */
-updateSlackStatusTimes = (evaluatingStatus, homeSlackStatus, workSlackStatus, oldStatus, newStatus) => {
-  // The start time only changes when the status text changes, so that if I
-  // add minutes to my focus time, only the end time changes. We're adding it
-  // to latestStatus so that we can use it the next time we check the status.
-
-  // TODO - can I get this from Slack?
-  newStatus.slack.statusStartTime = oldStatus.slack.text !== newStatus.slack.text
-    ? DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
-    : oldStatus.slack.statusStartTime;
-
-  // Determine the expiration time of the status
-  // 
-  // If we matched the home emoji, then we need to use the home expiration.
-  // The home emoji is intentionally being checked (instead of the work emoji)
-  // because
-  //   - It's possible that I'd be on PTO for work and that status would have an
-  //     expiration in a couple of days, and also be on a non-work meeting with 
-  //     an expiration of an hour or so. In this case, the home expiration 
-  //     should be used.
-  //   - Similarly, I can be on PTO and have a home status with no expiration,
-  //     where I want to use the no-expiration of my home status instead of the
-  //     expiration of my PTO at work.
-  //   - It's highly unlikely that I'd have a home status with an expiration 
-  //     while I'm working, where I'd want to use the work status's expiration.
-  let statusExpirationSeconds = 
-    homeSlackStatus.emoji && statusConditionService.matchesCondition(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) 
-      ? homeSlackStatus.expiration 
-      : workSlackStatus.expiration;
-
-  // Select the appropriate template for displaying the status time (i.e. 
-  // "Started @ 12:30 PM" or "12:30 PM - 1:00 PM")
-  let statusTimesTemplate = statusExpirationSeconds === 0 
-    ? TIMES_TEMPLATES.START 
-    : TIMES_TEMPLATES.START_TO_END;
-
-  let statusExpiration = DateTime
-    .fromSeconds(statusExpirationSeconds)
-    .toLocaleString(DateTime.TIME_SIMPLE);
-
-  // Set the times of this status
-  newStatus.slack.times = 
-    statusTimesTemplate
-      .replace('(START)', newStatus.slack.statusStartTime)
-      .replace('(STATUS_EXPIRATION)', statusExpiration);
 };
