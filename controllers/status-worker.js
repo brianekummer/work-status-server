@@ -35,13 +35,13 @@ parentPort.on('message', (oldStatus) => {
     
     // TODO- this status does NOT include lastUpdatedTime, so it will
     //       ONLY return an update when the Slack or HA status changes.
-    //       If I want it to update every minute, then add last updated
+    //       If I want it to update every minute, ONE SOLUTION is to add last updated
     //       time into this status
     if (JSON.stringify(oldStatus) !== JSON.stringify(newStatus)) {
       logger.info( 
-        `Changed status\n` +
-        `   from Slack: ${oldStatus.slack.emoji}/${oldStatus.slack.text}/${oldStatus.slack.times} --- HA: ${oldStatus.homeAssistant.washerText}/${oldStatus.homeAssistant.dryerText}/${oldStatus.homeAssistant.temperatureText}\n` +
-        `     to Slack: ${newStatus.slack.emoji}/${newStatus.slack.text}/${newStatus.slack.times} --- HA: ${newStatus.homeAssistant.washerText}/${newStatus.homeAssistant.dryerText}/${newStatus.homeAssistant.temperatureText}`);
+        `status-worker.on.message(), changed status\n` +
+        `   FROM Slack:${oldStatus.slack.emoji}/${oldStatus.slack.text}/${oldStatus.slack.times} ; HA:${oldStatus.homeAssistant.washerText}/${oldStatus.homeAssistant.dryerText}/${oldStatus.homeAssistant.temperatureText}\n` +
+        `     TO Slack:${newStatus.slack.emoji}/${newStatus.slack.text}/${newStatus.slack.times} ; HA:${newStatus.homeAssistant.washerText}/${newStatus.homeAssistant.dryerText}/${newStatus.homeAssistant.temperatureText}`);
       parentPort.postMessage(newStatus);
     }
   });

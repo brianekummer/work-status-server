@@ -32,7 +32,19 @@ const fs = require('fs');
 
 // Generate timestamp in New York timezone
 const timezonedTimestamp = () => 
-  new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+  new Date().toLocaleString('en-US', {
+    timeZone: 'America/New_York', 
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    fractionalSecondDigits: 3
+  });
+
+
 
 // Determine log directory (defaults to the project folder if /var/log doesn't exist)
 const logDir = fs.existsSync('/var/log') ? '/var/log/' : '';
