@@ -29,27 +29,32 @@ const TIMES_TEMPLATES = {
  * It is a signal to go get updates and to return the updated status
  */
 parentPort.on('message', (oldStatus) => {
-  buildNewStatus(oldStatus)
+  getLatestStatus(oldStatus)
   .then((newStatus) => {
     // Only send the new status back if there has been a change
+    
+    // TODO- this status does NOT include lastUpdatedTime, so it will
+    //       ONLY return an update when the Slack or HA status changes.
+    //       If I want it to update every minute, then add last updated
+    //       time into this status
     if (JSON.stringify(oldStatus) !== JSON.stringify(newStatus)) {
       logger.info( 
         `Changed status\n` +
         `   from Slack: ${oldStatus.slack.emoji}/${oldStatus.slack.text}/${oldStatus.slack.times} --- HA: ${oldStatus.homeAssistant.washerText}/${oldStatus.homeAssistant.dryerText}/${oldStatus.homeAssistant.temperatureText}\n` +
         `     to Slack: ${newStatus.slack.emoji}/${newStatus.slack.text}/${newStatus.slack.times} --- HA: ${newStatus.homeAssistant.washerText}/${newStatus.homeAssistant.dryerText}/${newStatus.homeAssistant.temperatureText}`);
-        parentPort.postMessage(newStatus);
-      }
+      parentPort.postMessage(newStatus);
+    }
   });
 });
 
 
 /**
- * Process any status change
+ * Get the latest status
  *
  * It gets my Slack status for my work and home accounts, as well as statuses of
  * things in Home Assistant. Then it builds the latest status to display.
  */
-buildNewStatus = (oldStatus) => {
+getLatestStatus = (oldStatus) => {
   return Promise.resolve(
     Promise.all([
       slackService.getSlackStatus(slackService.ACCOUNTS.WORK),
@@ -63,13 +68,13 @@ buildNewStatus = (oldStatus) => {
 
       let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       if (matchingCondition) {
-        newStatus = mapDataIntoNewStatus(oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData);
+        newStatus = buildNewStatus(oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData);
       }
       
       return newStatus;
     })
     .catch(ex => {
-      logger.error(`status-worker.buildNewStatus(), ERROR: ${ex}`);
+      logger.error(`status-worker.getLatestStatus(), ERROR: ${ex}`);
       return slackService.ERROR_STATUS;
     })
   );
@@ -79,7 +84,7 @@ buildNewStatus = (oldStatus) => {
 /**
  * Map data into the new status
  */
-mapDataIntoNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData) => {
+buildNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData) => {
   let newStatus =  {
     slack: {
       emoji:  matchingCondition.display_emoji,

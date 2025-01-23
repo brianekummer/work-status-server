@@ -74,7 +74,7 @@ module.exports = function(app) {
 
 
 
-  // TODO- this is fired every SERVER_REFRESH_MS when worker thread is notified to look for changes
+
   // Watch out for name updatedStatus, this named same as  what comes back from worker thread
   // but its not
   router.sendUpdateToClients = (updatedStatus) => {
