@@ -1,7 +1,9 @@
 *.log
-.*-audit.json
 *.env
 *.bak
+
+# Config file for winston-daily-rotate-file
+.*-audit.json
 
 # node_modules should not be checked in, can use the command "npm install"
 # to rebuild this folder

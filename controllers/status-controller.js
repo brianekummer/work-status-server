@@ -1,9 +1,10 @@
 const { DateTime } = require('luxon');
+const logger = require('../services/logger');
 const slackService = new (require('../services/slack-service'));
 const homeAssistantService = new (require('../services/home-assistant-service'));
-const logger = require('../services/logger');
 
 const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
+
 
 /**
  * Status Controller
@@ -11,19 +12,22 @@ const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
  * Used to build the status that will be send to the clients
  */
 class StatusController {
-
-
   // The default, empty status
   EMPTY_STATUS = {
     slack: slackService.EMPTY_STATUS,
     homeAssistant: homeAssistantService.EMPTY_STATUS
   };
 
+  // TODO- should I add models for SlackStatus, HomeAssistantStatus, CombinedStatus (currentStatus), and the output of getStatusForClient (StatusToClient)?
+
+  // This variable is needed because it contains Slack.statusStartTime which this code adds to keep track of when the status started
+  // It does not come from Slack, and when we set the status, we need the current value
   currentStatus = null;
 
-  clients = new Set();
 
+  clients = new Set();
   worker = null;
+
 
   /**
    * Constructor
@@ -42,9 +46,7 @@ class StatusController {
     this.currentStatus = this.EMPTY_STATUS;
 
     this.worker.postMessage(this.currentStatus);
-    setInterval(() => {
-      this.worker.postMessage(this.currentStatus); 
-    }, SERVER_REFRESH_MS); 
+    setInterval(() => this.worker.postMessage(this.currentStatus), SERVER_REFRESH_MS); 
   }
 
 
@@ -53,11 +55,9 @@ class StatusController {
   * Use Server Sent Events to continually push updates to the browser every
   * CLIENT_REFRESH_MS.
   *
-  * FYI, request.get('Referrer') returns the full URL of the referring/
-  * requesting site
   */
   getStatusUpdates = async (request, response) => {
-    // Add the client to our list of who gets updates
+    // Add the client to our list of clients that need updates
     response.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -65,8 +65,8 @@ class StatusController {
     });
     this.clients.add(response);
   
-    // Push initial data
-    this.pushStatus(response, true, this.currentStatus);
+    // Push initial data to this client
+    this.pushStatusToClient(response, true, this.currentStatus);
 
     // Remove the client from our list when it closes the connection
     request.on('close', () => {
@@ -75,14 +75,22 @@ class StatusController {
   }
 
 
+  /**
+   * 
+   * @param {*} updatedStatus 
+   */
   sendUpdateToClients = (updatedStatus) => {
     this.clients.forEach(client => {
-      this.pushStatus(client, false, updatedStatus);
+      this.pushStatusToClient(client, false, updatedStatus);
     });
   }
 
 
-  pushStatus = (client, initialPush, status) => {
+  /**
+   * FYI, request.get('Referrer') returns the full URL of the referring/
+   * requesting site
+   */
+  pushStatusToClient = (client, initialPush, status) => {
     logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
     client.write(`data: ${JSON.stringify(this.getStatusForClient(status))}\n\n`);
   }

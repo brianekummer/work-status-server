@@ -31,10 +31,10 @@ app.set("view engine", "mustache");
 app.set("views", "./views");
 
 // Start the worker thread and pass it to the status controller
-worker = new Worker('./controllers/status-worker.js');
-statusController = new StatusController(worker);
+let worker = new Worker('./controllers/status-worker.js');
+let statusController = new StatusController(worker);
 
-// Initialize our router, which needs the status controller
+// Initialize the router, which needs the status controller
 let router = require("./routes/routes")(statusController);
 app.use(router);
 

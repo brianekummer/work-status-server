@@ -13,16 +13,16 @@ class SlackService {
     HOME: 1
   };
   EMPTY_STATUS = {
-    emoji:      null,
-    text:       null,
-    expiration: 0,
-    presence:   null
+    emoji:           null,
+    text:            null,
+    expiration:      0,
+    presence:        null
   };
   ERROR_STATUS = {
-    emoji:      'ERROR',
-    text:       'ERROR',
-    expiration: 0,
-    presence:   'ERROR'
+    emoji:           'ERROR',
+    text:            'ERROR',
+    expiration:      0,
+    presence:        'ERROR'
   };
 
   // Private constants and variables
@@ -53,15 +53,17 @@ class SlackService {
       ])
       .then(responses => Promise.all(responses.map(response => response.json())))
       .then(jsonResponses => {
+        // Huddles don't set an emoji, they only set 'huddle_state' property. For
+        // my purposes, changing the emoji to the same as a Slack call is fine.
+        let emoji = jsonResponses[0].profile.huddle_state === 'in_a_huddle' 
+                      ? this.#SLACK_CALL_STATUS_EMOJI 
+                      : jsonResponses[0].profile.status_emoji;
+
         let slackStatus = {
-          // Huddles don't set an emoji, they only set 'huddle_state' property. For
-          // my purposes, changing the emoji to the same as a Slack call is fine.
-          emoji:      jsonResponses[0].profile.huddle_state === 'in_a_huddle' 
-                        ? this.#SLACK_CALL_STATUS_EMOJI 
-                        : jsonResponses[0].profile.status_emoji,
-          text:       jsonResponses[0].profile.status_text,
-          expiration: jsonResponses[0].profile.status_expiration || 0,
-          presence:   jsonResponses[1].presence
+          emoji:           emoji,
+          text:            jsonResponses[0].profile.status_text,
+          expiration:      jsonResponses[0].profile.status_expiration || 0,
+          presence:        jsonResponses[1].presence
         };
 
         logger.debug(`Got SLACK for ${accountName}: ` +

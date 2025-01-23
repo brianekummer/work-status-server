@@ -1,9 +1,11 @@
 const express = require('express')
-const logger = require('../services/logger');
 
 
 /**
  * Routes
+ * 
+ * @param statusController is the status controller
+ * @returns the router 
  */
 module.exports = function(statusController) {
   const FONT_AWESOME_ACCOUNT_ID = (process.env.FONT_AWESOME_ACCOUNT_ID || '');

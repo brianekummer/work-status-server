@@ -87,10 +87,12 @@ getLatestStatus = (oldStatus) => {
 buildNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantData) => {
   let newStatus =  {
     slack: {
-      emoji:  matchingCondition.display_emoji,
-      text:   (matchingCondition.display_text || '')
-                .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
-                .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text)
+      emoji: matchingCondition.display_emoji,
+      text: (matchingCondition.display_text || '')
+              .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
+              .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text),
+      times: null,
+      statusStartTime: null
     },
     homeAssistant: {          
       washerText: homeAssistantData.washerText,
@@ -109,13 +111,15 @@ buildNewStatus = (oldStatus, matchingCondition, workSlackStatus, homeSlackStatus
 /**
  * Determine the times of the Slack status and update that in newStatus
  */
-updateSlackStatusTimes = (evaluatingStatus, homeSlackStatus, workSlackStatus, currentStatus, newStatus) => {
+updateSlackStatusTimes = (evaluatingStatus, homeSlackStatus, workSlackStatus, oldStatus, newStatus) => {
   // The start time only changes when the status text changes, so that if I
   // add minutes to my focus time, only the end time changes. We're adding it
   // to latestStatus so that we can use it the next time we check the status.
-  newStatus.slack.statusStartTime = currentStatus.slack.text !== newStatus.slack.text
+
+  // TODO - can I get this from Slack?
+  newStatus.slack.statusStartTime = oldStatus.slack.text !== newStatus.slack.text
     ? DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
-    : currentStatus.slack.statusStartTime;
+    : oldStatus.slack.statusStartTime;
 
   // Determine the expiration time of the status
   // 
