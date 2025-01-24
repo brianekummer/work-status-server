@@ -1,4 +1,3 @@
-const { DateTime } = require('luxon');
 const { parentPort } = require('worker_threads');
 
 
@@ -24,6 +23,11 @@ const statusConditionService = new (require('../services/status-condition-servic
  * It is a signal to go get updates and to return the updated status
  */
 parentPort.on('message', (oldCombinedStatus) => {
+  // The object being received is a simple JSON object, not a JS class, so we must convert it
+  logger.debug('^^^^^ status-worker.on.message() RECEIVED');
+  oldCombinedStatus = CombinedStatus.fromJsonObject(oldCombinedStatus);
+  console.log(oldCombinedStatus);
+
   getLatestStatus(oldCombinedStatus)
   .then((newCombinedStatus) => {
     // Only send the new status back if there has been a change
@@ -34,10 +38,14 @@ parentPort.on('message', (oldCombinedStatus) => {
     //       time into this status
     if (JSON.stringify(oldCombinedStatus) !== JSON.stringify(newCombinedStatus)) {
       // TODO- commenting this out lets me see useful error messages when oldCombinedStatus.slack or newCombinedStatus.slack is null/undefined
-      logger.info( 
-        `status-worker.on.message(), changed status\n` +
-        `   FROM Slack:${oldCombinedStatus.slack.emoji}/${oldCombinedStatus.slack.text}/${oldCombinedStatus.slack.times} ; HA:${oldCombinedStatus.homeAssistant.washerText}/${oldCombinedStatus.homeAssistant.dryerText}/${oldCombinedStatus.homeAssistant.temperatureText}\n` +
-        `     TO Slack:${newCombinedStatus.slack.emoji}/${newCombinedStatus.slack.text}/${newCombinedStatus.slack.times} ; HA:${newCombinedStatus.homeAssistant.washerText}/${newCombinedStatus.homeAssistant.dryerText}/${newCombinedStatus.homeAssistant.temperatureText}`);
+      //logger.info( 
+      //  `status-worker.on.message(), changed status\n` +
+      //  `   FROM Slack:${oldCombinedStatus.slack.emoji}/${oldCombinedStatus.slack.text}/${oldCombinedStatus.slack.times} ; HA:${oldCombinedStatus.homeAssistant.washerText}/${oldCombinedStatus.homeAssistant.dryerText}/${oldCombinedStatus.homeAssistant.temperatureText}\n` +
+      //  `     TO Slack:${newCombinedStatus.slack.emoji}/${newCombinedStatus.slack.text}/${newCombinedStatus.slack.times} ; HA:${newCombinedStatus.homeAssistant.washerText}/${newCombinedStatus.homeAssistant.dryerText}/${newCombinedStatus.homeAssistant.temperatureText}`);
+
+      logger.debug(';;;;; status-worker.postMessage SENDING');
+      console.log(newCombinedStatus);
+
       parentPort.postMessage(newCombinedStatus);
     }
   });
@@ -62,12 +70,12 @@ getLatestStatus = (oldCombinedStatus) => {
       let [ workSlackStatus, homeSlackStatus, homeAssistantStatus ] = statuses;
 
       logger.debug(`[[[[[`);
-      logger.debug(workSlackStatus);
-      logger.debug(homeSlackStatus);
+      console.log(workSlackStatus);
+      console.log(homeSlackStatus);
       let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
-        ? new CombinedStatus(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
-        //? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
+        //? new CombinedStatus(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
+        ? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
         : oldCombinedStatus;
     })
     .catch(ex => {

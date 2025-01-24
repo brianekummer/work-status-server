@@ -33,8 +33,8 @@ class StatusController {
     // repeatedly do that every SERVER_REFRESH_MS.
     this.worker = worker;
     this.worker.on('message', (newCombinedStatus) => {
-      logger.debug(`@@@@@`);
-      logger.debug(newCombinedStatus);
+      logger.debug(`@@@@@ StatusController.on.message() RECEIVED`);
+      console.log(newCombinedStatus);
       logger.debug(`@@@@@`);
       this.combinedStatus = newCombinedStatus;
       this.sendStatusToAllClients();

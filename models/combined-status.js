@@ -25,6 +25,8 @@ class CombinedStatus {
   //toStringDebug = () => `${this.washerText}/${this.dryerText}/${this.temperatureText}`;
 
 
+  // Works
+  /*
   constructor(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus) {
   // Definition of EMPTY_STATUS passes in null for everything, so use ? operator and be careful
     logger.debug('&&&&& combined-status constructor()');
@@ -57,6 +59,101 @@ class CombinedStatus {
 
     return newCombinedStatus;
   }
+    */
+
+
+
+  constructor(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus) {
+    // Definition of EMPTY_STATUS passes in null for everything, so use ? operator and be careful
+    //logger.debug('&&&&& combined-status constructor()');
+    //console.log(matchingCondition);
+    
+    this.slack = {
+        emoji: matchingCondition?.display_emoji || '',
+        text: (matchingCondition?.display_text || '')
+                .replace('(WORK_STATUS_TEXT)', workSlackStatus?.text || '')
+                .replace('(HOME_STATUS_TEXT)', homeSlackStatus?.text || ''),
+        times: null,
+        statusStartTime: null
+      };
+    this.homeAssistant = {
+        washerText: homeAssistantStatus?.washerText || '',
+        dryerText: homeAssistantStatus?.dryerText || '',
+        temperatureText: homeAssistantStatus?.temperatureText || ''
+    };
+    
+    // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM") and
+    // status start time
+    if (matchingCondition) {
+      this.updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, oldCombinedStatus, this);
+    }
+
+    logger.debug('%%%%% CombinedStatus.constructor() RETURNING');
+    console.log(this);
+  }
+
+
+  static fromJsonObject(jsonObject) {
+    let newCombinedStatus = new CombinedStatus(null, null, null, null, null);
+    newCombinedStatus.slack = {
+      emoji: jsonObject.slack.emoji,
+      text: jsonObject.slack.text,
+      times: jsonObject.slack.times,
+      statusStartTime: jsonObject.slack.statusStartTime
+    };
+    newCombinedStatus.homeAssistant = {          
+      washerText: jsonObject.homeAssistant.washerText,
+      dryerText: jsonObject.homeAssistant.dryerText,
+      temperatureText: jsonObject.homeAssistant.temperatureText
+    };
+
+    return newCombinedStatus;
+  }
+
+
+
+
+  
+  updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus) {
+    logger.debug('\\\\\ combined-status updateStatus()');
+    
+    /*
+    let newCombinedStatus = new CombinedStatus(
+        matchingCondition.display_emoji,
+        (matchingCondition.display_text || '')
+          .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
+          .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text),
+        null,
+        null, 
+        homeAssistantStatus.washerText,
+        homeAssistantStatus.dryerText,
+        homeAssistantStatus.temperatureText
+    );
+    */
+    let newCombinedStatus = new CombinedStatus(this, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus);
+    
+    // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM") and
+    // status start time
+    this.updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, this, newCombinedStatus);
+
+    logger.debug('\\\\\ CombinedStatus.updateStatus() RETURNING');
+    console.log(newCombinedStatus);
+
+    return newCombinedStatus;
+  }
+
+
+
+
+  
+
+
+
+
+
+
+
+
 
   /***** DOESN'T WORK *****
   constructor(slackEmoji, slackText, slackTimes, slackStatusStartTime, homeAssistantWasherText, homeAssistantDryerText, homeAssistantTemperatureText) {
