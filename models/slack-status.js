@@ -7,6 +7,28 @@ class SlackStatus {
   // Static variables and functions
   static EMPTY_STATUS = new SlackStatus(null, null, 0, null);
   static ERROR_STATUS = new SlackStatus('ERROR', 'ERROR', 0, 'ERROR');
+
+  
+  // Public variables/properties
+  emoji = '';
+  text = '';
+  expiration = 0;
+  presence = '';
+
+
+  // Private variables
+  #SLACK_CALL_STATUS_EMOJI = ':slack_call:';
+
+
+  // Constructors
+  constructor(emoji, text, expiration, presence) {
+    this.emoji = emoji;
+    this.text = text;
+    this.expiration = expiration;
+    this.presence = presence;
+  }
+
+
   static fromApi(slackApiProfileResponse, slackApiPresenceResponse) {
     // Slack huddles don't set an emoji, they only set 'huddle_state' property. For
     // my purposes, changing the emoji to the same as a Slack call is fine.
@@ -22,30 +44,8 @@ class SlackStatus {
     );
   }
 
-  
-  // Public variables/properties
-  emoji = '';
-  text = '';
-  expiration = 0;
-  presence = '';
 
-
-  // Private variables
-  #SLACK_CALL_STATUS_EMOJI = ':slack_call:';
-
-
-  constructor(emoji, text, expiration, presence) {
-    this.emoji = emoji;
-    this.text = text;
-    this.expiration = expiration;
-    this.presence = presence;
-  }
-
-
-  // TODO- Having fns in my models causes issues passing status into worker.postMessage
-  toString() {
-    return `${this.emoji}/${this.text}/${this.expiration}/${this.presence}`;
-  }
+  toString = () => `${this.emoji}/${this.text}/${this.expiration}/${this.presence}`;
 }
 
 

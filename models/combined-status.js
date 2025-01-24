@@ -6,19 +6,15 @@ const statusConditionService = new (require('../services/status-condition-servic
  * Combined Status
  * 
  * Has all Slack and Home Assistant statuses
+ * 
+ * 
+ * This class is passed between StatusController and status-worker. Apparently JS doesn't like fns
+ * in this class to use "fat arrow" syntax, or JS can't clone objects of this class for that purpose.
+ * So all fns must be defined using "standard" (TODO- what is proper term here?) syntax.
+ * 
  */
 class CombinedStatus {
   static EMPTY_STATUS = new CombinedStatus(null, null, null, null, null, null, null);
-  static fromJsonObject(jsonObject) {
-    return new CombinedStatus(
-      jsonObject.slack.emoji, 
-      jsonObject.slack.text, 
-      jsonObject.slack.times, 
-      jsonObject.slack.statusStartTime,
-      jsonObject.homeAssistant.washerText,
-      jsonObject.homeAssistant.dryerText,
-      jsonObject.homeAssistant.temperatureText);
-  }
 
   #TIMES_TEMPLATES = {
     START: 'Started @ (START)',
@@ -30,12 +26,12 @@ class CombinedStatus {
   homeAssistant = {};
 
   
-  // doesn't like fat arrow syntax here, has issues being passed into worker thread - dunno why
   toString() { 
     return `Slack:${this.slack.emoji}/${this.slack.text}/${this.slack.times} ; HA:${this.homeAssistant.washerText}/${this.homeAssistant.dryerText}/${this.homeAssistant.temperatureText}`;
   }
 
 
+  // Constructors
   constructor(slackEmoji, slackText, slackTimes, slackStatusStartTime, homeAssistantWasherText, homeAssistantDryerText, homeAssistantTemperatureText) {
     this.slack = {
       emoji: slackEmoji,
@@ -48,6 +44,18 @@ class CombinedStatus {
       dryerText: homeAssistantDryerText,
       temperatureText: homeAssistantTemperatureText
     };
+  }
+
+
+  static fromJsonObject(jsonObject) {
+    return new CombinedStatus(
+      jsonObject.slack.emoji, 
+      jsonObject.slack.text, 
+      jsonObject.slack.times, 
+      jsonObject.slack.statusStartTime,
+      jsonObject.homeAssistant.washerText,
+      jsonObject.homeAssistant.dryerText,
+      jsonObject.homeAssistant.temperatureText);
   }
 
 

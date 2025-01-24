@@ -13,14 +13,23 @@
  * 
  * 
  * TO DO ITEMS
- *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
+ *   - merge what I have into master
+ * 
+ *   - convert to typescript? would save me some grief
+ *       - new branch to test this
  *
  *   - instead of polling HA, use webhook
  *       - I think this should be a separate branch
  *       - is using font awesome to show HVAC status up-to-date enough to be useful?
+ *
+ *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
+ *       - do this AFTER I look at webhook for HA, because that will likely significantly change
+ *         how things are done
  *   
- *   - consistent style in defining functions. fat arrow syntax has issues with passing data into worker thread, dunno why, so decision to not use that syntax in CombinedStatus model - add comment explaining that. 
- *   - Update all comments, readme's, etc.
+ *   - Cleanup
+ *       - find a linter
+ *       - consistent style in defining functions
+ *       - Update all comments, readme's, etc.
  */
 
 // Require packages
