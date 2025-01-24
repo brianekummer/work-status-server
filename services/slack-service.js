@@ -41,10 +41,10 @@ class SlackService {
       ])
       .then(responses => Promise.all(responses.map(response => response.json())))
       .then(jsonResponses => {
-        logger.debug(`>>>>>> slack-service.getSlackStatus()`);
+        //logger.debug(`>>>>>> slack-service.getSlackStatus()`);
         let slackStatus = SlackStatus.fromApi(jsonResponses[0], jsonResponses[1]);
-        logger.debug(`>>>>>> slack-service.getSlackStatus()`);
-        console.log(slackStatus);
+        //logger.debug(`>>>>>> slack-service.getSlackStatus()`);
+        //console.log(slackStatus);
         // TODO- improve logging
         logger.debug(`Got SLACK for ${accountName}: ${slackStatus.emoji}/${slackStatus.text}/${slackStatus.expiration}/${slackStatus.presence}`);
 

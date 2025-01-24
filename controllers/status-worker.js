@@ -24,7 +24,8 @@ const statusConditionService = new (require('../services/status-condition-servic
  */
 parentPort.on('message', (oldCombinedStatus) => {
   // The object being received is a simple JSON object, not a JS class, so we must convert it
-  logger.debug('^^^^^ status-worker.on.message() RECEIVED');
+  // so we can use its methods
+  logger.debug('^^^^^ status-worker.on.message() RECEIVED (after conversion)');
   oldCombinedStatus = CombinedStatus.fromJsonObject(oldCombinedStatus);
   console.log(oldCombinedStatus);
 
@@ -38,10 +39,10 @@ parentPort.on('message', (oldCombinedStatus) => {
     //       time into this status
     if (JSON.stringify(oldCombinedStatus) !== JSON.stringify(newCombinedStatus)) {
       // TODO- commenting this out lets me see useful error messages when oldCombinedStatus.slack or newCombinedStatus.slack is null/undefined
-      //logger.info( 
-      //  `status-worker.on.message(), changed status\n` +
-      //  `   FROM Slack:${oldCombinedStatus.slack.emoji}/${oldCombinedStatus.slack.text}/${oldCombinedStatus.slack.times} ; HA:${oldCombinedStatus.homeAssistant.washerText}/${oldCombinedStatus.homeAssistant.dryerText}/${oldCombinedStatus.homeAssistant.temperatureText}\n` +
-      //  `     TO Slack:${newCombinedStatus.slack.emoji}/${newCombinedStatus.slack.text}/${newCombinedStatus.slack.times} ; HA:${newCombinedStatus.homeAssistant.washerText}/${newCombinedStatus.homeAssistant.dryerText}/${newCombinedStatus.homeAssistant.temperatureText}`);
+      logger.info( 
+        `status-worker.on.message(), changed status\n` +
+        `   FROM Slack:${oldCombinedStatus.slack.emoji}/${oldCombinedStatus.slack.text}/${oldCombinedStatus.slack.times} ; HA:${oldCombinedStatus.homeAssistant.washerText}/${oldCombinedStatus.homeAssistant.dryerText}/${oldCombinedStatus.homeAssistant.temperatureText}\n` +
+        `     TO Slack:${newCombinedStatus.slack.emoji}/${newCombinedStatus.slack.text}/${newCombinedStatus.slack.times} ; HA:${newCombinedStatus.homeAssistant.washerText}/${newCombinedStatus.homeAssistant.dryerText}/${newCombinedStatus.homeAssistant.temperatureText}`);
 
       logger.debug(';;;;; status-worker.postMessage SENDING');
       console.log(newCombinedStatus);
@@ -75,7 +76,7 @@ getLatestStatus = (oldCombinedStatus) => {
       let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
         //? new CombinedStatus(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
-        ? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
+        ? CombinedStatus.fromConditionMatching(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
         : oldCombinedStatus;
     })
     .catch(ex => {
