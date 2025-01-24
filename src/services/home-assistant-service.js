@@ -1,4 +1,5 @@
 const logger = require('./logger');
+const HomeAssistantStatus = require('../models/home-assistant-status');
 
 
 /**
@@ -7,21 +8,13 @@ const logger = require('./logger');
  * Gets status info about a couple of devices from Home Assistant
  */
 class HomeAssistantService {
+  // Public constants and variables
+
+
   // Private constants and variables
   #HOME_ASSISTANT_BASE_URL = process.env.HOME_ASSISTANT_BASE_URL;
   #HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
 
-  // Public constants and variables
-  EMPTY_STATUS = {
-    washerText: null,
-    dryerText: null,
-    temperatureText: null
-  };
-  ERROR_STATUS = {
-    washerText: 'ERROR',
-    dryerText: 'ERROR',
-    temperatureText: 'ERROR'
-  };
 
 
   /**
@@ -50,20 +43,14 @@ class HomeAssistantService {
           { method: 'GET', headers: headers })
         .then(response => response.json())
         .then(jsonResponse => {
-          let state = JSON.parse(jsonResponse.state);
-    
-          return {
-            washerText: state.Washer,
-            dryerText: state.Dryer,
-            temperatureText: state.Temperature
-          };
+          return HomeAssistantStatus.fromApi(JSON.parse(jsonResponse.state));
         })
         .catch(ex => {
           logger.error(`HomeAssistantService.getHomeAssistantStatus(), ERROR: ${ex}`);
-          return this.ERROR_STATUS;
+          return HomeAssistantStatus.ERROR_STATUS;
         });
     } else {
-      return this.EMPTY_STATUS;
+      return HomeAssistantStatus.EMPTY_STATUS;
     }
   }
 };

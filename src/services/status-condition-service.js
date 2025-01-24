@@ -13,6 +13,9 @@ const logger = require('./logger');
 class StatusConditionService {
   #STATUS_CONDITIONS_FILENAME = 'status-conditions.csv';
 
+  statusConditions = null;
+
+
   /**
    * Constructor
    * 
@@ -57,8 +60,8 @@ class StatusConditionService {
    *   - Condition value of * matches any non-empty value
    */
   matchesCondition = (conditionValue, actualValue) => {
-    return (conditionValue == null || conditionValue === '' || conditionValue === actualValue) ||
-            (conditionValue === '*' && actualValue != null && actualValue !== '');
+    return (conditionValue == null || conditionValue === '' || conditionValue === actualValue)
+           || (conditionValue === '*' && actualValue != null && actualValue !== '');
   };
 
 
@@ -68,15 +71,16 @@ class StatusConditionService {
   getMatchingCondition = (workSlackStatus, homeSlackStatus) => {
     try {
       return this.statusConditions.find(evaluatingStatus => 
-        this.matchesCondition(evaluatingStatus.conditions_work_emoji, workSlackStatus.emoji) &&
-        this.matchesCondition(evaluatingStatus.conditions_work_presence, workSlackStatus.presence) &&
-        this.matchesCondition(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) &&
-        this.matchesCondition(evaluatingStatus.conditions_home_presence, homeSlackStatus.presence));
+        this.matchesCondition(evaluatingStatus.conditions_work_emoji, workSlackStatus.emoji) 
+        && this.matchesCondition(evaluatingStatus.conditions_work_presence, workSlackStatus.presence)
+        && this.matchesCondition(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji)
+        && this.matchesCondition(evaluatingStatus.conditions_home_presence, homeSlackStatus.presence));
 
     } catch (ex) {
-      logger.error(`ERROR in getMatchingCondition: ${ex}`);
+      logger.error(`ERROR in StatusConditionService.getMatchingCondition(): ${ex}`);
     }
   }
 };
+
 
 module.exports = StatusConditionService;
