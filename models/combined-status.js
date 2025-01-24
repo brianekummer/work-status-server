@@ -36,7 +36,6 @@ class CombinedStatus {
   }
 
 
-
   constructor(slackEmoji, slackText, slackTimes, slackStatusStartTime, homeAssistantWasherText, homeAssistantDryerText, homeAssistantTemperatureText) {
     this.slack = {
       emoji: slackEmoji,

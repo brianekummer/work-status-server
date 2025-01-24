@@ -29,7 +29,7 @@ updateClocks = () => {
 let eventSource = new EventSource('/api/status-updates');
 eventSource.onmessage = (event) => {
   let status = JSON.parse(event.data);
-  let isVisible = status.emoji || status.text;
+  let isVisible = status.emojiImage || status.text;
 
   document.body.className = isVisible ? 'visible' : 'invisible';
 
@@ -40,7 +40,7 @@ eventSource.onmessage = (event) => {
       ? 'status--font-size__small' 
       : 'status--font-size';    // Adjust the size of the status text
 
-    $('status-emoji').src = status.emoji || '';
+    $('status-emoji').src = status.emojiImage || '';
     $('status-text').innerHTML = status.text || '';
     $('status-times').innerHTML = status.times || '';
     $('last-updated-time').innerHTML = status.lastUpdatedTime || '';

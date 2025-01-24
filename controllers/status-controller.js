@@ -13,8 +13,6 @@ const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 class StatusController {
   // The default, empty status
 
-  // TODO- should I add models for SlackStatus, HomeAssistantStatus, CombinedStatus (currentStatus), and the output of getStatusForClient (StatusToClient)?
-
   // This variable is needed because it contains Slack.statusStartTime which this code adds to keep track of when the status started
   // It does not come from Slack, and when we set the status, we need the current value
   combinedStatus = CombinedStatus.EMPTY_STATUS;
@@ -87,7 +85,7 @@ class StatusController {
     logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
 
     let statusToSend = {
-      emoji: this.combinedStatus.slack.emoji ? `/images/${this.combinedStatus.slack.emoji}.png` : '',
+      emojiImage: this.combinedStatus.slack.emoji ? `/images/${this.combinedStatus.slack.emoji}.png` : '',
       text: this.combinedStatus.slack.text,
       times: this.combinedStatus.slack.times,
       lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE),

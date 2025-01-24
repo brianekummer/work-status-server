@@ -13,8 +13,6 @@
  * 
  * 
  * TO DO ITEMS
- *   - replace all these EMPTY_STATUS with just calling new xxxxxStatus()
- *   - rename in data sent to desk/wall "emoji" to "emoji-image" and change css classes etc
  *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
  *
  *   - instead of polling HA, use webhook
