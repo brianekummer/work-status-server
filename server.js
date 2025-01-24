@@ -13,11 +13,7 @@
  * 
  * 
  * TO DO ITEMS
- *   - CombinedStatus.updateStatus does not work- fix it
  *   - replace all these EMPTY_STATUS with just calling new xxxxxStatus()
- *   - CombinedStatus.EMPTY_STATUS - improve it
- *   - Adding fns to my models like toString breaks passing them in/out of worker thread
- *       - improves logging
  *   - rename in data sent to desk/wall "emoji" to "emoji-image" and change css classes etc
  *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
  *
@@ -25,6 +21,7 @@
  *       - I think this should be a separate branch
  *       - is using font awesome to show HVAC status up-to-date enough to be useful?
  *   
+ *   - consistent style in defining functions. fat arrow syntax has issues with passing data into worker thread, dunno why, so decision to not use that syntax in CombinedStatus model - add comment explaining that. 
  *   - Update all comments, readme's, etc.
  */
 

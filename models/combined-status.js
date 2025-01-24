@@ -8,8 +8,17 @@ const statusConditionService = new (require('../services/status-condition-servic
  * Has all Slack and Home Assistant statuses
  */
 class CombinedStatus {
-  // TODO- improve this??
   static EMPTY_STATUS = new CombinedStatus(null, null, null, null, null, null, null);
+  static fromJsonObject(jsonObject) {
+    return new CombinedStatus(
+      jsonObject.slack.emoji, 
+      jsonObject.slack.text, 
+      jsonObject.slack.times, 
+      jsonObject.slack.statusStartTime,
+      jsonObject.homeAssistant.washerText,
+      jsonObject.homeAssistant.dryerText,
+      jsonObject.homeAssistant.temperatureText);
+  }
 
   #TIMES_TEMPLATES = {
     START: 'Started @ (START)',
@@ -21,8 +30,10 @@ class CombinedStatus {
   homeAssistant = {};
 
   
-  // TODO- Having fns in my models causes issues passing status into worker.postMessage
-  //toStringDebug = () => `${this.washerText}/${this.dryerText}/${this.temperatureText}`;
+  // doesn't like fat arrow syntax here, has issues being passed into worker thread - dunno why
+  toString() { 
+    return `Slack:${this.slack.emoji}/${this.slack.text}/${this.slack.times} ; HA:${this.homeAssistant.washerText}/${this.homeAssistant.dryerText}/${this.homeAssistant.temperatureText}`;
+  }
 
 
 
@@ -41,54 +52,41 @@ class CombinedStatus {
   }
 
 
-
-  static fromConditionMatching(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus) {
-    // Definition of EMPTY_STATUS passes in null for everything, so use ? operator and be careful
-    //logger.debug('&&&&& combined-status fromConditionMatching()');
+  updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus) {
+    //logger.debug('&&&&& combined-status updateStatus()');
     //console.log(matchingCondition);
     
     let newCombinedStatus = new CombinedStatus(
       matchingCondition?.display_emoji,
-      (matchingCondition?.display_text || '')
-        .replace('(WORK_STATUS_TEXT)', workSlackStatus?.text || '')
-        .replace('(HOME_STATUS_TEXT)', homeSlackStatus?.text || ''),
+      (matchingCondition.display_text)
+        .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
+        .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text),
       null,
       null,
-      homeAssistantStatus?.washerText || '',
-      homeAssistantStatus?.dryerText || '',
-      homeAssistantStatus?.temperatureText || ''
+      homeAssistantStatus.washerText,
+      homeAssistantStatus.dryerText,
+      homeAssistantStatus.temperatureText
     );
     
     // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM") and
     // status start time
-    newCombinedStatus.updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, oldCombinedStatus, newCombinedStatus);
+    newCombinedStatus.updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, this);
 
-    logger.debug('%%%%% CombinedStatus.fromConditionMatching() RETURNING');
-    console.log(newCombinedStatus);
+    //logger.debug('%%%%% CombinedStatus.updateStatus() RETURNING');
+    //console.log(newCombinedStatus);
 
     return newCombinedStatus;
-  }
-
-  static fromJsonObject(jsonObject) {
-    return new CombinedStatus(
-      jsonObject.slack.emoji, 
-      jsonObject.slack.text, 
-      jsonObject.slack.times, 
-      jsonObject.slack.statusStartTime,
-      jsonObject.homeAssistant.washerText,
-      jsonObject.homeAssistant.dryerText,
-      jsonObject.homeAssistant.temperatureText);
   }
 
 
   /**
    * Determine the times of the Slack status and update that in newStatus
    */
-  *updateSlackStatusTimes(evaluatingStatus, homeSlackStatus, workSlackStatus, oldCombinedStatus, newCombinedStatus) {
+  *updateSlackStatusTimes(evaluatingStatus, homeSlackStatus, workSlackStatus, oldCombinedStatus) {
     // The start time only changes when the status text changes, so that if I
     // add minutes to my focus time, only the end time changes. We're adding it
     // to latestStatus so that we can use it the next time we check the status.
-    newCombinedStatus.slack.statusStartTime = oldCombinedStatus.slack.text !== newCombinedStatus.slack.text
+    this.slack.statusStartTime = oldCombinedStatus.slack.text !== this.slack.text
       ? DateTime.now().toLocaleString(DateTime.TIME_SIMPLE)
       : oldCombinedStatus.slack.statusStartTime;
 
@@ -122,9 +120,9 @@ class CombinedStatus {
       .toLocaleString(DateTime.TIME_SIMPLE);
   
     // Set the times of this status
-    newCombinedStatus.slack.times = 
+    this.slack.times = 
       statusTimesTemplate
-        .replace('(START)', newCombinedStatus.slack.statusStartTime)
+        .replace('(START)', this.slack.statusStartTime)
         .replace('(STATUS_EXPIRATION)', statusExpiration);
   };
 }

@@ -17,7 +17,6 @@ class SlackService {
 
   // Get the Slack security tokens
   #SLACK_TOKENS = [process.env.SLACK_TOKEN_WORK, process.env.SLACK_TOKEN_HOME || ''];
-  #SLACK_CALL_STATUS_EMOJI = ':slack_call:';
 
 
   /**
@@ -45,8 +44,7 @@ class SlackService {
         let slackStatus = SlackStatus.fromApi(jsonResponses[0], jsonResponses[1]);
         //logger.debug(`>>>>>> slack-service.getSlackStatus()`);
         //console.log(slackStatus);
-        // TODO- improve logging
-        logger.debug(`Got SLACK for ${accountName}: ${slackStatus.emoji}/${slackStatus.text}/${slackStatus.expiration}/${slackStatus.presence}`);
+        logger.debug(`Got SLACK for ${accountName}: ${slackStatus.toString()}`);
 
         return Promise.resolve(slackStatus);
       })

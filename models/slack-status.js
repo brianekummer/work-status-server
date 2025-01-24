@@ -43,7 +43,9 @@ class SlackStatus {
 
 
   // TODO- Having fns in my models causes issues passing status into worker.postMessage
-  //toStringDebug = () => `${this.emoji}/${this.text}/${this.expiration}/${this.presence}`;
+  toString() {
+    return `${this.emoji}/${this.text}/${this.expiration}/${this.presence}`;
+  }
 }
 
 

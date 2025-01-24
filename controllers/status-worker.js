@@ -25,9 +25,9 @@ const statusConditionService = new (require('../services/status-condition-servic
 parentPort.on('message', (oldCombinedStatus) => {
   // The object being received is a simple JSON object, not a JS class, so we must convert it
   // so we can use its methods
-  logger.debug('^^^^^ status-worker.on.message() RECEIVED (after conversion)');
   oldCombinedStatus = CombinedStatus.fromJsonObject(oldCombinedStatus);
-  console.log(oldCombinedStatus);
+  //logger.debug('^^^^^ status-worker.on.message() RECEIVED (after conversion)');
+  //console.log(oldCombinedStatus);
 
   getLatestStatus(oldCombinedStatus)
   .then((newCombinedStatus) => {
@@ -41,11 +41,11 @@ parentPort.on('message', (oldCombinedStatus) => {
       // TODO- commenting this out lets me see useful error messages when oldCombinedStatus.slack or newCombinedStatus.slack is null/undefined
       logger.info( 
         `status-worker.on.message(), changed status\n` +
-        `   FROM Slack:${oldCombinedStatus.slack.emoji}/${oldCombinedStatus.slack.text}/${oldCombinedStatus.slack.times} ; HA:${oldCombinedStatus.homeAssistant.washerText}/${oldCombinedStatus.homeAssistant.dryerText}/${oldCombinedStatus.homeAssistant.temperatureText}\n` +
-        `     TO Slack:${newCombinedStatus.slack.emoji}/${newCombinedStatus.slack.text}/${newCombinedStatus.slack.times} ; HA:${newCombinedStatus.homeAssistant.washerText}/${newCombinedStatus.homeAssistant.dryerText}/${newCombinedStatus.homeAssistant.temperatureText}`);
+        `   FROM ${oldCombinedStatus.toString()}\n` +
+        `     TO ${newCombinedStatus.toString()}`);
 
-      logger.debug(';;;;; status-worker.postMessage SENDING');
-      console.log(newCombinedStatus);
+      //logger.debug(';;;;; status-worker.postMessage SENDING');
+      //console.log(newCombinedStatus);
 
       parentPort.postMessage(newCombinedStatus);
     }
@@ -70,13 +70,14 @@ getLatestStatus = (oldCombinedStatus) => {
       // Statuses are returned in the same order they were called in Promises.all() 
       let [ workSlackStatus, homeSlackStatus, homeAssistantStatus ] = statuses;
 
-      logger.debug(`[[[[[`);
-      console.log(workSlackStatus);
-      console.log(homeSlackStatus);
+      //logger.debug(`[[[[[`);
+      //console.log(workSlackStatus);
+      //console.log(homeSlackStatus);
       let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
         //? new CombinedStatus(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
-        ? CombinedStatus.fromConditionMatching(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
+        //? CombinedStatus.fromConditionMatching(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
+        ? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
         : oldCombinedStatus;
     })
     .catch(ex => {
