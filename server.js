@@ -13,8 +13,19 @@
  * 
  * 
  * TO DO ITEMS
+ *   - CombinedStatus.updateStatus does not work- fix it
+ *   - replace all these EMPTY_STATUS with just calling new xxxxxStatus()
+ *   - CombinedStatus.EMPTY_STATUS - improve it
+ *   - Adding fns to my models like toString breaks passing them in/out of worker thread
+ *       - improves logging
  *   - rename in data sent to desk/wall "emoji" to "emoji-image" and change css classes etc
- * 
+ *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
+ *
+ *   - instead of polling HA, use webhook
+ *       - I think this should be a separate branch
+ *       - is using font awesome to show HVAC status up-to-date enough to be useful?
+ *   
+ *   - Update all comments, readme's, etc.
  */
 
 // Require packages
@@ -37,7 +48,7 @@ app.set("views", "./views");
 
 // Start the worker thread and pass it to the status controller
 let worker = new Worker('./controllers/status-worker.js');
-let statusController = new StatusController(worker, logger);
+let statusController = new StatusController(worker);
 
 // Initialize the router, which needs the status controller
 let router = require("./routes/routes")(statusController);

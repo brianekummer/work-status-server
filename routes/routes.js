@@ -10,7 +10,7 @@ const express = require('express')
 module.exports = function(statusController) {
   const FONT_AWESOME_ACCOUNT_ID = (process.env.FONT_AWESOME_ACCOUNT_ID || '');
 
-  // Define our router and our routes
+  // Define the router and our routes
   const router = express.Router(); 
 
   router.get("/desk", (request, response) => response.render("desk", { FONT_AWESOME_ACCOUNT_ID }));

@@ -33,6 +33,7 @@ parentPort.on('message', (oldCombinedStatus) => {
     //       If I want it to update every minute, ONE SOLUTION is to add last updated
     //       time into this status
     if (JSON.stringify(oldCombinedStatus) !== JSON.stringify(newCombinedStatus)) {
+      // TODO- commenting this out lets me see useful error messages when oldCombinedStatus.slack or newCombinedStatus.slack is null/undefined
       logger.info( 
         `status-worker.on.message(), changed status\n` +
         `   FROM Slack:${oldCombinedStatus.slack.emoji}/${oldCombinedStatus.slack.text}/${oldCombinedStatus.slack.times} ; HA:${oldCombinedStatus.homeAssistant.washerText}/${oldCombinedStatus.homeAssistant.dryerText}/${oldCombinedStatus.homeAssistant.temperatureText}\n` +
@@ -60,9 +61,13 @@ getLatestStatus = (oldCombinedStatus) => {
       // Statuses are returned in the same order they were called in Promises.all() 
       let [ workSlackStatus, homeSlackStatus, homeAssistantStatus ] = statuses;
 
+      logger.debug(`[[[[[`);
+      logger.debug(workSlackStatus);
+      logger.debug(homeSlackStatus);
       let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
         ? new CombinedStatus(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
+        //? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
         : oldCombinedStatus;
     })
     .catch(ex => {

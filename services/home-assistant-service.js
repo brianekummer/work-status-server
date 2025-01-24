@@ -8,11 +8,13 @@ const HomeAssistantStatus = require('../models/home-assistant-status');
  * Gets status info about a couple of devices from Home Assistant
  */
 class HomeAssistantService {
+  // Public constants and variables
+
+
   // Private constants and variables
   #HOME_ASSISTANT_BASE_URL = process.env.HOME_ASSISTANT_BASE_URL;
   #HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
 
-  // Public constants and variables
 
 
   /**

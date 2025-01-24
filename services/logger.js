@@ -46,7 +46,7 @@ const timezonedTimestamp = () =>
 
 
 
-// Determine log directory (defaults to the project folder if /var/log doesn't exist)
+// Define file logging transport, set log directory to the project folder if /var/log doesn't exist
 const logDir = fs.existsSync('/var/log') ? '/var/log/' : '';
 const fileRotateTransport = new winston.transports.DailyRotateFile({
   filename: `${logDir}work-server-status.%DATE%.log`,
