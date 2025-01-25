@@ -3,28 +3,28 @@
  * 
  * 
  */
-class HomeAssistantStatus {
-  static EMPTY_STATUS = new HomeAssistantStatus(null, null, null);
-  static ERROR_STATUS = new HomeAssistantStatus('ERROR', 'ERROR', 'ERROR');
+export class HomeAssistantStatus {
+  public static readonly EMPTY_STATUS: HomeAssistantStatus = new HomeAssistantStatus('', '', '');
+  public static readonly ERROR_STATUS: HomeAssistantStatus = new HomeAssistantStatus('ERROR', 'ERROR', 'ERROR');
     
   
-  washerText = '';
-  dryerText = '';
-  temperatureText= '';
+  public washerText: string = '';
+  public dryerText: string = '';
+  public temperatureText: string = '';
   
 
   // Constructors
-  constructor(washerText, dryerText, temperatureText) {
+  constructor(washerText: string, dryerText: string, temperatureText: string) {
     this.washerText = washerText;
     this.dryerText = dryerText;
     this.temperatureText = temperatureText;
   }
 
 
-  static fromApi = (state) => {
+  public static fromApi(state: any): HomeAssistantStatus {
     return new HomeAssistantStatus(state.Washer, state.Dryer, state.Temperature);
   }
 }
   
   
-module.exports = HomeAssistantStatus;
+//module.exports = HomeAssistantStatus;

@@ -1,4 +1,4 @@
-const { parentPort } = require('worker_threads');
+import { parentPort } from 'worker_threads';
 
 
 /**
@@ -10,11 +10,20 @@ const { parentPort } = require('worker_threads');
  * Reminder that this runs in a separate process and that all of the services
  * are new instances, separate from those of the main thread.
  */
-const logger = require('../services/logger');
-const CombinedStatus = require('../models/combined-status');
-const slackService = new (require('../services/slack-service'));
-const homeAssistantService = new (require('../services/home-assistant-service'));
-const statusConditionService = new (require('../services/status-condition-service'));
+import logger from '../services/logger';
+import { CombinedStatus } from '../models/combined-status';
+
+
+import { SlackService } from '../services/slack-service';
+import { HomeAssistantService } from '../services/home-assistant-service';
+import { StatusConditionService } from '../services/status-condition-service';
+
+
+
+// TODO- direct injection?
+const slackService = new SlackService();
+const homeAssistantService = new HomeAssistantService();
+const statusConditionService = new StatusConditionService();
 
 
 /**
@@ -22,7 +31,7 @@ const statusConditionService = new (require('../services/status-condition-servic
  *
  * It is a signal to go get updates and to return the updated status
  */
-parentPort.on('message', (oldCombinedStatus) => {
+parentPort!.on('message', (oldCombinedStatus: CombinedStatus) => {
   // The object being received is a simple JSON object, not a JS class, so we must convert it
   // so we can use its methods
   oldCombinedStatus = CombinedStatus.fromJsonObject(oldCombinedStatus);
@@ -30,7 +39,7 @@ parentPort.on('message', (oldCombinedStatus) => {
   //console.log(oldCombinedStatus);
 
   getLatestStatus(oldCombinedStatus)
-  .then((newCombinedStatus) => {
+  .then((newCombinedStatus: CombinedStatus) => {
     // Only send the new status back if there has been a change
     
     // TODO- this status does NOT include lastUpdatedTime, so it will
@@ -47,7 +56,7 @@ parentPort.on('message', (oldCombinedStatus) => {
       //logger.debug(';;;;; status-worker.postMessage SENDING');
       //console.log(newCombinedStatus);
 
-      parentPort.postMessage(newCombinedStatus);
+      parentPort!.postMessage(newCombinedStatus);
     }
   });
 });
@@ -59,7 +68,7 @@ parentPort.on('message', (oldCombinedStatus) => {
  * It gets my Slack status for my work and home accounts, as well as statuses of
  * things in Home Assistant. Then it builds the latest status to display.
  */
-getLatestStatus = (oldCombinedStatus) => {
+function getLatestStatus(oldCombinedStatus: CombinedStatus) {
   return Promise.resolve(
     Promise.all([
       slackService.getSlackStatus(slackService.ACCOUNTS.WORK),
@@ -75,14 +84,16 @@ getLatestStatus = (oldCombinedStatus) => {
       //console.log(homeSlackStatus);
       let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
-        //? new CombinedStatus(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
-        //? CombinedStatus.fromConditionMatching(oldCombinedStatus, matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
-        ? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus)
+        ? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus, statusConditionService.matchesCondition(matchingCondition.conditions_home_emoji, homeSlackStatus.emoji))
         : oldCombinedStatus;
     })
     .catch(ex => {
       logger.error(`status-worker.getLatestStatus(), ERROR: ${ex}`);
-      return slackService.ERROR_STATUS;
+      return CombinedStatus.ERROR_STATUS;
     })
   );
 };
+
+
+
+//export {}

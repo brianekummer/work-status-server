@@ -6,7 +6,7 @@ case "$OSTYPE" in
     source /root/.env
     export LOG_LEVEL="$1"
     cd /opt/work-status-server/
-    node server.js
+    node app.js
     ;;
 
   msys)
@@ -15,6 +15,7 @@ case "$OSTYPE" in
     ##########################################################################
     source .env
     export LOG_LEVEL="$1"
-    node --watch server.js $1
+    cd dist/src
+    node --watch app.js $1
     ;;
 esac

@@ -1,8 +1,7 @@
 const { DateTime } = require('luxon');
-const logger = require('../services/logger');
-const CombinedStatus = require('../models/combined-status');
+import logger from '../services/logger';
+import { CombinedStatus } from '../models/combined-status';
 
-const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
 
 
 /**
@@ -10,27 +9,28 @@ const SERVER_REFRESH_MS = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
  * 
  * Used to build the status that will be send to the clients
  */
-class StatusController {
+export class StatusController {
+  private readonly SERVER_REFRESH_MS: number = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
   // The default, empty status
 
   // This variable is needed because it contains Slack.statusStartTime which this code adds to keep track of when the status started
   // It does not come from Slack, and when we set the status, we need the current value
-  combinedStatus = CombinedStatus.EMPTY_STATUS;
+  private combinedStatus: CombinedStatus = CombinedStatus.EMPTY_STATUS;
 
 
-  clients = new Set();
-  worker = null;
+  private clients: any = new Set();
+  private worker: any = null;
 
 
   /**
    * Constructor
    */
-  constructor(worker) {
+  constructor(worker: any) {
     // Immediately send the currentStatus to the worker thread, which will check
     // for updates, and then send the updated status back in a message. Then
     // repeatedly do that every SERVER_REFRESH_MS.
     this.worker = worker;
-    this.worker.on('message', (newCombinedStatus) => {
+    this.worker.on('message', (newCombinedStatus: CombinedStatus) => {
       //logger.debug(`@@@@@ StatusController.on.message() RECEIVED`);
       //console.log(newCombinedStatus);
       //logger.debug(`@@@@@`);
@@ -39,7 +39,7 @@ class StatusController {
     });
   
     this.worker.postMessage(this.combinedStatus);
-    setInterval(() => this.worker.postMessage(this.combinedStatus), SERVER_REFRESH_MS); 
+    setInterval(() => this.worker.postMessage(this.combinedStatus), this.SERVER_REFRESH_MS); 
   }
 
 
@@ -49,7 +49,7 @@ class StatusController {
   * CLIENT_REFRESH_MS.
   *
   */
-  getStatusUpdates = async (request, response) => {
+  public async getStatusUpdates(request: any, response: any) {
     // Add the client to our list of clients that need updates
     response.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -69,8 +69,8 @@ class StatusController {
   /**
    * 
    */
-  sendStatusToAllClients = () => {
-    this.clients.forEach(client => this.pushStatusToClient(client, false));
+  private sendStatusToAllClients() {
+    this.clients.forEach((client: any) => this.pushStatusToClient(client, false));
   }
 
 
@@ -81,7 +81,7 @@ class StatusController {
    *    * Get status to send to the client, making any necessary changes, such as
    * converting an emoji to an actual filename.
    */
-  pushStatusToClient = (client, initialPush) => {
+  private pushStatusToClient(client: any, initialPush: boolean) {
     logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
 
     let statusToSend = {
@@ -99,4 +99,4 @@ class StatusController {
   }
 }
 
-module.exports = StatusController;
+//module.exports = StatusController;

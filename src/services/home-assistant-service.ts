@@ -1,5 +1,5 @@
-const logger = require('./logger');
-const HomeAssistantStatus = require('../models/home-assistant-status');
+import logger from './logger';
+import { HomeAssistantStatus } from '../models/home-assistant-status';
 
 
 /**
@@ -7,21 +7,23 @@ const HomeAssistantStatus = require('../models/home-assistant-status');
  * 
  * Gets status info about a couple of devices from Home Assistant
  */
-class HomeAssistantService {
+export class HomeAssistantService {
   // Public constants and variables
 
 
   // Private constants and variables
-  #HOME_ASSISTANT_BASE_URL = process.env.HOME_ASSISTANT_BASE_URL;
-  #HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
+  private readonly HOME_ASSISTANT_BASE_URL = process.env.HOME_ASSISTANT_BASE_URL;
+  private readonly HOME_ASSISTANT_TOKEN = process.env.HOME_ASSISTANT_TOKEN;
 
 
 
   /**
    * Returns true if there is Home Assistant integration
    */
-  haveHomeAssistantIntegration = () => 
-    this.#HOME_ASSISTANT_BASE_URL && this.#HOME_ASSISTANT_TOKEN;
+  // TODO- set return type
+  private haveHomeAssistantIntegration() {
+    return this.HOME_ASSISTANT_BASE_URL && this.HOME_ASSISTANT_TOKEN;
+  }
 
 
   /**
@@ -32,14 +34,15 @@ class HomeAssistantService {
    *
    * Returns a JSON object with status of the relevant Home Assistant entities
    */
-  getHomeAssistantStatus = () => {
+  // TODO- set return type
+  public getHomeAssistantStatus() {
     if (this.haveHomeAssistantIntegration()) {
       const headers = {
-        'Authorization': `Bearer ${this.#HOME_ASSISTANT_TOKEN}`
+        'Authorization': `Bearer ${this.HOME_ASSISTANT_TOKEN}`
       };
     
       return fetch(
-          new URL('/api/states/sensor.work_status_phone_info', this.#HOME_ASSISTANT_BASE_URL),
+          new URL('/api/states/sensor.work_status_phone_info', this.HOME_ASSISTANT_BASE_URL),
           { method: 'GET', headers: headers })
         .then(response => response.json())
         .then(jsonResponse => {
@@ -56,4 +59,4 @@ class HomeAssistantService {
 };
 
 
-module.exports = HomeAssistantService;
+//module.exports = HomeAssistantService;

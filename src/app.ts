@@ -16,6 +16,10 @@
  *   - convert to typescript? would save me some grief
  *       - https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html
  *       - https://kvz.io/blog/js-to-ts.html
+ *       - review everywhere ": any" is used
+ *       - review anywhere use "require"
+ *       - review all packages in package.json
+ *       - specify return types for all fns
  *
  *   - instead of polling HA, use webhook
  *       - I think this should be a separate branch
@@ -32,11 +36,12 @@
  */
 
 // Require packages
-const express = require("express");
-const mustacheExpress = require("mustache-express");
-const logger = require("./services/logger");
-const { Worker } = require('worker_threads');
-const StatusController = require('./controllers/status-controller');
+const express = require('express');
+const mustacheExpress = require('mustache-express');
+import logger from './services/logger'
+import { Worker } from 'worker_threads';
+import { StatusController } from './controllers/status-controller';
+import path from 'path';
 
 
 /***********************  Start of Node Configuration  ***********************/
@@ -45,20 +50,21 @@ const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
 let app = express();
 
 // Configure Mustache
-app.engine("mustache", mustacheExpress());
-app.set("view engine", "mustache");
-app.set("views", "./views");
+app.engine('mst', mustacheExpress());
+app.set('view engine', 'mst');
+app.set('views', path.join(__dirname, 'views'));
 
 // Start the worker thread and pass it to the status controller
 let worker = new Worker('./controllers/status-worker.js');
 let statusController = new StatusController(worker);
 
 // Initialize the router, which needs the status controller
-let router = require("./routes/routes")(statusController);
+let router = require('./routes/routes')(statusController);
 app.use(router);
 
-// Expose only the necessary files
-app.use(express.static(`./public`));
+// Expose public folder
+//app.use(express.static(`./public`));
+app.use(express.static('../public'));
 
 // Hack to prevent "certificate has expired" issue. Not suitable for production,
 // but ok for me here. https://github.com/node-fetch/node-fetch/issues/568

@@ -1,14 +1,15 @@
-const logger = require('./logger');
-const SlackStatus = require('../models/slack-status');
+import logger from './logger';
+import { SlackStatus } from '../models/slack-status';
 
 /**
  * Slack Service
  * 
  * Gets the status of a Slack account
  */
-class SlackService {
+export class SlackService {
   // Public constants and variables
-  ACCOUNTS = {
+  // TODO - convert to enum??
+  public ACCOUNTS = {
     WORK: 0,
     HOME: 1
   };
@@ -16,7 +17,7 @@ class SlackService {
   // Private constants and variables
 
   // Get the Slack security tokens
-  #SLACK_TOKENS = [process.env.SLACK_TOKEN_WORK, process.env.SLACK_TOKEN_HOME || ''];
+  private readonly SLACK_TOKENS = [process.env.SLACK_TOKEN_WORK, process.env.SLACK_TOKEN_HOME || ''];
 
 
   /**
@@ -26,12 +27,13 @@ class SlackService {
    *
    * Returns a JSON object with my Slack status
    */
-  getSlackStatus = (account) => {
-    if (this.#SLACK_TOKENS[account]) {
+  // TODO- set return type
+  public getSlackStatus(account: any) {
+    if (this.SLACK_TOKENS[account]) {
       const accountName = account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME';
       let headers = {
         'Content-Type':  'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${this.#SLACK_TOKENS[account]}`  
+        'Authorization': `Bearer ${this.SLACK_TOKENS[account]}`  
       };
 
       return Promise.all([
@@ -60,4 +62,4 @@ class SlackService {
 }
 
 
-module.exports = SlackService;
+// module.exports = SlackService;

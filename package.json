@@ -3,11 +3,21 @@
   "version": "1.0.0",
   "description": "Work Status web server",
   "homepage": "http://192.168.1.202:3000",
-  "main": "server.js",
+  "main": "app.js",
+  "scripts": {
+    "build": "tsc && npm run copy-views && npm run copy-public && npm run copy-files",
+    "copy-views": "cp -r src/views dist/src",
+    "copy-public": "cp -r public dist/",
+    "copy-files": "cp -r files dist/"
+  }, 
   "dependencies": {
+    "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
+    "@types/mustache-express": "^1.2.5",
+    "@types/node": "^22.10.10",
     "@typescript-eslint/eslint-plugin": "^8.21.0",
     "@typescript-eslint/parser": "^8.21.0",
+    "copyfiles": "^2.4.1",
     "csv-parser": "^3.1.0",
     "eslint-import-resolver-typescript": "^3.7.0",
     "eslint-plugin-prefer-import": "^0.0.1",
