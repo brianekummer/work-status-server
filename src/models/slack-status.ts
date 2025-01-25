@@ -49,6 +49,3 @@ export class SlackStatus {
     return `${this.emoji}/${this.text}/${this.expiration}/${this.presence}`;
   }
 }
-
-
-//module.exports = SlackStatus;

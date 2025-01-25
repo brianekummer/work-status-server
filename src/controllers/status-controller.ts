@@ -1,7 +1,8 @@
-const { DateTime } = require('luxon');
-import logger from '../services/logger';
+import { DateTime } from "luxon";
 import { CombinedStatus } from '../models/combined-status';
-
+import logger from '../services/logger';
+import { Worker } from 'worker_threads';
+import { Request, Response } from 'express';
 
 
 /**
@@ -11,21 +12,19 @@ import { CombinedStatus } from '../models/combined-status';
  */
 export class StatusController {
   private readonly SERVER_REFRESH_MS: number = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
-  // The default, empty status
 
   // This variable is needed because it contains Slack.statusStartTime which this code adds to keep track of when the status started
   // It does not come from Slack, and when we set the status, we need the current value
   private combinedStatus: CombinedStatus = CombinedStatus.EMPTY_STATUS;
 
-
-  private clients: any = new Set();
-  private worker: any = null;
+  private clients: Set<Response> = new Set<Response>();
+  private worker: Worker;
 
 
   /**
    * Constructor
    */
-  constructor(worker: any) {
+  constructor(worker: Worker) {
     // Immediately send the currentStatus to the worker thread, which will check
     // for updates, and then send the updated status back in a message. Then
     // repeatedly do that every SERVER_REFRESH_MS.
@@ -45,11 +44,11 @@ export class StatusController {
 
   /*
   * 
-  * Use Server Sent Events to continually push updates to the browser every
+  * Use Server Sent Events to stream updates to the browser every
   * CLIENT_REFRESH_MS.
   *
   */
-  public async getStatusUpdates(request: any, response: any) {
+  public async streamStatusUpdates(request: Request, response: Response) {
     // Add the client to our list of clients that need updates
     response.writeHead(200, {
       'Content-Type': 'text/event-stream',
@@ -70,7 +69,7 @@ export class StatusController {
    * 
    */
   private sendStatusToAllClients() {
-    this.clients.forEach((client: any) => this.pushStatusToClient(client, false));
+    this.clients.forEach((client: Response) => this.pushStatusToClient(client, false));
   }
 
 
@@ -81,7 +80,7 @@ export class StatusController {
    *    * Get status to send to the client, making any necessary changes, such as
    * converting an emoji to an actual filename.
    */
-  private pushStatusToClient(client: any, initialPush: boolean) {
+  private pushStatusToClient(client: Response, initialPush: boolean) {
     logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
 
     let statusToSend = {
@@ -95,8 +94,7 @@ export class StatusController {
         temperatureText: this.combinedStatus.homeAssistant.temperatureText
       }
     };
+    
     client.write(`data: ${JSON.stringify(statusToSend)}\n\n`);
   }
 }
-
-//module.exports = StatusController;

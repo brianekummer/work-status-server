@@ -1,4 +1,5 @@
 import { parentPort } from 'worker_threads';
+import { StatusCondition } from '../models/status-condition';
 
 
 /**
@@ -20,7 +21,7 @@ import { StatusConditionService } from '../services/status-condition-service';
 
 
 
-// TODO- direct injection?
+// TODO- fix this ugly hack - direct injection?
 const slackService = new SlackService();
 const homeAssistantService = new HomeAssistantService();
 const statusConditionService = new StatusConditionService();
@@ -68,11 +69,11 @@ parentPort!.on('message', (oldCombinedStatus: CombinedStatus) => {
  * It gets my Slack status for my work and home accounts, as well as statuses of
  * things in Home Assistant. Then it builds the latest status to display.
  */
-function getLatestStatus(oldCombinedStatus: CombinedStatus) {
+function getLatestStatus(oldCombinedStatus: CombinedStatus): Promise<CombinedStatus> {
   return Promise.resolve(
     Promise.all([
-      slackService.getSlackStatus(slackService.ACCOUNTS.WORK),
-      slackService.getSlackStatus(slackService.ACCOUNTS.HOME),
+      slackService.getSlackStatus(SlackService.ACCOUNTS.WORK),
+      slackService.getSlackStatus(SlackService.ACCOUNTS.HOME),
       homeAssistantService.getHomeAssistantStatus()
     ])
     .then(statuses => {
@@ -82,7 +83,7 @@ function getLatestStatus(oldCombinedStatus: CombinedStatus) {
       //logger.debug(`[[[[[`);
       //console.log(workSlackStatus);
       //console.log(homeSlackStatus);
-      let matchingCondition = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
+      let matchingCondition: StatusCondition|undefined = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
         ? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus, statusConditionService.matchesCondition(matchingCondition.conditions_home_emoji, homeSlackStatus.emoji))
         : oldCombinedStatus;
@@ -93,7 +94,3 @@ function getLatestStatus(oldCombinedStatus: CombinedStatus) {
     })
   );
 };
-
-
-
-//export {}

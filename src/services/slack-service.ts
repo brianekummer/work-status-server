@@ -1,6 +1,14 @@
 import logger from './logger';
 import { SlackStatus } from '../models/slack-status';
 
+
+
+enum ACCOUNTS {
+  WORK = 0,
+  HOME = 1
+}
+
+
 /**
  * Slack Service
  * 
@@ -8,11 +16,7 @@ import { SlackStatus } from '../models/slack-status';
  */
 export class SlackService {
   // Public constants and variables
-  // TODO - convert to enum??
-  public ACCOUNTS = {
-    WORK: 0,
-    HOME: 1
-  };
+  static readonly ACCOUNTS = ACCOUNTS;
 
   // Private constants and variables
 
@@ -27,10 +31,9 @@ export class SlackService {
    *
    * Returns a JSON object with my Slack status
    */
-  // TODO- set return type
-  public getSlackStatus(account: any) {
+  public getSlackStatus(account: any): Promise<SlackStatus> {
     if (this.SLACK_TOKENS[account]) {
-      const accountName = account === this.ACCOUNTS.WORK ? 'WORK' : 'HOME';
+      const accountName = (account === SlackService.ACCOUNTS.WORK ? 'WORK' : 'HOME');
       let headers = {
         'Content-Type':  'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${this.SLACK_TOKENS[account]}`  
@@ -60,6 +63,3 @@ export class SlackService {
     }
   };
 }
-
-
-// module.exports = SlackService;

@@ -14,12 +14,7 @@
  * 
  * TO DO ITEMS
  *   - convert to typescript? would save me some grief
- *       - https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html
- *       - https://kvz.io/blog/js-to-ts.html
- *       - review everywhere ": any" is used
- *       - review anywhere use "require"
  *       - review all packages in package.json
- *       - specify return types for all fns
  *
  *   - instead of polling HA, use webhook
  *       - I think this should be a separate branch
@@ -36,12 +31,13 @@
  */
 
 // Require packages
-const express = require('express');
-const mustacheExpress = require('mustache-express');
+import express from 'express';
+import mustacheExpress from 'mustache-express';
 import logger from './services/logger'
 import { Worker } from 'worker_threads';
 import { StatusController } from './controllers/status-controller';
 import path from 'path';
+import routerModule from './routes/routes';  // Change to import
 
 
 /***********************  Start of Node Configuration  ***********************/
@@ -59,7 +55,7 @@ let worker = new Worker('./controllers/status-worker.js');
 let statusController = new StatusController(worker);
 
 // Initialize the router, which needs the status controller
-let router = require('./routes/routes')(statusController);
+let router = routerModule(statusController);
 app.use(router);
 
 // Expose public folder

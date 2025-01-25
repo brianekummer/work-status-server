@@ -1,8 +1,23 @@
-const { DateTime } = require('luxon');
-const logger = require('../services/logger');
-import { StatusConditionService } from '../services/status-condition-service';
+import { DateTime } from "luxon";
+import logger from '../services/logger';
 import { HomeAssistantStatus } from './home-assistant-status';
 import { SlackStatus } from './slack-status';
+import { StatusCondition } from './status-condition';
+
+
+// TODO- fix naming !!
+interface slackStuff {
+  emoji: string,
+  text: string,
+  times: string,
+  statusStartTime: string
+}
+
+interface homeAssistantStuff {          
+  washerText: string,
+  dryerText: string,
+  temperatureText: string
+}
 
 
 /**
@@ -26,8 +41,8 @@ export class CombinedStatus {
   }
   
 
-  public slack: any = {};
-  public homeAssistant: any = {};
+  public slack: slackStuff;
+  public homeAssistant: homeAssistantStuff;
 
   
   public toString(): string { 
@@ -63,12 +78,12 @@ export class CombinedStatus {
   }
 
 
-  public updateStatus(matchingCondition: any, workSlackStatus: SlackStatus, homeSlackStatus: SlackStatus, homeAssistantStatus: HomeAssistantStatus, matchesHomeEmoji: boolean): CombinedStatus {
+  public updateStatus(matchingCondition: StatusCondition, workSlackStatus: SlackStatus, homeSlackStatus: SlackStatus, homeAssistantStatus: HomeAssistantStatus, matchesHomeEmoji: boolean): CombinedStatus {
     //logger.debug('&&&&& combined-status updateStatus()');
     //console.log(matchingCondition);
     
     let newCombinedStatus = new CombinedStatus(
-      matchingCondition.display_emoji,
+      matchingCondition.display_emoji_image,
       (matchingCondition.display_text)
         .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
         .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text),
@@ -136,6 +151,3 @@ export class CombinedStatus {
         .replace('(STATUS_EXPIRATION)', statusExpiration);
   };
 }
-    
-    
-//module.exports = CombinedStatus;

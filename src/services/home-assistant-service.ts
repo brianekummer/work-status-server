@@ -20,9 +20,8 @@ export class HomeAssistantService {
   /**
    * Returns true if there is Home Assistant integration
    */
-  // TODO- set return type
-  private haveHomeAssistantIntegration() {
-    return this.HOME_ASSISTANT_BASE_URL && this.HOME_ASSISTANT_TOKEN;
+  private haveHomeAssistantIntegration(): boolean {
+    return Boolean(this.HOME_ASSISTANT_BASE_URL) && Boolean(this.HOME_ASSISTANT_TOKEN);
   }
 
 
@@ -34,8 +33,7 @@ export class HomeAssistantService {
    *
    * Returns a JSON object with status of the relevant Home Assistant entities
    */
-  // TODO- set return type
-  public getHomeAssistantStatus() {
+  public getHomeAssistantStatus(): Promise<HomeAssistantStatus> {
     if (this.haveHomeAssistantIntegration()) {
       const headers = {
         'Authorization': `Bearer ${this.HOME_ASSISTANT_TOKEN}`
@@ -53,10 +51,7 @@ export class HomeAssistantService {
           return HomeAssistantStatus.ERROR_STATUS;
         });
     } else {
-      return HomeAssistantStatus.EMPTY_STATUS;
+      return Promise.resolve(HomeAssistantStatus.EMPTY_STATUS);
     }
   }
-};
-
-
-//module.exports = HomeAssistantService;
+}

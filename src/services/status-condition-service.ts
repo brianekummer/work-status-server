@@ -1,18 +1,10 @@
-import * as fs from 'fs';
+import fs from 'fs';
 import csv from 'csv-parser';
 import watch from 'node-watch';
 import logger from './logger';
 import { SlackStatus } from '../models/slack-status';
+import { StatusCondition } from '../models/status-condition';
 
-/**
- * Interface for a Status Condition object.
- */
-interface StatusCondition {
-  conditions_work_emoji: string;
-  conditions_work_presence: string;
-  conditions_home_emoji: string;
-  conditions_home_presence: string;
-}
 
 /**
  * Status Condition Service
@@ -26,21 +18,21 @@ export class StatusConditionService {
   private statusConditions: StatusCondition[] = [];
 
   constructor() {
-    // Initialize by reading status conditions.
+    // Initialize by reading status conditions
     this.readStatusConditions()
       .then((conditions) => {
         this.statusConditions = conditions;
         logger.info('Initial status conditions loaded.');
       })
-      .catch((error) => {
-        logger.error(`Error loading initial status conditions: ${error}`);
+      .catch((ex) => {
+        logger.error(`StatusConditionService.constructor(), error loading initial status conditions: ${ex}`);
       });
 
     // Watch for file changes and re-read when necessary.
     watch(
       this.STATUS_CONDITIONS_FILENAME,
       { recursive: false },
-      async (evt: any, name: string) => {
+      async (name: string) => {
         logger.debug(`${name} changed, re-reading it.`);
         try {
           this.statusConditions = await this.readStatusConditions();
@@ -52,7 +44,7 @@ export class StatusConditionService {
   }
 
   /**
-   * Reads status conditions from a CSV file into a usable JSON object.
+   * Reads status conditions from a CSV file into an array of StatusCondition objects
    */
   private readStatusConditions(): Promise<StatusCondition[]> {
     return new Promise((resolve, reject) => {
@@ -69,7 +61,7 @@ export class StatusConditionService {
         )
         .on('data', (data: StatusCondition) => results.push(data as StatusCondition))
         .on('end', () => resolve(results))
-        .on('error', (error: any) => reject(error));
+        .on('error', (error: unknown) => reject(error));
     });
   }
 

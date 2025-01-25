@@ -25,6 +25,3 @@ export class HomeAssistantStatus {
     return new HomeAssistantStatus(state.Washer, state.Dryer, state.Temperature);
   }
 }
-  
-  
-//module.exports = HomeAssistantStatus;
