@@ -14,8 +14,6 @@
  * 
  * TO DO ITEMS
  *   - convert to typescript? would save me some grief
- *       - add linting
- *       - review all packages in package.json
  *       - deploy on server- test it
  *       - merge to master
  * 
