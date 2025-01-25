@@ -1,8 +1,9 @@
 import { DateTime } from "luxon";
-import { CombinedStatus } from '../models/combined-status';
-import logger from '../services/logger';
 import { Worker } from 'worker_threads';
 import { Request, Response } from 'express';
+
+import logger from '../services/logger';
+import { CombinedStatus } from '../models/combined-status';
 
 
 /**

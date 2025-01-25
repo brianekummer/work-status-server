@@ -13,12 +13,18 @@
  * 
  * 
  * TO DO ITEMS
+ *   - add linting
+ * 
  *   - convert to typescript? would save me some grief
  *       - review all packages in package.json
+ * 
+ *   - Create endpoint for AHK to call when I change status, to immediately update status
  *
  *   - instead of polling HA, use webhook
  *       - I think this should be a separate branch
- *       - is using font awesome to show HVAC status up-to-date enough to be useful?
+ *       - How awkward is this change? will likely be some drastic changes?
+ * 
+ *   - is using font awesome to show HVAC status up-to-date enough to be useful?
  *
  *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
  *       - do this AFTER I look at webhook for HA, because that will likely significantly change
