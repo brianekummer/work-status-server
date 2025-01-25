@@ -12,7 +12,7 @@ import { CombinedStatus } from '../models/combined-status';
  * Used to build the status that will be send to the clients
  */
 export class StatusController {
-  private readonly SERVER_REFRESH_MS: number = (process.env.SERVER_REFRESH_SECONDS || 30) * 1000;
+  private readonly SERVER_REFRESH_MS: number = (process.env.SERVER_POLLING_SECONDS || 30) * 1000;
 
   // This variable is needed because it contains Slack.statusStartTime which this code adds to keep track of when the status started
   // It does not come from Slack, and when we set the status, we need the current value
@@ -84,7 +84,7 @@ export class StatusController {
   private pushStatusToClient(client: Response, initialPush: boolean) {
     logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
 
-    let statusToSend = {
+    const statusToSend = {
       emojiImage: this.combinedStatus.slack.emoji ? `/images/${this.combinedStatus.slack.emoji}.png` : '',
       text: this.combinedStatus.slack.text,
       times: this.combinedStatus.slack.times,

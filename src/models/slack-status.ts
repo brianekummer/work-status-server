@@ -29,10 +29,11 @@ export class SlackStatus {
   }
 
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static fromApi(slackApiProfileResponse: any, slackApiPresenceResponse: any): SlackStatus {
     // Slack huddles don't set an emoji, they only set 'huddle_state' property. For
     // my purposes, changing the emoji to the same as a Slack call is fine.
-    let emoji: string = slackApiProfileResponse.profile.huddle_state === 'in_a_huddle' 
+    const emoji: string = slackApiProfileResponse.profile.huddle_state === 'in_a_huddle' 
                   ? this.SLACK_CALL_STATUS_EMOJI
                   : slackApiProfileResponse.profile.status_emoji;
 

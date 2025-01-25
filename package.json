@@ -9,7 +9,7 @@
     "copy-views": "cp -r src/views dist/src",
     "copy-public": "cp -r public dist/",
     "copy-files": "cp -r files dist/",
-    "lint": "eslint"
+    "lint": "eslint \"./**/*.{ts,tsx}\" --ignore-pattern \"dist\" --ignore-pattern \"public/**/*.js\""
   },
   "dependencies": {
     "csv-parser": "^3.1.0",

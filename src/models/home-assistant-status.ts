@@ -21,6 +21,7 @@ export class HomeAssistantStatus {
   }
 
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static fromApi(state: any): HomeAssistantStatus {
     return new HomeAssistantStatus(state.Washer, state.Dryer, state.Temperature);
   }

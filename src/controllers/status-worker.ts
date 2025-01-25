@@ -78,12 +78,12 @@ function getLatestStatus(oldCombinedStatus: CombinedStatus): Promise<CombinedSta
     ])
     .then(statuses => {
       // Statuses are returned in the same order they were called in Promises.all() 
-      let [ workSlackStatus, homeSlackStatus, homeAssistantStatus ] = statuses;
+      const [ workSlackStatus, homeSlackStatus, homeAssistantStatus ] = statuses;
 
       //logger.debug(`[[[[[`);
       //console.log(workSlackStatus);
       //console.log(homeSlackStatus);
-      let matchingCondition: StatusCondition|undefined = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
+      const matchingCondition: StatusCondition|undefined = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
         ? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus, statusConditionService.matchesCondition(matchingCondition.conditions_home_emoji, homeSlackStatus.emoji))
         : oldCombinedStatus;

@@ -31,10 +31,10 @@ export class SlackService {
    *
    * Returns a JSON object with my Slack status
    */
-  public getSlackStatus(account: any): Promise<SlackStatus> {
+  public getSlackStatus(account: ACCOUNTS): Promise<SlackStatus> {
     if (this.SLACK_TOKENS[account]) {
       const accountName = (account === SlackService.ACCOUNTS.WORK ? 'WORK' : 'HOME');
-      let headers = {
+      const headers = {
         'Content-Type':  'application/x-www-form-urlencoded',
         'Authorization': `Bearer ${this.SLACK_TOKENS[account]}`  
       };
@@ -46,7 +46,7 @@ export class SlackService {
       .then(responses => Promise.all(responses.map(response => response.json())))
       .then(jsonResponses => {
         //logger.debug(`>>>>>> slack-service.getSlackStatus()`);
-        let slackStatus = SlackStatus.fromApi(jsonResponses[0], jsonResponses[1]);
+        const slackStatus = SlackStatus.fromApi(jsonResponses[0], jsonResponses[1]);
         //logger.debug(`>>>>>> slack-service.getSlackStatus()`);
         //console.log(slackStatus);
         logger.debug(`Got SLACK for ${accountName}: ${slackStatus.toString()}`);

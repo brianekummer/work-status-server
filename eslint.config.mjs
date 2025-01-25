@@ -8,31 +8,39 @@ import { FlatCompat } from "@eslint/eslintrc";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const compat = new FlatCompat({
-    baseDirectory: __dirname,
-    recommendedConfig: js.configs.recommended,
-    allConfig: js.configs.all
+  baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+  allConfig: js.configs.all
 });
 
 export default [...compat.extends(
-    "eslint:recommended",
-    "plugin:@typescript-eslint/eslint-recommended",
-    "plugin:@typescript-eslint/recommended",
+  "eslint:recommended",
+  "plugin:@typescript-eslint/eslint-recommended",
+  "plugin:@typescript-eslint/recommended",
 ), {
-    plugins: {
-        "@typescript-eslint": typescriptEslint
-    },
+  plugins: {
+    "@typescript-eslint": typescriptEslint
+  },
 
-    languageOptions: {
-        parser: tsParser,
-        ecmaVersion: 2020,
-        sourceType: "module",
+  languageOptions: {
+    parser: tsParser,
+    ecmaVersion: 2020,
+    sourceType: "module",
 
-        parserOptions: {
-            project: "./tsconfig.json"
-        }
-    },
+    parserOptions: {
+      project: "./tsconfig.json"
+    }
+  },
 
-    rules: {   //0=off, 1=warn, 2=error
-        "no-console": 1
-    },
-}];
+  rules: {   // off|warn|error
+    "no-console": "warn"
+  }
+},
+{
+  // Specific configuration for declaration files
+  files: ["**/*.d.ts"],
+  rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+  }
+}
+];

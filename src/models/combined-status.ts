@@ -1,5 +1,5 @@
 import { DateTime } from "luxon";
-import logger from '../services/logger';
+//import logger from '../services/logger';
 import { HomeAssistantStatus } from './home-assistant-status';
 import { SlackStatus } from './slack-status';
 import { StatusCondition } from './status-condition';
@@ -66,6 +66,7 @@ export class CombinedStatus {
   }
 
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static fromJsonObject(jsonObject: any): CombinedStatus {
     return new CombinedStatus(
       jsonObject.slack.emoji, 
@@ -82,7 +83,7 @@ export class CombinedStatus {
     //logger.debug('&&&&& combined-status updateStatus()');
     //console.log(matchingCondition);
     
-    let newCombinedStatus = new CombinedStatus(
+    const newCombinedStatus = new CombinedStatus(
       matchingCondition.display_emoji_image,
       (matchingCondition.display_text)
         .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
@@ -130,17 +131,17 @@ export class CombinedStatus {
     //     expiration of my PTO at work.
     //   - It's highly unlikely that I'd have a home status with an expiration 
     //     while I'm working, where I'd want to use the work status's expiration.
-    let statusExpirationSeconds = homeSlackStatus.emoji && matchesHomeEmoji
+    const statusExpirationSeconds = homeSlackStatus.emoji && matchesHomeEmoji
         ? homeSlackStatus.expiration 
         : workSlackStatus.expiration;
   
     // Select the appropriate template for displaying the status time (i.e. 
     // "Started @ 12:30 PM" or "12:30 PM - 1:00 PM")
-    let statusTimesTemplate = statusExpirationSeconds === 0 
+    const statusTimesTemplate = statusExpirationSeconds === 0 
       ? this.TIMES_TEMPLATES.START 
       : this.TIMES_TEMPLATES.START_TO_END;
   
-    let statusExpiration = DateTime
+    const statusExpiration = DateTime
       .fromSeconds(statusExpirationSeconds)
       .toLocaleString(DateTime.TIME_SIMPLE);
   

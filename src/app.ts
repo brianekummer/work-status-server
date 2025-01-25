@@ -13,10 +13,11 @@
  * 
  * 
  * TO DO ITEMS
- *   - add linting
- * 
  *   - convert to typescript? would save me some grief
+ *       - add linting
  *       - review all packages in package.json
+ *       - deploy on server- test it
+ *       - merge to master
  * 
  *   - Create endpoint for AHK to call when I change status, to immediately update status
  *
@@ -49,7 +50,7 @@ import routerModule from './routes/routes';  // Change to import
 /***********************  Start of Node Configuration  ***********************/
 const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
 
-let app = express();
+const app = express();
 
 // Configure Mustache
 app.engine('mst', mustacheExpress());
@@ -57,11 +58,11 @@ app.set('view engine', 'mst');
 app.set('views', path.join(__dirname, 'views'));
 
 // Start the worker thread and pass it to the status controller
-let worker = new Worker('./controllers/status-worker.js');
-let statusController = new StatusController(worker);
+const worker = new Worker('./controllers/status-worker.js');
+const statusController = new StatusController(worker);
 
 // Initialize the router, which needs the status controller
-let router = routerModule(statusController);
+const router = routerModule(statusController);
 app.use(router);
 
 // Expose public folder

@@ -66,7 +66,7 @@ const logger = winston.createLogger({
 });
 
 logger.on('error', (err: unknown) => {
-  console.error('Error with logging:', err);
+  console.error('Error with logging:', err);   // eslint-disable-line no-console
 });
 
 // Export the logger as default

@@ -5,7 +5,7 @@ namespace NodeJS {
       SLACK_TOKEN_HOME?: string
       HOME_ASSISTANT_BASE_URL?: string
       HOME_ASSISTANT_TOKEN?: string
-      SERVER_REFRESH_SECONDS?: number
+      SERVER_POLLING_SECONDS?: number
       CLIENT_REFRESH_SECONDS?: number
       LOG_LEVEL?: string
     }
