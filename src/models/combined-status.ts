@@ -1,5 +1,4 @@
 import { DateTime } from "luxon";
-//import logger from '../services/logger';
 import { HomeAssistantStatus } from './home-assistant-status';
 import { SlackStatus } from './slack-status';
 import { StatusCondition } from './status-condition';

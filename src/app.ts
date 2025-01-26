@@ -15,6 +15,7 @@
  * TO DO ITEMS
  *   - convert to typescript? would save me some grief
  *       - deploy to proxmox and test for a week
+ *       - fix ugly hack in status-worker asking about dependency injection
  *       - merge to master
  * 
  *   - instead of polling HA, use webhook

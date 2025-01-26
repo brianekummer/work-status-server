@@ -61,3 +61,6 @@ You need to define an app in Slack to get a security token which you can use to 
 
 ## Running Locally
 Use the shell script `start-service.sh`, which optionally takes the desired log level as its only parameter
+
+## Useful Tools
+- https://ezgif.com/split takes an animated gif and splits it into individual frames. I use this to create an un-animated image to display on my desk phone, since I don't want animation there.
