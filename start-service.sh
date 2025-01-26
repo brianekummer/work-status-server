@@ -5,7 +5,7 @@ case "$OSTYPE" in
     ##########################################################################
     source /root/.env
     export LOG_LEVEL="$1"
-    cd /opt/work-status-server/
+    cd /opt/work-status-server/dist/src
     node app.js
     ;;
 

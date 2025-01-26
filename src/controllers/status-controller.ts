@@ -12,7 +12,7 @@ import { CombinedStatus } from '../models/combined-status';
  * Used to build the status that will be send to the clients
  */
 export class StatusController {
-  private readonly SERVER_REFRESH_MS: number = (process.env.SERVER_POLLING_SECONDS || 30) * 1000;
+  private readonly SERVER_POLLING_MS: number = (process.env.SERVER_POLLING_SECONDS || 30) * 1000;
 
   // This variable is needed because it contains Slack.statusStartTime which this code adds to keep track of when the status started
   // It does not come from Slack, and when we set the status, we need the current value
@@ -38,15 +38,20 @@ export class StatusController {
       this.sendStatusToAllClients();
     });
   
+    this.tellWorkerToGetLatestStatus();
+    setInterval(() => this.tellWorkerToGetLatestStatus(), this.SERVER_POLLING_MS); 
+  }
+
+
+  // TODO- rename this fn
+  private tellWorkerToGetLatestStatus() {
     this.worker.postMessage(this.combinedStatus);
-    setInterval(() => this.worker.postMessage(this.combinedStatus), this.SERVER_REFRESH_MS); 
   }
 
 
   /*
   * 
-  * Use Server Sent Events to stream updates to the browser every
-  * CLIENT_REFRESH_MS.
+  * Use Server Sent Events to stream updates to the browser. Constructor sets up the loop that pushes updates every SERVER_POLLING_SECONDS
   *
   */
   public async streamStatusUpdates(request: Request, response: Response) {
@@ -82,7 +87,7 @@ export class StatusController {
    * converting an emoji to an actual filename.
    */
   private pushStatusToClient(client: Response, initialPush: boolean) {
-    logger.debug(`Pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
+    logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
 
     const statusToSend = {
       emojiImage: this.combinedStatus.slack.emoji ? `/images/${this.combinedStatus.slack.emoji}.png` : '',
@@ -97,5 +102,18 @@ export class StatusController {
     };
     
     client.write(`data: ${JSON.stringify(statusToSend)}\n\n`);
+  }
+
+
+  /**
+   * User says they just updated their status, so immediately 
+   * 
+   * @param response 
+   */
+  public updatedStatus(response: Response) {
+    // Have the worker thread check NOW!
+    logger.debug(`StatusController.updatedStatus() called, checking for updates NOW`);
+    this.tellWorkerToGetLatestStatus();
+    response.status(200).end();
   }
 }

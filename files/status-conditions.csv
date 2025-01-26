@@ -15,6 +15,7 @@
 | In a non-work meeting          |                        | away     | :non_work_meeting:     |          | non_work_meeting     | Non-Work Meeting     |
 | Playing                        |                        | away     | :8bit:                 |          | 8bit                 | Playing              |
 | At lunch                       | :hamburger:            |          |                        |          | hamburger            | Lunch                |
+| At dinner                      | :poultry_leg:          |          |                        |          | poultry_leg          | Dinner               |
 | Unavailable                    | :no_entry:             |          |                        |          | no_entry             | (WORK_STATUS_TEXT)   |
 | Be right back                  | :brb:                  |          |                        |          | brb                  | Be Right Back        |
 | Commuting                      | :blue_car:             |          |                        |          | blue_car             | Commuting            |
@@ -23,6 +24,7 @@
 | Heads down focused             | :heads-down:           |          |                        |          | heads_down           | Focusing             |
 | In Pittsburgh                  | :cityscape:            |          |                        |          | cityscape            | In Pittsburgh        |
 | In a meeting                   | :spiral_calendar_pad:  |          |                        |          | spiral_calendar      | Meeting              |
+| Studying                       | :books:                |          |                        |          | books                | Studying             |
 | Home- some other emoji         |                        | away     | *                      |          |                      | (HOME_STATUS_TEXT)   |
 | Work- some other emoji         | *                      |          |                        |          |                      | (WORK_STATUS_TEXT)   |
 | No status                      |                        | away     |                        |          |                      |                      |

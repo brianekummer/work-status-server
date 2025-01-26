@@ -14,11 +14,9 @@
  * 
  * TO DO ITEMS
  *   - convert to typescript? would save me some grief
- *       - deploy on server- test it
+ *       - deploy to proxmox and test for a week
  *       - merge to master
  * 
- *   - Create endpoint for AHK to call when I change status, to immediately update status
- *
  *   - instead of polling HA, use webhook
  *       - I think this should be a separate branch
  *       - How awkward is this change? will likely be some drastic changes?
