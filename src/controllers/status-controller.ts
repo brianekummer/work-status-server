@@ -4,6 +4,12 @@ import { Request, Response } from 'express';
 
 import logger from '../services/logger';
 import { CombinedStatus } from '../models/combined-status';
+import { globSync } from 'glob';
+import path from 'path';
+
+
+// TODO- is this type worthwhile??
+type EmojiImagesDictionary = Map<string, string[]>;
 
 
 /**
@@ -18,8 +24,14 @@ export class StatusController {
   // It does not come from Slack, and when we set the status, we need the current value
   private combinedStatus: CombinedStatus = CombinedStatus.EMPTY_STATUS;
 
+
+
+
+
   private clients: Set<Response> = new Set<Response>();
   private worker: Worker;
+  // TODO- declare a type for this??
+  private emojiImages: EmojiImagesDictionary;
 
 
   /**
@@ -40,6 +52,8 @@ export class StatusController {
   
     this.tellWorkerToGetLatestStatus();
     setInterval(() => this.tellWorkerToGetLatestStatus(), this.SERVER_POLLING_MS); 
+
+    this.emojiImages = this.buildListOfEmojiImages()
   }
 
 
@@ -79,6 +93,46 @@ export class StatusController {
   }
 
 
+
+
+  //***** SHOULD THE EMOJI IMAGE STUFF BE PULLED INTO A SEPARATE SERVICE?
+
+  /**
+   * Explain how am doing this
+   */
+  private buildListOfEmojiImages(): EmojiImagesDictionary {
+    const dirname = '../public/images';
+
+    // Build a unique list of emojis by stripping trailing digits and underscores from filenames
+    const filenames = globSync(`${dirname}/*`);
+    const emojis = Array.from(new Set(
+      filenames.map(f =>
+        path.basename(f, path.extname(f)).replace(/_\d+$/, '')
+      )
+    ));
+
+    // Create a map of emoji to their corresponding images
+    const emojiImages: EmojiImagesDictionary = new Map<string, string[]>();
+    emojis.forEach(e => {
+      const images = 
+        globSync(`${dirname}/${e}*`)
+        .map(i => `/images/${path.basename(i)}`);
+      emojiImages.set(e, images);
+    });
+
+    return emojiImages;
+  }
+  /**
+   * 
+   */
+  private getRandomEmojiImage(emoji: string): string {
+    const images = this.emojiImages.get(emoji);
+    return images ? images[Math.floor(Math.random() * images.length)] : '';
+  }
+
+
+
+
   /**
    * FYI, request.get('Referrer') returns the full URL of the referring/
    * requesting site
@@ -87,12 +141,12 @@ export class StatusController {
    * converting an emoji to an actual filename.
    */
   private pushStatusToClient(client: Response, initialPush: boolean) {
-    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address
+    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
     const clientIp = (client.req.ip || '').replace('::ffff:', '');
     logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')?.split('/').pop()} on ${clientIp}`);
 
     const statusToSend = {
-      emojiImage: this.combinedStatus.slack.emoji ? `/images/${this.combinedStatus.slack.emoji}.png` : '',
+      emojiImage: this.getRandomEmojiImage(this.combinedStatus.slack.emoji),
       text: this.combinedStatus.slack.text,
       times: this.combinedStatus.slack.times,
       lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE),
