@@ -62,7 +62,6 @@ const router = routerModule(statusController);
 app.use(router);
 
 // Expose public folder
-//app.use(express.static(`./public`));
 app.use(express.static('../public'));
 
 // Hack to prevent "certificate has expired" issue. Not suitable for production,

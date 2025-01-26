@@ -87,7 +87,9 @@ export class StatusController {
    * converting an emoji to an actual filename.
    */
   private pushStatusToClient(client: Response, initialPush: boolean) {
-    logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')}`);
+    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address
+    const clientIp = (client.req.ip || '').replace('::ffff:', '');
+    logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} to ${client.req.get('Referrer')?.split('/').pop()} on ${clientIp}`);
 
     const statusToSend = {
       emojiImage: this.combinedStatus.slack.emoji ? `/images/${this.combinedStatus.slack.emoji}.png` : '',
