@@ -22,7 +22,7 @@ export class StatusController {
   private combinedStatus: CombinedStatus = CombinedStatus.EMPTY_STATUS;
 
 
-  private emojiService: EmojiService = new EmojiService();
+  private emojiService: EmojiService;
 
 
   private clients: Set<Response> = new Set<Response>();
@@ -34,11 +34,13 @@ export class StatusController {
   /**
    * Constructor
    */
-  constructor(worker: Worker) {
+  constructor(worker: Worker, emojiService: EmojiService) {
+    this.worker = worker;
+    this.emojiService = emojiService;
+
     // Immediately send the currentStatus to the worker thread, which will check
     // for updates, and then send the updated status back in a message. Then
     // repeatedly do that every SERVER_REFRESH_MS.
-    this.worker = worker;
     this.worker.on('message', (newCombinedStatus: CombinedStatus) => {
       //logger.debug(`@@@@@ StatusController.on.message() RECEIVED`);
       //console.log(newCombinedStatus);

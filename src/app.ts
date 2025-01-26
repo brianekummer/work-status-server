@@ -15,7 +15,6 @@
  * TO DO ITEMS
  *   - convert to typescript? would save me some grief
  *       - deploy to proxmox and test for a week
- *       - fix ugly hack in status-worker asking about dependency injection
  *       - merge to master
  * 
  *   - instead of polling HA, use webhook
@@ -41,7 +40,9 @@ import logger from './services/logger'
 import { Worker } from 'worker_threads';
 import { StatusController } from './controllers/status-controller';
 import path from 'path';
-import routerModule from './routes/routes';  // Change to import
+import routerModule from './routes/routes';
+
+import { EmojiService } from './services/emoji-service';
 
 
 /***********************  Start of Node Configuration  ***********************/
@@ -54,9 +55,10 @@ app.engine('mst', mustacheExpress());
 app.set('view engine', 'mst');
 app.set('views', path.join(__dirname, 'views'));
 
+const emojiService: EmojiService = new EmojiService();
 // Start the worker thread and pass it to the status controller
 const worker = new Worker('./controllers/status-worker.js');
-const statusController = new StatusController(worker);
+const statusController = new StatusController(worker, emojiService);
 
 // Initialize the router, which needs the status controller
 const router = routerModule(statusController);

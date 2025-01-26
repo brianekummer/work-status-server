@@ -8,20 +8,17 @@ import { StatusCondition } from '../models/status-condition';
  * This is a worker thread for collecting up-to-date status information and 
  * returning it back to the caller.
  * 
- * Reminder that this runs in a separate process and that all of the services
- * are new instances, separate from those of the main thread.
  */
 import logger from '../services/logger';
 import { CombinedStatus } from '../models/combined-status';
-
-
 import { SlackService } from '../services/slack-service';
 import { HomeAssistantService } from '../services/home-assistant-service';
 import { StatusConditionService } from '../services/status-condition-service';
 
 
 
-// TODO- fix this ugly hack - direct injection?
+// This worker thread runs in a separate process and that all of the services
+// are new instances, separate from those of the main thread.
 const slackService = new SlackService();
 const homeAssistantService = new HomeAssistantService();
 const statusConditionService = new StatusConditionService();
