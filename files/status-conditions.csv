@@ -14,10 +14,11 @@
 #--------------------------------|------------------------|----------|------------------------|----------|----------------------|----------------------|
 | In a non-work meeting          |                        | away     | :non_work_meeting:     |          | non_work_meeting     | Non-Work Meeting     |
 | Playing                        |                        | away     | :8bit:                 |          | 8bit                 | Playing              |
+| Be right back (home)           |                        | away     | :brb:                  |          | brb                  | Be Right Back        |
 | At lunch                       | :hamburger:            |          |                        |          | hamburger            | Lunch                |
 | At dinner                      | :poultry_leg:          |          |                        |          | poultry_leg          | Dinner               |
 | Unavailable                    | :no_entry:             |          |                        |          | no_entry             | (WORK_STATUS_TEXT)   |
-| Be right back                  | :brb:                  |          |                        |          | brb                  | Be Right Back        |
+| Be right back (work)           | :brb:                  |          |                        |          | brb                  | Be Right Back        |
 | Commuting                      | :blue_car:             |          |                        |          | blue_car             | Commuting            |
 | On PTO                         | :palm_tree:            |          |                        |          |                      |                      |
 | On a Slack call                | :slack_call:           |          |                        |          | telephone_receiver   | On a Call            |

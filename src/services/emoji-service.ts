@@ -5,19 +5,17 @@ import path from 'path';
 type EmojiImagesDictionary = Map<string, string[]>;
 
 
-
 /**
  * Emoji Service
  * 
  */
 export class EmojiService {
-
-    private emojiImages: EmojiImagesDictionary;
+  private emojiImages: EmojiImagesDictionary;
 
     
-    constructor() {
-      this.emojiImages = this.buildListOfEmojiImages()
-    }
+  constructor() {
+    this.emojiImages = this.buildListOfEmojiImages()
+  }
   
 
   /**
@@ -59,5 +57,4 @@ export class EmojiService {
     const images = this.emojiImages.get(`${emoji}-${pageName}`);
     return images ? images[Math.floor(Math.random() * images.length)] : '';
   }
-
 }

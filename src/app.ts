@@ -15,17 +15,21 @@
  * TO DO ITEMS
  *   - convert to typescript? would save me some grief
  *       - deploy to proxmox and test for a week
+ *       - emoji is the same between desk and phone, but image is not. so can have mario (8bit_1)
+ *         on desk and 8bit_2 on wall - do I care? How hard to make them the same?
+ *           - selecting which image would have to be done in sendStatusToAllClients(), and that
+ *             would have to assume that there's always a png and gif, etc. very ugly and fragile?
  *       - merge to master
  * 
  *   - instead of polling HA, use webhook
  *       - I think this should be a separate branch
  *       - How awkward is this change? will likely be some drastic changes?
  * 
- *   - is using font awesome to show HVAC status up-to-date enough to be useful?
- *
  *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
  *       - do this AFTER I look at webhook for HA, because that will likely significantly change
  *         how things are done
+ *
+ *   - is using font awesome to show HVAC status up-to-date enough to be useful?
  *   
  *   - Cleanup
  *       - find a linter
@@ -33,19 +37,17 @@
  *       - Update all comments, readme's, etc.
  */
 
-// Require packages
 import express from 'express';
 import mustacheExpress from 'mustache-express';
-import logger from './services/logger'
 import { Worker } from 'worker_threads';
-import { StatusController } from './controllers/status-controller';
 import path from 'path';
-import routerModule from './routes/routes';
 
+import logger from './services/logger';
+import routerModule from './routes/routes';
+import { StatusController } from './controllers/status-controller';
 import { EmojiService } from './services/emoji-service';
 
 
-/***********************  Start of Node Configuration  ***********************/
 const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
 
 const app = express();
@@ -72,4 +74,3 @@ app.use(express.static('../public'));
 process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
 app.listen(port, () => logger.info(`Listening on port ${port}`));
-/************************  End of Node Configuration  ************************/
