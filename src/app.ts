@@ -53,7 +53,6 @@ import logger from './services/logger';
 import routerModule from './routes/routes';
 import { StatusController } from './controllers/status-controller';
 import { EmojiService } from './services/emoji-service';
-import { HomeAssistantService } from './services/home-assistant-service';
 
 
 const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
@@ -69,11 +68,10 @@ app.set('views', path.join(__dirname, 'views'));
 app.use(bodyParser.json());
 
 const emojiService: EmojiService = new EmojiService();
-const homeAssistantService: HomeAssistantService = new HomeAssistantService();
 
 // Start the worker thread and pass it to the status controller
 const worker = new Worker('./controllers/status-worker.js');
-const statusController = new StatusController(worker, emojiService, homeAssistantService);
+const statusController = new StatusController(worker, emojiService);
 
 // Initialize the router, which needs the status controller
 const router = routerModule(statusController);

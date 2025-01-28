@@ -74,11 +74,7 @@ export class CombinedStatus {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public updateHomeAssistantStatus(homeAssistantWebhookData: any) {
-    return new CombinedStatus(
-      this.slack.emoji, 
-      this.slack.text, 
-      this.slack.times, 
-      this.slack.statusStartTime,
+    this.homeAssistant = new HomeAssistantStatus(
       homeAssistantWebhookData.Washer,
       homeAssistantWebhookData.Dryer,
       homeAssistantWebhookData.Temperature);

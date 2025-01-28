@@ -12,7 +12,6 @@ import { StatusCondition } from '../models/status-condition';
 import logger from '../services/logger';
 import { CombinedStatus } from '../models/combined-status';
 import { SlackService } from '../services/slack-service';
-//import { HomeAssistantService } from '../services/home-assistant-service';
 import { StatusConditionService } from '../services/status-condition-service';
 
 
@@ -20,7 +19,6 @@ import { StatusConditionService } from '../services/status-condition-service';
 // This worker thread runs in a separate process and that all of the services
 // are new instances, separate from those of the main thread.
 const slackService = new SlackService();
-//const homeAssistantService = new HomeAssistantService();
 const statusConditionService = new StatusConditionService();
 
 
@@ -71,7 +69,6 @@ function getLatestStatus(oldCombinedStatus: CombinedStatus): Promise<CombinedSta
     Promise.all([
       slackService.getSlackStatus(SlackService.ACCOUNTS.WORK),
       slackService.getSlackStatus(SlackService.ACCOUNTS.HOME)
-      //homeAssistantService.getHomeAssistantStatus()
     ])
     .then(statuses => {
       // Statuses are returned in the same order they were called in Promises.all() 
