@@ -1,9 +1,9 @@
 import fs from 'fs';
 import csv from 'csv-parser';
 import watch from 'node-watch';
-import logger from './logger';
-import { SlackStatus } from '../models/slack-status';
-import { StatusCondition } from '../models/status-condition';
+import logger from './logger.js';
+import { SlackStatus } from '../models/slack-status.js';
+import { StatusCondition } from '../models/status-condition.js';
 
 
 /**
@@ -29,7 +29,7 @@ export class StatusConditionService {
       });
 
     // Watch for file changes and re-read when necessary.
-    watch(
+    watch.default(
       this.STATUS_CONDITIONS_FILENAME,
       { recursive: false },
       async (name: string) => {

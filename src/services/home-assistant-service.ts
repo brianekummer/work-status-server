@@ -1,5 +1,5 @@
-import logger from './logger';
-import { HomeAssistantStatus } from '../models/home-assistant-status';
+import logger from './logger.js';
+import { HomeAssistantStatus } from '../models/home-assistant-status.js';
 
 
 /**

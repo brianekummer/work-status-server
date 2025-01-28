@@ -2,10 +2,10 @@ import { DateTime } from "luxon";
 import { Worker } from 'worker_threads';
 import { Request, Response } from 'express';
 
-import logger from '../services/logger';
-import { CombinedStatus } from '../models/combined-status';
-import { EmojiService } from '../services/emoji-service';
-import { HomeAssistantService } from '../services/home-assistant-service';
+import logger from '../services/logger.js';
+import { CombinedStatus } from '../models/combined-status.js';
+import { EmojiService } from '../services/emoji-service.js';
+import { HomeAssistantService } from '../services/home-assistant-service.js';
 //import { HomeAssistantStatus } from "../models/home-assistant-status";
 
 
@@ -46,6 +46,10 @@ export class StatusController {
     // This looks significant, but may not be. THINK ABOUT IT.
     //   - This would affect Kaley opening the web page to see the laundry status, although
     //     if laundry is running, it'd update every minute
+    //   - CORRECTION- this is only for the first couple of minutes the SERVER is running
+    //     once the server has been running for a couple of minutes and gets the first
+    //     HA update, any new client will IMMEDIATELY get the status. This is NOT
+    //     worth the extra mess of keeping HomeAssistantService, the async constructor mess here, etc.
     //
     // I thought about pushing updates for HA separate from Slack. Would be initiated
     // from the same route, but then could push two different payloads to the client,
@@ -66,26 +70,44 @@ export class StatusController {
   /**
    * Constructor
    */
-  constructor(worker: Worker, emojiService: EmojiService, homeAssistantService: HomeAssistantService) {
+  constructor(
+    worker: Worker, 
+    emojiService: EmojiService, 
+    homeAssistantService: HomeAssistantService
+  ) {
     this.worker = worker;
     this.emojiService = emojiService;
     this.homeAssistantService = homeAssistantService;
+  }
 
-    // Immediately send the currentStatus to the worker thread, which will check
-    // for updates, and then send the updated status back in a message. Then
-    // repeatedly do that every SERVER_REFRESH_MS.
-    this.worker.on('message', (newCombinedStatus: CombinedStatus) => {
+  static async create(
+    worker: Worker, 
+    emojiService: EmojiService, 
+    homeAssistantService: HomeAssistantService
+  ) {
+    const controller = new StatusController(worker, emojiService, homeAssistantService);
+
+
+    // When the worker sends us a message, save it and send it to all the clients
+    worker.on('message', (newCombinedStatus: CombinedStatus) => {
       //logger.debug(`@@@@@ StatusController.on.message() RECEIVED`);
       //console.log(newCombinedStatus);
       //logger.debug(`@@@@@`);
-      this.combinedStatus = newCombinedStatus;
-      this.sendStatusToAllClients();
+      controller.combinedStatus = newCombinedStatus;
+      controller.sendStatusToAllClients();
     });
-  
-    this.combinedStatus.homeAssistant = await this.homeAssistantService.getHomeAssistantStatus();
-    this.tellWorkerToGetLatestStatus();
+
+
+    // Get the Home Assistant status and then have the worker get the Slack status 
+    // and send it to all clients
+    controller.combinedStatus.homeAssistant = await homeAssistantService.getHomeAssistantStatus();
+    controller.tellWorkerToGetLatestStatus();
     
-    setInterval(() => this.tellWorkerToGetLatestStatus(), this.SERVER_POLLING_MS); 
+    // Every SERVER_POLLING_MS, tell the worker to get the status. It will do that and
+    // send us a message, which is the "worker.on('message'..." above.
+    setInterval(() => controller.tellWorkerToGetLatestStatus(), controller.SERVER_POLLING_MS); 
+
+    return controller;
   }
 
 

@@ -4,6 +4,7 @@
   "description": "Work Status web server",
   "homepage": "http://192.168.1.202:3000",
   "main": "app.js",
+  "type": "module",
   "scripts": {
     "build": "tsc && npm run copy-views && npm run copy-public && npm run copy-files",
     "copy-views": "cp -r src/views dist/src",

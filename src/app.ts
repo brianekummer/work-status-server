@@ -47,16 +47,23 @@ import express from 'express';
 import mustacheExpress from 'mustache-express';
 import { Worker } from 'worker_threads';
 import path from 'path';
+import {fileURLToPath} from 'url';
 import bodyParser from 'body-parser';
 
-import logger from './services/logger';
-import routerModule from './routes/routes';
-import { StatusController } from './controllers/status-controller';
-import { EmojiService } from './services/emoji-service';
-import { HomeAssistantService } from './services/home-assistant-service';
+import logger from './services/logger.js';
+import routerModule from './routes/routes.js';
+import { StatusController } from './controllers/status-controller.js';
+import { EmojiService } from './services/emoji-service.js';
+import { HomeAssistantService } from './services/home-assistant-service.js';
 
 
 const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
+
+const __filename = fileURLToPath(import.meta.url);
+console.log('__filename: ', __filename)
+
+const __dirname = path.dirname(__filename);
+console.log('__dirname: ', __dirname);
 
 const app = express();
 
@@ -73,7 +80,7 @@ const homeAssistantService: HomeAssistantService = new HomeAssistantService();
 
 // Start the worker thread and pass it to the status controller
 const worker = new Worker('./controllers/status-worker.js');
-const statusController = new StatusController(worker, emojiService, homeAssistantService);
+const statusController = await StatusController.create(worker, emojiService, homeAssistantService);
 
 // Initialize the router, which needs the status controller
 const router = routerModule(statusController);

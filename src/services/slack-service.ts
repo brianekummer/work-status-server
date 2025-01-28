@@ -1,5 +1,5 @@
-import logger from './logger';
-import { SlackStatus } from '../models/slack-status';
+import logger from './logger.js';
+import { SlackStatus } from '../models/slack-status.js';
 
 
 

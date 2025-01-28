@@ -1,5 +1,5 @@
 import { parentPort } from 'worker_threads';
-import { StatusCondition } from '../models/status-condition';
+import { StatusCondition } from '../models/status-condition.js';
 
 
 /**
@@ -9,11 +9,11 @@ import { StatusCondition } from '../models/status-condition';
  * returning it back to the caller.
  * 
  */
-import logger from '../services/logger';
-import { CombinedStatus } from '../models/combined-status';
-import { SlackService } from '../services/slack-service';
-//import { HomeAssistantService } from '../services/home-assistant-service';
-import { StatusConditionService } from '../services/status-condition-service';
+import logger from '../services/logger.js';
+import { CombinedStatus } from '../models/combined-status.js';
+import { SlackService } from '../services/slack-service.js';
+//import { HomeAssistantService } from '../services/home-assistant-service.js';
+import { StatusConditionService } from '../services/status-condition-service.js';
 
 
 

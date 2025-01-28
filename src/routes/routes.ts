@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { StatusController } from '../controllers/status-controller';
+import { StatusController } from '../controllers/status-controller.js';
 
 
 /**

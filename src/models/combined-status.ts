@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
-import { SlackStatus } from './slack-status';
-import { HomeAssistantStatus } from './home-assistant-status';
-import { StatusCondition } from './status-condition';
+import { SlackStatus } from './slack-status.js';
+import { HomeAssistantStatus } from './home-assistant-status.js';
+import { StatusCondition } from './status-condition.js';
 
 
 // TODO- fix naming !!
