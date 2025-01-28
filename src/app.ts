@@ -19,10 +19,12 @@
  *         on desk and 8bit_2 on wall - do I care? How hard to make them the same?
  *           - selecting which image would have to be done in sendStatusToAllClients(), and that
  *             would have to assume that there's always a png and gif, etc. very ugly and fragile?
+ *           - code is in folder "work-status-server - complex client object", not checked in
  *       - merge to master
  * 
  *   - instead of polling HA, use webhook
- *       - I think this should be a separate branch
+ *       - I think this should be a separate branch- ha-webhook
+ *           - merge in migrate-to-typescript
  *       - How awkward is this change? will likely be some drastic changes?
  * 
  *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
