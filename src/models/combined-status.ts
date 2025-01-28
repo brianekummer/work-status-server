@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
-//import { HomeAssistantStatus } from './home-assistant-status';
 import { SlackStatus } from './slack-status';
+import { HomeAssistantStatus } from './home-assistant-status';
 import { StatusCondition } from './status-condition';
 
 
@@ -10,12 +10,6 @@ interface slackStuff {
   text: string,
   times: string,
   statusStartTime: string
-}
-
-interface homeAssistantStuff {          
-  washerText: string,
-  dryerText: string,
-  temperatureText: string
 }
 
 
@@ -42,7 +36,7 @@ export class CombinedStatus {
   
 
   public slack: slackStuff;
-  public homeAssistant: homeAssistantStuff;
+  public homeAssistant: HomeAssistantStatus;
 
   
   public toString(): string { 
@@ -58,11 +52,11 @@ export class CombinedStatus {
       times: slackTimes,
       statusStartTime: slackStatusStartTime
     };
-    this.homeAssistant = {          
-      washerText: homeAssistantWasherText,
-      dryerText: homeAssistantDryerText,
-      temperatureText: homeAssistantTemperatureText
-    };
+    this.homeAssistant = new HomeAssistantStatus(
+      homeAssistantWasherText,
+      homeAssistantDryerText,
+      homeAssistantTemperatureText
+    );
   }
 
 
@@ -91,9 +85,8 @@ export class CombinedStatus {
   }
 
 
-  //public updateStatus(matchingCondition: StatusCondition, workSlackStatus: SlackStatus, homeSlackStatus: SlackStatus, homeAssistantStatus: HomeAssistantStatus, matchesHomeEmoji: boolean): CombinedStatus {
-  public updateStatus(matchingCondition: StatusCondition, workSlackStatus: SlackStatus, homeSlackStatus: SlackStatus, matchesHomeEmoji: boolean): CombinedStatus {
-      //logger.debug('&&&&& combined-status updateStatus()');
+  public updateSlackStatus(matchingCondition: StatusCondition, workSlackStatus: SlackStatus, homeSlackStatus: SlackStatus, matchesHomeEmoji: boolean): CombinedStatus {
+    //logger.debug('&&&&& combined-status updateSlackStatus()');
     //console.log(matchingCondition);
     
     const newCombinedStatus = new CombinedStatus(
@@ -112,7 +105,7 @@ export class CombinedStatus {
     // status start time
     newCombinedStatus.updateSlackStatusTimes(homeSlackStatus, workSlackStatus, this, matchesHomeEmoji);
 
-    //logger.debug('%%%%% CombinedStatus.updateStatus() RETURNING');
+    //logger.debug('%%%%% CombinedStatus.updateSlackStatus() RETURNING');
     //console.log(newCombinedStatus);
 
     return newCombinedStatus;

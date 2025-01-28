@@ -84,7 +84,7 @@ function getLatestStatus(oldCombinedStatus: CombinedStatus): Promise<CombinedSta
       const matchingCondition: StatusCondition|undefined = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
         //? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus, statusConditionService.matchesCondition(matchingCondition.conditions_home_emoji, homeSlackStatus.emoji))
-        ? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, statusConditionService.matchesCondition(matchingCondition.conditions_home_emoji, homeSlackStatus.emoji))
+        ? oldCombinedStatus.updateSlackStatus(matchingCondition, workSlackStatus, homeSlackStatus, statusConditionService.matchesCondition(matchingCondition.conditions_home_emoji, homeSlackStatus.emoji))
         : oldCombinedStatus;
     })
     .catch(ex => {

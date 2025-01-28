@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import logger from '../services/logger';
 import { CombinedStatus } from '../models/combined-status';
 import { EmojiService } from '../services/emoji-service';
+import { HomeAssistantService } from '../services/home-assistant-service';
 //import { HomeAssistantStatus } from "../models/home-assistant-status";
 
 
@@ -24,6 +25,7 @@ export class StatusController {
 
 
   private emojiService: EmojiService;
+  private homeAssistantService: HomeAssistantService;
 
 
   private clients: Set<Response> = new Set<Response>();
@@ -35,15 +37,15 @@ export class StatusController {
   public homeAssistantUpdate(request: Request, response: Response) {
     logger.debug(`>>>>>>>>>>>>>>>>>>>>>> StatusController.homeAssistantUpdate()`);
 
-    //const updatedHAStatus: any = request.body;
-
-    // TODO- how do I update this.combinedStatus.homeAssistant? I think this is hacky
-    // and not right, but good for POC
     //   - status-worker is responsible for POLLING. StatusController is responsible 
     //     for maintaining this.combinedStatus
     //
-    // ALSO, this will eliminate the need for the HomeAssistantService entirely. Which 
-    // also gets rid of the need for the HA security token :-) Does this also mean that HomeAssistantStatus goes away?
+    // If I get rid of HomeAssistantService and stop polling it, then when I open a 
+    // webpage, I will not have any HA data until I get my first update, which could be
+    // 10-20 minutes, depending on when something in that data changes. DO I CARE?
+    // This looks significant, but may not be. THINK ABOUT IT.
+    //   - This would affect Kaley opening the web page to see the laundry status, although
+    //     if laundry is running, it'd update every minute
     //
     // I thought about pushing updates for HA separate from Slack. Would be initiated
     // from the same route, but then could push two different payloads to the client,
@@ -64,9 +66,10 @@ export class StatusController {
   /**
    * Constructor
    */
-  constructor(worker: Worker, emojiService: EmojiService) {
+  constructor(worker: Worker, emojiService: EmojiService, homeAssistantService: HomeAssistantService) {
     this.worker = worker;
     this.emojiService = emojiService;
+    this.homeAssistantService = homeAssistantService;
 
     // Immediately send the currentStatus to the worker thread, which will check
     // for updates, and then send the updated status back in a message. Then
@@ -79,12 +82,14 @@ export class StatusController {
       this.sendStatusToAllClients();
     });
   
+    this.combinedStatus.homeAssistant = await this.homeAssistantService.getHomeAssistantStatus();
     this.tellWorkerToGetLatestStatus();
+    
     setInterval(() => this.tellWorkerToGetLatestStatus(), this.SERVER_POLLING_MS); 
   }
 
 
-  // TODO- rename this fn
+  // TODO- rename this fn - tellWorkerToGetLatestSlackStatus ?
   private tellWorkerToGetLatestStatus() {
     this.worker.postMessage(this.combinedStatus);
   }
@@ -104,6 +109,12 @@ export class StatusController {
     });
     this.clients.add(response);
   
+    // If we do not yet have the Home Assistant status, go get it
+    // TODO- I'd like this in the constructor, but not sure that'll work
+    if (this.combinedStatus.homeAssistant.washerText === '') {
+      this.combinedStatus.homeAssistant = await this.homeAssistantService.getHomeAssistantStatus();
+    }
+
     // Push initial data to this client
     this.pushStatusToClient(response, true);
 
