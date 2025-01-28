@@ -5,6 +5,7 @@ import { Request, Response } from 'express';
 import logger from '../services/logger';
 import { CombinedStatus } from '../models/combined-status';
 import { EmojiService } from '../services/emoji-service';
+//import { HomeAssistantStatus } from "../models/home-assistant-status";
 
 
 
@@ -29,6 +30,35 @@ export class StatusController {
   private worker: Worker;
   // TODO- declare a type for this??
   
+
+
+  public homeAssistantUpdate(request: Request, response: Response) {
+    logger.debug(`>>>>>>>>>>>>>>>>>>>>>> StatusController.homeAssistantUpdate()`);
+
+    //const updatedHAStatus: any = request.body;
+
+    // TODO- how do I update this.combinedStatus.homeAssistant? I think this is hacky
+    // and not right, but good for POC
+    //   - status-worker is responsible for POLLING. StatusController is responsible 
+    //     for maintaining this.combinedStatus
+    //
+    // ALSO, this will eliminate the need for the HomeAssistantService entirely. Which 
+    // also gets rid of the need for the HA security token :-) Does this also mean that HomeAssistantStatus goes away?
+    //
+    // I thought about pushing updates for HA separate from Slack. Would be initiated
+    // from the same route, but then could push two different payloads to the client,
+    // and the client would have to look at the payload to determine what to update.
+    // This seems very unnecessary. I may want to document this decision somewhere.
+
+    logger.debug(`   BEFORE: ${JSON.stringify(this.combinedStatus.homeAssistant)}`);
+    this.combinedStatus.updateHomeAssistantStatus(request.body);
+    logger.debug(`   AFTER: ${JSON.stringify(this.combinedStatus.homeAssistant)}`);
+
+    this.sendStatusToAllClients();
+
+    response.status(200).end();
+  }
+
 
 
   /**

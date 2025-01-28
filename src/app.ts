@@ -43,6 +43,7 @@ import express from 'express';
 import mustacheExpress from 'mustache-express';
 import { Worker } from 'worker_threads';
 import path from 'path';
+import bodyParser from 'body-parser';
 
 import logger from './services/logger';
 import routerModule from './routes/routes';
@@ -59,6 +60,9 @@ app.engine('mst', mustacheExpress());
 app.set('view engine', 'mst');
 app.set('views', path.join(__dirname, 'views'));
 
+// Middleware to parse JSON bodies- must be before include the router
+app.use(bodyParser.json());
+
 const emojiService: EmojiService = new EmojiService();
 // Start the worker thread and pass it to the status controller
 const worker = new Worker('./controllers/status-worker.js');
@@ -67,6 +71,9 @@ const statusController = new StatusController(worker, emojiService);
 // Initialize the router, which needs the status controller
 const router = routerModule(statusController);
 app.use(router);
+
+
+
 
 // Expose public folder
 app.use(express.static('../public'));
