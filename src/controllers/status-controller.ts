@@ -57,10 +57,6 @@ export class StatusController {
     // This seems very unnecessary. I may want to document this decision somewhere.
 
     logger.debug(`   BEFORE: ${JSON.stringify(this.combinedStatus.homeAssistant)}, is of type ${typeof this.combinedStatus.homeAssistant} and instanceof CombinedStatus = ${this.combinedStatus.homeAssistant instanceof CombinedStatus}`);
-
-    // TODO- fix this failing, says "updateHomeAssistantStatus" is not a function.
-    // This is because combinedStatus is a simple JSON object and not an instance of CombinedStatus,
-    // but I don't know why.
     this.combinedStatus.updateHomeAssistantStatus(request.body);
     logger.debug(`   AFTER: ${JSON.stringify(this.combinedStatus.homeAssistant)}`);
 
