@@ -13,6 +13,8 @@ import { EmojiService } from '../services/emoji-service';
  * Status Controller
  * 
  * Used to build the status that will be send to the clients
+ * 
+ * 
  */
 export class StatusController {
   private readonly SERVER_POLLING_MS: number = (process.env.SERVER_POLLING_SECONDS || 30) * 1000;
@@ -31,6 +33,40 @@ export class StatusController {
   
 
 
+  public homeAssistantUpdate(request: Request, response: Response) {
+    logger.debug(`>>>>>>>>>>>>>>>>>>>>>> StatusController.homeAssistantUpdate()`);
+
+    //   - status-worker is responsible for POLLING. StatusController is responsible 
+    //     for maintaining this.combinedStatus
+    //
+    // If I get rid of HomeAssistantService and stop polling it, then when I open a 
+    // webpage, I will not have any HA data until I get my first update, which could be
+    // 5-45 minutes, depending on when something in that data changes. DO I CARE?
+    // This looks significant, but may not be. THINK ABOUT IT.
+    //   - This would affect Kaley opening the web page to see the laundry status, although
+    //     if laundry is running, it'd update every minute
+    //   - CORRECTION- this is only for the first couple of minutes the SERVER is running
+    //     once the server has been running for a couple of minutes and gets the first
+    //     HA update, any new client will IMMEDIATELY get the status. This is NOT
+    //     worth the extra mess of keeping HomeAssistantService, the async constructor mess here, etc.
+    //     DOCUMENT THIS SOMEWHERE as an oddity, known and accepted issue
+    //
+    // I thought about pushing updates for HA separate from Slack. Would be initiated
+    // from the same route, but then could push two different payloads to the client,
+    // and the client would have to look at the payload to determine what to update.
+    // This seems very unnecessary. I may want to document this decision somewhere.
+
+    logger.debug(`   BEFORE: ${JSON.stringify(this.combinedStatus.homeAssistant)}, is of type ${typeof this.combinedStatus.homeAssistant} and instanceof CombinedStatus = ${this.combinedStatus.homeAssistant instanceof CombinedStatus}`);
+    this.combinedStatus.updateHomeAssistantStatus(request.body);
+    logger.debug(`   AFTER: ${JSON.stringify(this.combinedStatus.homeAssistant)}`);
+
+    this.sendStatusToAllClients();
+
+    response.status(200).end();
+  }
+
+
+
   /**
    * Constructor
    */
@@ -42,19 +78,24 @@ export class StatusController {
     // for updates, and then send the updated status back in a message. Then
     // repeatedly do that every SERVER_REFRESH_MS.
     this.worker.on('message', (newCombinedStatus: CombinedStatus) => {
-      //logger.debug(`@@@@@ StatusController.on.message() RECEIVED`);
-      //console.log(newCombinedStatus);
-      //logger.debug(`@@@@@`);
+      logger.debug(`@@@@@ StatusController.on.message() RECEIVED, newCombinedStatus is type ${typeof newCombinedStatus} and instanceof CombinedStatus = ${newCombinedStatus instanceof CombinedStatus}`);
+      newCombinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
+      console.log(newCombinedStatus);
+      logger.debug(`@@@@@ AFTER, newCombinedStatus is type ${typeof newCombinedStatus} and instanceof CombinedStatus = ${newCombinedStatus instanceof CombinedStatus}`);
+  
+      // TODO- do I need to use: this.combinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
       this.combinedStatus = newCombinedStatus;
+      logger.debug(`this.combinedStatus is of type ${typeof this.combinedStatus} and instanceof CombinedStatus = ${this.combinedStatus instanceof CombinedStatus}`);
       this.sendStatusToAllClients();
     });
   
     this.tellWorkerToGetLatestStatus();
+    
     setInterval(() => this.tellWorkerToGetLatestStatus(), this.SERVER_POLLING_MS); 
   }
 
 
-  // TODO- rename this fn
+  // TODO- rename this fn - tellWorkerToGetLatestSlackStatus ?
   private tellWorkerToGetLatestStatus() {
     this.worker.postMessage(this.combinedStatus);
   }

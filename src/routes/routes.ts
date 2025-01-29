@@ -20,5 +20,10 @@ export default (statusController: StatusController) => {
   router.post('/api/updated-status', (request: Request, response: Response) => statusController.updatedStatus(response));
   router.get('/favicon.ico', (request: Request, response: express.Response) => response.status(204).end());
 
+  // TRYING THIS !!
+  router.post('/api/home-assistant-update', (request: Request, response: Response) => statusController.homeAssistantUpdate(request, response));
+
+  
+
   return router;
 }

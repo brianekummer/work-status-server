@@ -19,13 +19,17 @@
  *         on desk and 8bit_2 on wall - do I care? How hard to make them the same?
  *           - selecting which image would have to be done in sendStatusToAllClients(), and that
  *             would have to assume that there's always a png and gif, etc. very ugly and fragile?
- *           - code is in folder "work-status-server - complex client object", not checked in
+ *       - I have code that prevents a desk/wall phone from changing the IMAGE when the emoji is the same-
+ *         code is in folder "work-status-server - complex client object", not checked in
  *       - merge to master
  * 
  *   - instead of polling HA, use webhook
  *       - I think this should be a separate branch- ha-webhook
  *           - merge in migrate-to-typescript
  *       - How awkward is this change? will likely be some drastic changes?
+ * 
+ *   - Add error handling in desk/wall.js so that if server connection dies, I change something, 
+ *     probably slack text to "COMMUNICATION ERROR" or something
  * 
  *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
  *       - do this AFTER I look at webhook for HA, because that will likely significantly change
@@ -43,6 +47,7 @@ import express from 'express';
 import mustacheExpress from 'mustache-express';
 import { Worker } from 'worker_threads';
 import path from 'path';
+import bodyParser from 'body-parser';
 
 import logger from './services/logger';
 import routerModule from './routes/routes';
@@ -59,7 +64,11 @@ app.engine('mst', mustacheExpress());
 app.set('view engine', 'mst');
 app.set('views', path.join(__dirname, 'views'));
 
+// Middleware to parse JSON bodies- must be before include the router
+app.use(bodyParser.json());
+
 const emojiService: EmojiService = new EmojiService();
+
 // Start the worker thread and pass it to the status controller
 const worker = new Worker('./controllers/status-worker.js');
 const statusController = new StatusController(worker, emojiService);
@@ -67,6 +76,9 @@ const statusController = new StatusController(worker, emojiService);
 // Initialize the router, which needs the status controller
 const router = routerModule(statusController);
 app.use(router);
+
+
+
 
 // Expose public folder
 app.use(express.static('../public'));

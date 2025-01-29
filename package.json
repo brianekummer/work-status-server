@@ -12,6 +12,8 @@
     "lint": "eslint \"./**/*.{ts,tsx}\" --ignore-pattern \"dist\" --ignore-pattern \"public/**/*.js\""
   },
   "dependencies": {
+    "@types/body-parser": "^1.19.5",
+    "body-parser": "^1.20.3",
     "csv-parser": "^3.1.0",
     "express": "4.18.2",
     "glob": "^11.0.1",

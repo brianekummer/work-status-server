@@ -1,6 +1,6 @@
 import { DateTime } from "luxon";
-import { HomeAssistantStatus } from './home-assistant-status';
 import { SlackStatus } from './slack-status';
+import { HomeAssistantStatus } from './home-assistant-status';
 import { StatusCondition } from './status-condition';
 
 
@@ -10,12 +10,6 @@ interface slackStuff {
   text: string,
   times: string,
   statusStartTime: string
-}
-
-interface homeAssistantStuff {          
-  washerText: string,
-  dryerText: string,
-  temperatureText: string
 }
 
 
@@ -35,13 +29,14 @@ export class CombinedStatus {
   public static readonly ERROR_STATUS = new CombinedStatus('ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR');
 
   private readonly TIMES_TEMPLATES = {
+    EMPTY: '',
     START: 'Started @ (START)',
     START_TO_END: '(START) - (STATUS_EXPIRATION)'
   }
   
 
   public slack: slackStuff;
-  public homeAssistant: homeAssistantStuff;
+  public homeAssistant: HomeAssistantStatus;
 
   
   public toString(): string { 
@@ -57,11 +52,11 @@ export class CombinedStatus {
       times: slackTimes,
       statusStartTime: slackStatusStartTime
     };
-    this.homeAssistant = {          
-      washerText: homeAssistantWasherText,
-      dryerText: homeAssistantDryerText,
-      temperatureText: homeAssistantTemperatureText
-    };
+    this.homeAssistant = new HomeAssistantStatus(
+      homeAssistantWasherText,
+      homeAssistantDryerText,
+      homeAssistantTemperatureText
+    );
   }
 
 
@@ -77,9 +72,17 @@ export class CombinedStatus {
       jsonObject.homeAssistant.temperatureText);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public updateHomeAssistantStatus(homeAssistantWebhookData: any) {
+    this.homeAssistant = new HomeAssistantStatus(
+      homeAssistantWebhookData.Washer,
+      homeAssistantWebhookData.Dryer,
+      homeAssistantWebhookData.Temperature);
+  }
 
-  public updateStatus(matchingCondition: StatusCondition, workSlackStatus: SlackStatus, homeSlackStatus: SlackStatus, homeAssistantStatus: HomeAssistantStatus, matchesHomeEmoji: boolean): CombinedStatus {
-    //logger.debug('&&&&& combined-status updateStatus()');
+
+  public updateSlackStatus(matchingCondition: StatusCondition, workSlackStatus: SlackStatus, homeSlackStatus: SlackStatus, matchesHomeEmoji: boolean): CombinedStatus {
+    //logger.debug('&&&&& combined-status updateSlackStatus()');
     //console.log(matchingCondition);
     
     const newCombinedStatus = new CombinedStatus(
@@ -89,16 +92,16 @@ export class CombinedStatus {
         .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text),
       '',
       '',
-      homeAssistantStatus.washerText,
-      homeAssistantStatus.dryerText,
-      homeAssistantStatus.temperatureText
+      this.homeAssistant.washerText,
+      this.homeAssistant.dryerText,
+      this.homeAssistant.temperatureText
     );
     
     // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM") and
     // status start time
     newCombinedStatus.updateSlackStatusTimes(homeSlackStatus, workSlackStatus, this, matchesHomeEmoji);
 
-    //logger.debug('%%%%% CombinedStatus.updateStatus() RETURNING');
+    //logger.debug('%%%%% CombinedStatus.updateSlackStatus() RETURNING');
     //console.log(newCombinedStatus);
 
     return newCombinedStatus;
@@ -136,10 +139,15 @@ export class CombinedStatus {
   
     // Select the appropriate template for displaying the status time (i.e. 
     // "Started @ 12:30 PM" or "12:30 PM - 1:00 PM")
-    const statusTimesTemplate = statusExpirationSeconds === 0 
-      ? this.TIMES_TEMPLATES.START 
-      : this.TIMES_TEMPLATES.START_TO_END;
-  
+    // If the emoji and text are blank, then don't display a time
+    //const statusTimesTemplate = statusExpirationSeconds === 0 
+    //  ? this.TIMES_TEMPLATES.START 
+    //  : this.TIMES_TEMPLATES.START_TO_END;
+    const statusTimesTemplate = 
+      this.slack.emoji === '' && this.slack.text === '' ? this.TIMES_TEMPLATES.EMPTY :
+      statusExpirationSeconds === 0 ? this.TIMES_TEMPLATES.START :
+      this.TIMES_TEMPLATES.START_TO_END;
+
     const statusExpiration = DateTime
       .fromSeconds(statusExpirationSeconds)
       .toLocaleString(DateTime.TIME_SIMPLE);
@@ -149,5 +157,5 @@ export class CombinedStatus {
       statusTimesTemplate
         .replace('(START)', this.slack.statusStartTime)
         .replace('(STATUS_EXPIRATION)', statusExpiration);
-  };
+  }
 }
