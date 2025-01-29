@@ -50,8 +50,6 @@ You need to define an app in Slack to get a security token which you can use to 
     - `FONT_AWESOME_ACCOUNT_ID`, is my account id for Font Awesome, which is part of the URL for the script to include in my HTML
     - `SLACK_TOKEN_WORK`, is the Slack security token for my work account
     - `SLACK_TOKEN_HOME`, is the Slack security token for my home account, optional
-    - `HOME_ASSISTANT_BASE_URL`, is the base URL for Home Assistant. Optional.
-    - `HOME_ASSISTANT_TOKEN`, is the security token for accessing Home Assistant. Optional.
     - `SERVER_POLLING_SECONDS`, is the refresh time on the server side, defaults to 30 seconds
     - `CLIENT_REFRESH_SECONDS`, is the refresh time on the client side, defaults to 15 seconds
     - `LOG_LEVEL`, is the logging level- can be `DEBUG`|`INFO`|`ERROR`

@@ -3,6 +3,7 @@ import { Worker } from 'worker_threads';
 import { Request, Response } from 'express';
 
 import logger from '../services/logger';
+import { Client } from '../models/client';
 import { CombinedStatus } from '../models/combined-status';
 import { EmojiService } from '../services/emoji-service';
 
@@ -25,11 +26,11 @@ export class StatusController {
 
 
   private emojiService: EmojiService;
+  private clients: Map<string, Client> = new Map<string, Client>();
 
 
-  private clients: Set<Response> = new Set<Response>();
+
   private worker: Worker;
-  // TODO- declare a type for this??
   
 
 
@@ -79,11 +80,11 @@ export class StatusController {
     // repeatedly do that every SERVER_REFRESH_MS.
     this.worker.on('message', (newCombinedStatus: CombinedStatus) => {
       logger.debug(`@@@@@ StatusController.on.message() RECEIVED, newCombinedStatus is type ${typeof newCombinedStatus} and instanceof CombinedStatus = ${newCombinedStatus instanceof CombinedStatus}`);
+      // newCombinedStatus is passed as a simple JSON object, need to convert it back to a real CombinedStatus object so we can use those methods
       newCombinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
       console.log(newCombinedStatus);
       logger.debug(`@@@@@ AFTER, newCombinedStatus is type ${typeof newCombinedStatus} and instanceof CombinedStatus = ${newCombinedStatus instanceof CombinedStatus}`);
   
-      // TODO- do I need to use: this.combinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
       this.combinedStatus = newCombinedStatus;
       logger.debug(`this.combinedStatus is of type ${typeof this.combinedStatus} and instanceof CombinedStatus = ${this.combinedStatus instanceof CombinedStatus}`);
       this.sendStatusToAllClients();
@@ -107,19 +108,38 @@ export class StatusController {
   *
   */
   public async streamStatusUpdates(request: Request, response: Response) {
+    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
+    const getIpAddress = (response: Response) => (response.req.ip || '').replace('::ffff:', '');
+
+    const getPageName = (response: Response) => response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
+    const getClientKey = (ipAddress: string, pageName: string) => `${ipAddress}-${pageName}`;
+
+    const ipAddress: string = getIpAddress(response);
+    const pageName: string = getPageName(response);
+    logger.debug(`StatusController.streamStatusUpdates() => Started streaming to IP address ${ipAddress} for page ${pageName}`);
+
+
     // Add the client to our list of clients that need updates
     response.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive'
     });
-    this.clients.add(response);
   
+    // Save info about the client we're streaming to
+    const client = new Client(ipAddress, pageName, response, '', '');
+    this.clients.set(getClientKey(ipAddress, pageName), client);
+    
     // Push initial data to this client
-    this.pushStatusToClient(response, true);
+    this.pushStatusToClient(client, true);
 
     // Remove the client from our list when it closes its connection
-    request.on('close', () => this.clients.delete(response));
+    request.on('close', () => {
+      const ipAddress: string = getIpAddress(response);
+      const pageName: string = getPageName(response);
+      logger.debug(`StatusController.request.on.close => Closing connection to IP address ${ipAddress} for page ${pageName}`);
+      this.clients.delete(getClientKey(ipAddress, pageName)); 
+    });
   }
 
 
@@ -127,7 +147,23 @@ export class StatusController {
    * 
    */
   private sendStatusToAllClients() {
-    this.clients.forEach((client: Response) => this.pushStatusToClient(client, false));
+    this.clients.forEach((client: Client) => this.pushStatusToClient(client, false));
+  }
+
+
+  // TODO- emojiImage needs returned, but returning that hides the fact that I'm changing client. I can'tr pass emojiImage in as ref
+  // because TS doesn't have byref parameters. This stinks
+  private handleEmojis(client: Client) {
+    let emojiImage = client.emojiImage;
+    if (client.emoji !== this.combinedStatus.slack.emoji) {
+      // Emoji has changed, so get a new random image
+      emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);
+      logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, new image is ${emojiImage}`);
+      client.emoji = this.combinedStatus.slack.emoji;
+      client.emojiImage = emojiImage;
+    } else {
+      logger.debug(`pushStatusToClient =? emoji is still ${client.emoji} so image is staying as ${emojiImage}`);
+    }
   }
 
 
@@ -138,14 +174,27 @@ export class StatusController {
    *    * Get status to send to the client, making any necessary changes, such as
    * converting an emoji to an actual filename.
    */
-  private pushStatusToClient(client: Response, initialPush: boolean) {
+  private pushStatusToClient(client: Client, initialPush: boolean) {
     // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
-    const clientIp: string = (client.req.ip || '').replace('::ffff:', '');
-    const pageName: string = client.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
-    logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${pageName} on ${clientIp}`);
+    logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress}`);
+
+    // This works, but I want to extract it into a fn. Doesn't make sense to put it in EmojiService because that just adds
+    // references to Client and CombinedStatus models, and that seems ugly, but it may be my best option
+    let emojiImage = client.emojiImage;
+    if (client.emoji !== this.combinedStatus.slack.emoji) {
+      // Emoji has changed, so get a new random image
+      emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);
+      logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, new image is ${emojiImage}`);
+      client.emoji = this.combinedStatus.slack.emoji;
+      client.emojiImage = emojiImage;
+    } else {
+      logger.debug(`pushStatusToClient =? emoji is still ${client.emoji} so image is staying as ${emojiImage}`);
+    }
+
+
 
     const statusToSend = {
-      emojiImage: this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, pageName),
+      emojiImage: emojiImage,
       text: this.combinedStatus.slack.text,
       times: this.combinedStatus.slack.times,
       lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE),
@@ -156,9 +205,8 @@ export class StatusController {
       }
     };
     
-    client.write(`data: ${JSON.stringify(statusToSend)}\n\n`);
+    client.response.write(`data: ${JSON.stringify(statusToSend)}\n\n`);
   }
-
 
   /**
    * User says they just updated their status, so immediately 

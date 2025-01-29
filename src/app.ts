@@ -13,21 +13,6 @@
  * 
  * 
  * TO DO ITEMS
- *   - convert to typescript? would save me some grief
- *       - deploy to proxmox and test for a week
- *       - emoji is the same between desk and phone, but image is not. so can have mario (8bit_1)
- *         on desk and 8bit_2 on wall - do I care? How hard to make them the same?
- *           - selecting which image would have to be done in sendStatusToAllClients(), and that
- *             would have to assume that there's always a png and gif, etc. very ugly and fragile?
- *       - I have code that prevents a desk/wall phone from changing the IMAGE when the emoji is the same-
- *         code is in folder "work-status-server - complex client object", not checked in
- *       - merge to master
- * 
- *   - instead of polling HA, use webhook
- *       - I think this should be a separate branch- ha-webhook
- *           - merge in migrate-to-typescript
- *       - How awkward is this change? will likely be some drastic changes?
- * 
  *   - Add error handling in desk/wall.js so that if server connection dies, I change something, 
  *     probably slack text to "COMMUNICATION ERROR" or something
  * 
