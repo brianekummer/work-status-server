@@ -44,6 +44,16 @@ export class CombinedStatus {
   }
 
 
+  public equals(otherCombinedStatus: CombinedStatus): boolean {
+    return this.slack.emoji === otherCombinedStatus.slack.emoji &&
+           this.slack.text === otherCombinedStatus.slack.text &&
+           this.slack.times === otherCombinedStatus.slack.times &&
+           this.slack.statusStartTime === otherCombinedStatus.slack.statusStartTime &&
+           this.homeAssistant.washerText === otherCombinedStatus.homeAssistant.washerText &&
+           this.homeAssistant.dryerText === otherCombinedStatus.homeAssistant.dryerText &&
+           this.homeAssistant.temperatureText === otherCombinedStatus.homeAssistant.temperatureText;
+  }
+
   // Constructors
   constructor(slackEmoji: string, slackText: string, slackTimes: string, slackStatusStartTime: string, homeAssistantWasherText: string, homeAssistantDryerText: string, homeAssistantTemperatureText: string) {
     this.slack = {

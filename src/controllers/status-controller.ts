@@ -38,7 +38,7 @@ export class StatusController {
     logger.debug(`>>>>>>>>>>>>>>>>>>>>>> StatusController.homeAssistantUpdate()`);
 
     //   - status-worker is responsible for POLLING. StatusController is responsible 
-    //     for maintaining this.combinedStatus
+    //     for maintaining this.combinedStatus and getting it out to the clients
     //
     // If I get rid of HomeAssistantService and stop polling it, then when I open a 
     // webpage, I will not have any HA data until I get my first update, which could be
@@ -57,12 +57,8 @@ export class StatusController {
     // and the client would have to look at the payload to determine what to update.
     // This seems very unnecessary. I may want to document this decision somewhere.
 
-    logger.debug(`   BEFORE: ${JSON.stringify(this.combinedStatus.homeAssistant)}, is of type ${typeof this.combinedStatus.homeAssistant} and instanceof CombinedStatus = ${this.combinedStatus.homeAssistant instanceof CombinedStatus}`);
     this.combinedStatus.updateHomeAssistantStatus(request.body);
-    logger.debug(`   AFTER: ${JSON.stringify(this.combinedStatus.homeAssistant)}`);
-
     this.sendStatusToAllClients();
-
     response.status(200).end();
   }
 
@@ -75,29 +71,34 @@ export class StatusController {
     this.worker = worker;
     this.emojiService = emojiService;
 
-    // Immediately send the currentStatus to the worker thread, which will check
-    // for updates, and then send the updated status back in a message. Then
-    // repeatedly do that every SERVER_REFRESH_MS.
-    this.worker.on('message', (newCombinedStatus: CombinedStatus) => {
-      logger.debug(`@@@@@ StatusController.on.message() RECEIVED, newCombinedStatus is type ${typeof newCombinedStatus} and instanceof CombinedStatus = ${newCombinedStatus instanceof CombinedStatus}`);
-      // newCombinedStatus is passed as a simple JSON object, need to convert it back to a real CombinedStatus object so we can use those methods
-      newCombinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
-      console.log(newCombinedStatus);
-      logger.debug(`@@@@@ AFTER, newCombinedStatus is type ${typeof newCombinedStatus} and instanceof CombinedStatus = ${newCombinedStatus instanceof CombinedStatus}`);
+    // When the worker thread sends an updated status, process it
+    this.worker.on('message', (newCombinedStatus: CombinedStatus) => 
+      this.processWorkerThreadMessage(newCombinedStatus));
   
-      this.combinedStatus = newCombinedStatus;
-      logger.debug(`this.combinedStatus is of type ${typeof this.combinedStatus} and instanceof CombinedStatus = ${this.combinedStatus instanceof CombinedStatus}`);
-      this.sendStatusToAllClients();
-    });
-  
-    this.tellWorkerToGetLatestStatus();
-    
-    setInterval(() => this.tellWorkerToGetLatestStatus(), this.SERVER_POLLING_MS); 
+    // Tell the worker thread t5o get the latest Slack status and send it back to us,
+    // then repeat that every SERVER_REFRESH_MS.
+    this.tellWorkerToGetLatestSlackStatus();
+    setInterval(() => this.tellWorkerToGetLatestSlackStatus(), this.SERVER_POLLING_MS); 
   }
 
 
-  // TODO- rename this fn - tellWorkerToGetLatestSlackStatus ?
-  private tellWorkerToGetLatestStatus() {
+
+  private processWorkerThreadMessage(newCombinedStatus: CombinedStatus) {
+    // newCombinedStatus is passed as a simple JSON object, need to convert it back to
+    // a real CombinedStatus object so we can use its methods
+    if (!this.combinedStatus.equals(newCombinedStatus)) {
+      logger.info( 
+        `status-worker.on.message(), changed status\n` +
+        `   FROM ${this.combinedStatus.toString()}\n` +
+        `     TO ${newCombinedStatus.toString()}`);
+
+      this.combinedStatus = newCombinedStatus;
+      this.sendStatusToAllClients();
+    }  
+  }
+
+
+  private tellWorkerToGetLatestSlackStatus() {
     this.worker.postMessage(this.combinedStatus);
   }
 
@@ -106,11 +107,15 @@ export class StatusController {
   * 
   * Use Server Sent Events to stream updates to the browser. Constructor sets up the loop that pushes updates every SERVER_POLLING_SECONDS
   *
+  * FYI, request.get('Referrer') returns the full URL of the referring/requesting site (http://server_ip:3000/desk)
+    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
   */
   public async streamStatusUpdates(request: Request, response: Response) {
-    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
-    const getIpAddress = (response: Response) => (response.req.ip || '').replace('::ffff:', '');
 
+
+    // TODO- should these move into the Client? 
+    // How would request.on('close' work?
+    const getIpAddress = (response: Response) => (response.req.ip || '').replace('::ffff:', '');
     const getPageName = (response: Response) => response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
     const getClientKey = (ipAddress: string, pageName: string) => `${ipAddress}-${pageName}`;
 
@@ -119,27 +124,23 @@ export class StatusController {
     logger.debug(`StatusController.streamStatusUpdates() => Started streaming to IP address ${ipAddress} for page ${pageName}`);
 
 
-    // Add the client to our list of clients that need updates
+    // Set this client to get updates streamed to it
     response.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive'
     });
   
-    // Save info about the client we're streaming to
+    // Save this new client to our list of clients that should get updates
     const client = new Client(ipAddress, pageName, response, '', '');
     this.clients.set(getClientKey(ipAddress, pageName), client);
     
-    // Push initial data to this client
+    // Push initial data to this new client
     this.pushStatusToClient(client, true);
 
-    // Remove the client from our list when it closes its connection
-    request.on('close', () => {
-      const ipAddress: string = getIpAddress(response);
-      const pageName: string = getPageName(response);
-      logger.debug(`StatusController.request.on.close => Closing connection to IP address ${ipAddress} for page ${pageName}`);
-      this.clients.delete(getClientKey(ipAddress, pageName)); 
-    });
+    // When the client closes its connection, remove it from our list of clients
+    request.on('close', () => 
+      this.clients.delete(getClientKey(getIpAddress(response), getPageName(response)))) ;
   }
 
 
@@ -152,8 +153,8 @@ export class StatusController {
 
 
 
-    // It's fine (even preferred) for wall to change emoji all the time, but I don't want my desk phone needlessly changing
-    private handleEmojis(client: Client) {
+  // It's fine (even preferred) for wall to change emoji all the time, but I don't want my desk phone needlessly changing
+  private handleEmojis(client: Client) {
     let emojiImage = client.emojiImage;
     if (client.emoji !== this.combinedStatus.slack.emoji || client.pageName !== PAGES.DESK) {
       // Emoji has changed, so get a new random image
@@ -168,14 +169,11 @@ export class StatusController {
 
 
   /**
-   * FYI, request.get('Referrer') returns the full URL of the referring/
-   * requesting site
    * 
    *    * Get status to send to the client, making any necessary changes, such as
    * converting an emoji to an actual filename.
    */
   private pushStatusToClient(client: Client, initialPush: boolean) {
-    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
     logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress}`);
 
 

@@ -35,26 +35,8 @@ parentPort!.on('message', (oldCombinedStatus: CombinedStatus) => {
   //console.log(oldCombinedStatus);
 
   getLatestStatus(oldCombinedStatus)
-  .then((newCombinedStatus: CombinedStatus) => {
-    // Only send the new status back if there has been a change
-    
-    // TODO- this status does NOT include lastUpdatedTime, so it will
-    //       ONLY return an update when the Slack or HA status changes.
-    //       If I want it to update every minute, ONE SOLUTION is to add last updated
-    //       time into this status
-    if (JSON.stringify(oldCombinedStatus) !== JSON.stringify(newCombinedStatus)) {
-      // TODO- commenting this out lets me see useful error messages when oldCombinedStatus.slack or newCombinedStatus.slack is null/undefined
-      logger.info( 
-        `status-worker.on.message(), changed status\n` +
-        `   FROM ${oldCombinedStatus.toString()}\n` +
-        `     TO ${newCombinedStatus.toString()}`);
-
-      //logger.debug(';;;;; status-worker.postMessage SENDING');
-      //console.log(newCombinedStatus);
-
-      parentPort!.postMessage(newCombinedStatus);
-    }
-  });
+  .then((newCombinedStatus: CombinedStatus) => 
+    parentPort!.postMessage(newCombinedStatus));
 });
 
 
