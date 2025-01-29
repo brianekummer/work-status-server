@@ -1,5 +1,16 @@
-const logger = require('../services/logger');
-const statusConditionService = new (require('../services/status-condition-service'));
+import { DateTime } from "luxon";
+import { SlackStatus } from './slack-status';
+import { HomeAssistantStatus } from './home-assistant-status';
+import { StatusCondition } from './status-condition';
+
+
+// TODO- fix naming !!
+interface slackStuff {
+  emoji: string,
+  text: string,
+  times: string,
+  statusStartTime: string
+}
 
 
 /**
@@ -13,41 +24,44 @@ const statusConditionService = new (require('../services/status-condition-servic
  * So all fns must be defined using "standard" (TODO- what is proper term here?) syntax.
  * 
  */
-class CombinedStatus {
-  static EMPTY_STATUS = new CombinedStatus(null, null, null, null, null, null, null);
+export class CombinedStatus {
+  public static readonly EMPTY_STATUS = new CombinedStatus('', '', '', '', '', '', '');
+  public static readonly ERROR_STATUS = new CombinedStatus('ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR', 'ERROR');
 
-  #TIMES_TEMPLATES = {
+  private readonly TIMES_TEMPLATES = {
+    EMPTY: '',
     START: 'Started @ (START)',
     START_TO_END: '(START) - (STATUS_EXPIRATION)'
   }
   
 
-  slack = {};
-  homeAssistant = {};
+  public slack: slackStuff;
+  public homeAssistant: HomeAssistantStatus;
 
   
-  toString() { 
+  public toString(): string { 
     return `Slack:${this.slack.emoji}/${this.slack.text}/${this.slack.times} ; HA:${this.homeAssistant.washerText}/${this.homeAssistant.dryerText}/${this.homeAssistant.temperatureText}`;
   }
 
 
   // Constructors
-  constructor(slackEmoji, slackText, slackTimes, slackStatusStartTime, homeAssistantWasherText, homeAssistantDryerText, homeAssistantTemperatureText) {
+  constructor(slackEmoji: string, slackText: string, slackTimes: string, slackStatusStartTime: string, homeAssistantWasherText: string, homeAssistantDryerText: string, homeAssistantTemperatureText: string) {
     this.slack = {
       emoji: slackEmoji,
       text: slackText,
       times: slackTimes,
       statusStartTime: slackStatusStartTime
     };
-    this.homeAssistant = {          
-      washerText: homeAssistantWasherText,
-      dryerText: homeAssistantDryerText,
-      temperatureText: homeAssistantTemperatureText
-    };
+    this.homeAssistant = new HomeAssistantStatus(
+      homeAssistantWasherText,
+      homeAssistantDryerText,
+      homeAssistantTemperatureText
+    );
   }
 
 
-  static fromJsonObject(jsonObject) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public static fromJsonObject(jsonObject: any): CombinedStatus {
     return new CombinedStatus(
       jsonObject.slack.emoji, 
       jsonObject.slack.text, 
@@ -58,28 +72,36 @@ class CombinedStatus {
       jsonObject.homeAssistant.temperatureText);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public updateHomeAssistantStatus(homeAssistantWebhookData: any) {
+    this.homeAssistant = new HomeAssistantStatus(
+      homeAssistantWebhookData.Washer,
+      homeAssistantWebhookData.Dryer,
+      homeAssistantWebhookData.Temperature);
+  }
 
-  updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus) {
-    //logger.debug('&&&&& combined-status updateStatus()');
+
+  public updateSlackStatus(matchingCondition: StatusCondition, workSlackStatus: SlackStatus, homeSlackStatus: SlackStatus, matchesHomeEmoji: boolean): CombinedStatus {
+    //logger.debug('&&&&& combined-status updateSlackStatus()');
     //console.log(matchingCondition);
     
-    let newCombinedStatus = new CombinedStatus(
-      matchingCondition?.display_emoji,
+    const newCombinedStatus = new CombinedStatus(
+      matchingCondition.display_emoji_image,
       (matchingCondition.display_text)
         .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
         .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text),
-      null,
-      null,
-      homeAssistantStatus.washerText,
-      homeAssistantStatus.dryerText,
-      homeAssistantStatus.temperatureText
+      '',
+      '',
+      this.homeAssistant.washerText,
+      this.homeAssistant.dryerText,
+      this.homeAssistant.temperatureText
     );
     
     // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM") and
     // status start time
-    newCombinedStatus.updateSlackStatusTimes(matchingCondition, homeSlackStatus, workSlackStatus, this);
+    newCombinedStatus.updateSlackStatusTimes(homeSlackStatus, workSlackStatus, this, matchesHomeEmoji);
 
-    //logger.debug('%%%%% CombinedStatus.updateStatus() RETURNING');
+    //logger.debug('%%%%% CombinedStatus.updateSlackStatus() RETURNING');
     //console.log(newCombinedStatus);
 
     return newCombinedStatus;
@@ -89,7 +111,7 @@ class CombinedStatus {
   /**
    * Determine the times of the Slack status and update that in newStatus
    */
-  *updateSlackStatusTimes(evaluatingStatus, homeSlackStatus, workSlackStatus, oldCombinedStatus) {
+  private updateSlackStatusTimes(homeSlackStatus: SlackStatus, workSlackStatus: SlackStatus, oldCombinedStatus: CombinedStatus, matchesHomeEmoji: boolean) {
     // The start time only changes when the status text changes, so that if I
     // add minutes to my focus time, only the end time changes. We're adding it
     // to latestStatus so that we can use it the next time we check the status.
@@ -111,18 +133,22 @@ class CombinedStatus {
     //     expiration of my PTO at work.
     //   - It's highly unlikely that I'd have a home status with an expiration 
     //     while I'm working, where I'd want to use the work status's expiration.
-    let statusExpirationSeconds = 
-      homeSlackStatus.emoji && statusConditionService.matchesCondition(evaluatingStatus.conditions_home_emoji, homeSlackStatus.emoji) 
+    const statusExpirationSeconds = homeSlackStatus.emoji && matchesHomeEmoji
         ? homeSlackStatus.expiration 
         : workSlackStatus.expiration;
   
     // Select the appropriate template for displaying the status time (i.e. 
     // "Started @ 12:30 PM" or "12:30 PM - 1:00 PM")
-    let statusTimesTemplate = statusExpirationSeconds === 0 
-      ? TIMES_TEMPLATES.START 
-      : TIMES_TEMPLATES.START_TO_END;
-  
-    let statusExpiration = DateTime
+    // If the emoji and text are blank, then don't display a time
+    //const statusTimesTemplate = statusExpirationSeconds === 0 
+    //  ? this.TIMES_TEMPLATES.START 
+    //  : this.TIMES_TEMPLATES.START_TO_END;
+    const statusTimesTemplate = 
+      this.slack.emoji === '' && this.slack.text === '' ? this.TIMES_TEMPLATES.EMPTY :
+      statusExpirationSeconds === 0 ? this.TIMES_TEMPLATES.START :
+      this.TIMES_TEMPLATES.START_TO_END;
+
+    const statusExpiration = DateTime
       .fromSeconds(statusExpirationSeconds)
       .toLocaleString(DateTime.TIME_SIMPLE);
   
@@ -131,8 +157,5 @@ class CombinedStatus {
       statusTimesTemplate
         .replace('(START)', this.slack.statusStartTime)
         .replace('(STATUS_EXPIRATION)', statusExpiration);
-  };
+  }
 }
-    
-    
-module.exports = CombinedStatus;

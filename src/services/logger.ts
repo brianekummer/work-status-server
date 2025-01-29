@@ -22,16 +22,15 @@
  *       verbose: 4,
  *       debug: 5,
  *       silly: 6
- *      };
+ *     };
  */
 
-const winston = require('winston');
-require('winston-daily-rotate-file');
-const fs = require('fs');
-
+import winston from 'winston';
+import 'winston-daily-rotate-file';
+import fs from 'fs';
 
 // Generate timestamp in New York timezone
-const timezonedTimestamp = () => 
+const timezonedTimestamp = (): string => 
   new Date().toLocaleString('en-US', {
     timeZone: 'America/New_York', 
     hour12: false,
@@ -41,10 +40,8 @@ const timezonedTimestamp = () =>
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    fractionalSecondDigits: 3
+    // TODO- fix this- fractionalSecondDigits: 3
   });
-
-
 
 // Define file logging transport, set log directory to the project folder if /var/log doesn't exist
 const logDir = fs.existsSync('/var/log') ? '/var/log/' : '';
@@ -54,23 +51,23 @@ const fileRotateTransport = new winston.transports.DailyRotateFile({
   maxFiles: '10d',
 });
 
-
 const logger = winston.createLogger({
   level: (process.env.LOG_LEVEL || 'error').toLowerCase(),
   format: winston.format.combine(
     winston.format.timestamp({ format: timezonedTimestamp }),
-    winston.format.printf(({ timestamp, level, message }) => `${timestamp} [${level}]: ${message}`)
+    winston.format.printf(({ timestamp, level, message }) => 
+      `${timestamp} [${level}]: ${message}`
+    )
   ),
   transports: [
     new winston.transports.Console(),
-    fileRotateTransport
-  ]
+    fileRotateTransport,
+  ],
 });
 
-
-logger.on('error', (err) => {
-  console.error('Error with logging:', err);
+logger.on('error', (err: unknown) => {
+  console.error('Error with logging:', err);   // eslint-disable-line no-console
 });
 
-
-module.exports = logger;
+// Export the logger as default
+export default logger;

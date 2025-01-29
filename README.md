@@ -52,12 +52,15 @@ You need to define an app in Slack to get a security token which you can use to 
     - `SLACK_TOKEN_HOME`, is the Slack security token for my home account, optional
     - `HOME_ASSISTANT_BASE_URL`, is the base URL for Home Assistant. Optional.
     - `HOME_ASSISTANT_TOKEN`, is the security token for accessing Home Assistant. Optional.
-    - `SERVER_REFRESH_SECONDS`, is the refresh time on the server side, defaults to 30 seconds
+    - `SERVER_POLLING_SECONDS`, is the refresh time on the server side, defaults to 30 seconds
     - `CLIENT_REFRESH_SECONDS`, is the refresh time on the client side, defaults to 15 seconds
     - `LOG_LEVEL`, is the logging level- can be `DEBUG`|`INFO`|`ERROR`
 - The mappings of status/presence for work and home are stored in the file `status-conditions.csv`, which is read upon startup, and a watcher re-reads whenever it changes. This avoids the need to restart the application for those changes to take effect.
-- A worker thread runs in the background every `SERVER_REFRESH_SECONDS` and polls Slack and Home Assistant for status updates, which are stored in a global variable.
+- A worker thread runs in the background every `SERVER_POLLING_SECONDS` and polls Slack and Home Assistant for status updates, which are stored in a global variable.
 - Updates are read from the global variable and pushed from the server to each client using Server Sent Events (SSE) every `CLIENT_REFRESH_SECONDS`
 
 ## Running Locally
 Use the shell script `start-service.sh`, which optionally takes the desired log level as its only parameter
+
+## Useful Tools
+- https://ezgif.com/split takes an animated gif and splits it into individual frames. I use this to create an un-animated image to display on my desk phone, since I don't want animation there.
