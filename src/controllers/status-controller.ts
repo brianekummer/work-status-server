@@ -125,30 +125,6 @@ export class StatusController {
   }
   
 
-  /*
-  private processWorkerThreadMessage(newCombinedStatus: CombinedStatus) {
-    // newCombinedStatus is passed as a simple JSON object, need to convert it back to
-    // a real CombinedStatus object so we can use its methods
-    newCombinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
-
-    // TODO- decide if send this update or not. Send it if
-    //   - it changed
-    //   - it has been at least one minute since the last update
-    if (this.combinedStatus.lastUpdatedDateTime.diffNow('seconds').seconds < -60 || !this.combinedStatus.equals(newCombinedStatus)) {
-      if (this.combinedStatus.lastUpdatedDateTime.diffNow('seconds').seconds < -60) {
-        logger.debug(`StatusController.processWorkerThreadMessage(), pushing update because of time`);
-      } else if (!this.combinedStatus.equals(newCombinedStatus)) {
-        logger.info( 
-          `StatusController.processWorkerThreadMessage(), pushing update because status changed\n` +
-          `   FROM ${this.combinedStatus.toString()}\n` +
-          `     TO ${newCombinedStatus.toString()}`);
-      }
-      newCombinedStatus.lastUpdatedDateTime = DateTime.now();
-      this.combinedStatus = newCombinedStatus;
-      this.sendStatusToAllClients();
-    }  
-  }
-  */
   private processWorkerThreadMessage(newCombinedStatus: CombinedStatus) {
     // Convert plain JSON object to a real CombinedStatus instance
     newCombinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);

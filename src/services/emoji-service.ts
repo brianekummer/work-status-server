@@ -1,5 +1,6 @@
 import { globSync } from 'glob';
 import path from 'path';
+import { PAGES } from '../constants';
 
 
 type EmojiImagesDictionary = Map<string, string[]>;
@@ -40,10 +41,10 @@ export class EmojiService {
         .map(i => `/images/${path.basename(i)}`);
 
       // For desk phone, I don't want animation, so only include png files
-      emojiImages.set(`${e}-desk`, images.filter(i => i.match(/\.png$/i)));
+      emojiImages.set(`${e}-${PAGES.DESK}`, images.filter(i => i.match(/\.png$/i)));
 
       // For wall phone, list includes all images, animated and unanimated
-      emojiImages.set(`${e}-wall`, images);
+      emojiImages.set(`${e}-${PAGES.WALL}`, images);
     });
 
     return emojiImages;

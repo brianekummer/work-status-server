@@ -28,27 +28,40 @@ const updateClocks = () => {
  * sending messages with up-to-date statuses
  */
 let eventSource = new EventSource('/api/status-updates');
+
 eventSource.onmessage = (event) => {
-    let status = JSON.parse(event.data);
+  let status = JSON.parse(event.data);
 
-    let isVisible = status.emojiImage || status.text;
-    document.body.className = isVisible ? 'visible' : 'invisible';
+  let isVisible = status.emojiImage || status.text;
+  document.body.className = isVisible ? 'visible' : 'invisible';
     
-    if (isVisible) {
-        updateClocks(); // Update clocks as soon as page becomes visible
+  if (isVisible) {
+    updateClocks(); // Update clocks as soon as page becomes visible
 
-        $('status-text').className = status.text.length > 13
-            ? 'status--font-size__small'
-            : 'status--font-size'; // Adjust the size of the status text
+    $('status-text').className = status.text.length > 13
+      ? 'status--font-size__small'
+      : 'status--font-size'; // Adjust the size of the status text
 
-        $('status-emoji').src = status.emojiImage || '';
-        $('status-text').innerHTML = status.text || '';
-        $('status-times').innerHTML = status.times || '';
-        $('last-updated-time').innerHTML = status.lastUpdatedTime || '';
+    $('status-emoji').src = status.emojiImage || '';
+    $('status-text').innerHTML = status.text || '';
+    $('status-times').innerHTML = status.times || '';
+    $('last-updated-time').innerHTML = status.lastUpdatedTime || '';
 
-        $('washer-text').innerHTML = status.homeAssistant.washerText || '';
-        $('dryer-text').innerHTML = status.homeAssistant.dryerText || '';
-        $('temperature-text').innerHTML = status.homeAssistant.temperatureText || '';
-    }
+    $('washer-text').innerHTML = status.homeAssistant.washerText || '';
+    $('dryer-text').innerHTML = status.homeAssistant.dryerText || '';
+    $('temperature-text').innerHTML = status.homeAssistant.temperatureText || '';
+  }
 };
+
+eventSource.onerror = (error) => {
+  $('status-emoji').src = ``;
+  $('status-text').innerHTML = 'Communication Error!';
+  $('status-times').innerHTML = '';
+  $('last-updated-time').innerHTML = '';
+
+  $('washer-text').innerHTML = '';
+  $('dryer-text').innerHTML = '';
+  $('temperature-text').innerHTML = '';
+};
+
 setInterval(updateClocks, EVERY_FIVE_SECONDS);

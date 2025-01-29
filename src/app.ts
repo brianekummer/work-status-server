@@ -13,9 +13,6 @@
  * 
  * 
  * TO DO ITEMS
-*   - Add error handling in desk/wall.js so that if server connection dies, I change something, 
- *     probably slack text to "COMMUNICATION ERROR" or something
- * 
  *   - is using font awesome to show HVAC status up-to-date enough to be useful?
  *   
  *   - Cleanup
