@@ -37,6 +37,7 @@ export class CombinedStatus {
 
   public slack: slackStuff;
   public homeAssistant: HomeAssistantStatus;
+  public lastUpdatedDateTime: DateTime;
 
   
   public toString(): string { 
@@ -67,6 +68,7 @@ export class CombinedStatus {
       homeAssistantDryerText,
       homeAssistantTemperatureText
     );
+    this.lastUpdatedDateTime = DateTime.now();
   }
 
 

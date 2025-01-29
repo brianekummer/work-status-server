@@ -13,10 +13,6 @@
  * 
  * 
  * TO DO ITEMS
- *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
- *       - do this AFTER I look at webhook for HA, because that will likely significantly change
- *         how things are done
-
 *   - Add error handling in desk/wall.js so that if server connection dies, I change something, 
  *     probably slack text to "COMMUNICATION ERROR" or something
  * 

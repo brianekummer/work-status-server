@@ -33,9 +33,59 @@ export class StatusController {
   private worker: Worker;
   
 
+  /**
+   * Constructor
+   */
+  constructor(worker: Worker, emojiService: EmojiService) {
+    this.worker = worker;
+    this.emojiService = emojiService;
+
+    // When the worker thread sends an updated status, process it
+    this.worker.on('message', (newCombinedStatus: CombinedStatus) => 
+      this.processWorkerThreadMessage(newCombinedStatus));
+  
+    // Tell the worker thread t5o get the latest Slack status and send it back to us,
+    // then repeat that every SERVER_REFRESH_MS.
+    this.tellWorkerToGetLatestSlackStatus();
+    setInterval(() => this.tellWorkerToGetLatestSlackStatus(), this.SERVER_POLLING_MS); 
+  }
+
+  
+ /**
+  * 
+  * Use Server Sent Events to stream updates to the browser. Constructor sets up the loop that pushes updates every SERVER_POLLING_SECONDS
+  *
+  * FYI, request.get('Referrer') returns the full URL of the referring/requesting site (http://server_ip:3000/desk)
+    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
+  */
+  public async streamStatusUpdates(request: Request, response: Response) {
+    const ipAddress: string = (response.req.ip || '').replace('::ffff:', '');
+    const pageName: string = response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
+    const clientKey: string = `${ipAddress}-${pageName}`;
+
+    logger.debug(`StatusController.streamStatusUpdates() => Started streaming to IP address ${ipAddress} for page ${pageName}`);
+
+    // Configure this client to have updates streamed to it
+    response.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive'
+    });
+  
+    // Save this new client to our list of clients that should get updates
+    const client = new Client(ipAddress, pageName, response, '', '');
+    this.clients.set(clientKey, client);
+    
+    // Push initial data to this new client
+    this.pushStatusToClient(client, true);
+
+    // When the client closes its connection, remove it from our list of clients
+    request.on('close', () => this.clients.delete(clientKey));
+  }
+  
 
   public homeAssistantUpdate(request: Request, response: Response) {
-    logger.debug(`>>>>>>>>>>>>>>>>>>>>>> StatusController.homeAssistantUpdate()`);
+    logger.debug(`StatusController.homeAssistantUpdate()`);
 
     //   - status-worker is responsible for POLLING. StatusController is responsible 
     //     for maintaining this.combinedStatus and getting it out to the clients
@@ -63,84 +113,69 @@ export class StatusController {
   }
 
 
-
   /**
-   * Constructor
+   * User says they just updated their status, so immediately 
+   * 
+   * @param response 
    */
-  constructor(worker: Worker, emojiService: EmojiService) {
-    this.worker = worker;
-    this.emojiService = emojiService;
-
-    // When the worker thread sends an updated status, process it
-    this.worker.on('message', (newCombinedStatus: CombinedStatus) => 
-      this.processWorkerThreadMessage(newCombinedStatus));
-  
-    // Tell the worker thread t5o get the latest Slack status and send it back to us,
-    // then repeat that every SERVER_REFRESH_MS.
+  public updatedStatus(response: Response) {
+    logger.debug(`StatusController.updatedStatus(), checking for updates`);
     this.tellWorkerToGetLatestSlackStatus();
-    setInterval(() => this.tellWorkerToGetLatestSlackStatus(), this.SERVER_POLLING_MS); 
+    response.status(200).end();
   }
+  
 
-
-
+  /*
   private processWorkerThreadMessage(newCombinedStatus: CombinedStatus) {
     // newCombinedStatus is passed as a simple JSON object, need to convert it back to
     // a real CombinedStatus object so we can use its methods
-    if (!this.combinedStatus.equals(newCombinedStatus)) {
-      logger.info( 
-        `status-worker.on.message(), changed status\n` +
-        `   FROM ${this.combinedStatus.toString()}\n` +
-        `     TO ${newCombinedStatus.toString()}`);
+    newCombinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
 
+    // TODO- decide if send this update or not. Send it if
+    //   - it changed
+    //   - it has been at least one minute since the last update
+    if (this.combinedStatus.lastUpdatedDateTime.diffNow('seconds').seconds < -60 || !this.combinedStatus.equals(newCombinedStatus)) {
+      if (this.combinedStatus.lastUpdatedDateTime.diffNow('seconds').seconds < -60) {
+        logger.debug(`StatusController.processWorkerThreadMessage(), pushing update because of time`);
+      } else if (!this.combinedStatus.equals(newCombinedStatus)) {
+        logger.info( 
+          `StatusController.processWorkerThreadMessage(), pushing update because status changed\n` +
+          `   FROM ${this.combinedStatus.toString()}\n` +
+          `     TO ${newCombinedStatus.toString()}`);
+      }
+      newCombinedStatus.lastUpdatedDateTime = DateTime.now();
       this.combinedStatus = newCombinedStatus;
       this.sendStatusToAllClients();
     }  
   }
+  */
+  private processWorkerThreadMessage(newCombinedStatus: CombinedStatus) {
+    // Convert plain JSON object to a real CombinedStatus instance
+    newCombinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
+
+    const timeExceeded = this.combinedStatus.lastUpdatedDateTime.diffNow('seconds').seconds < -60;
+    const statusChanged = !this.combinedStatus.equals(newCombinedStatus);
+
+    if (timeExceeded || statusChanged) {
+      if (timeExceeded) {
+        logger.debug(`StatusController.processWorkerThreadMessage(), pushing update because of time`);
+      } else if (statusChanged) {
+        logger.info(`StatusController.processWorkerThreadMessage(), pushing update because status changed\n` +
+          `   FROM ${this.combinedStatus.toString()}\n` +
+          `     TO ${newCombinedStatus.toString()}`);
+      }
+
+      newCombinedStatus.lastUpdatedDateTime = DateTime.now();
+      this.combinedStatus = newCombinedStatus;
+      this.sendStatusToAllClients();
+    }
+  }
+
+
 
 
   private tellWorkerToGetLatestSlackStatus() {
     this.worker.postMessage(this.combinedStatus);
-  }
-
-
-  /*
-  * 
-  * Use Server Sent Events to stream updates to the browser. Constructor sets up the loop that pushes updates every SERVER_POLLING_SECONDS
-  *
-  * FYI, request.get('Referrer') returns the full URL of the referring/requesting site (http://server_ip:3000/desk)
-    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
-  */
-  public async streamStatusUpdates(request: Request, response: Response) {
-
-
-    // TODO- should these move into the Client? 
-    // How would request.on('close' work?
-    const getIpAddress = (response: Response) => (response.req.ip || '').replace('::ffff:', '');
-    const getPageName = (response: Response) => response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
-    const getClientKey = (ipAddress: string, pageName: string) => `${ipAddress}-${pageName}`;
-
-    const ipAddress: string = getIpAddress(response);
-    const pageName: string = getPageName(response);
-    logger.debug(`StatusController.streamStatusUpdates() => Started streaming to IP address ${ipAddress} for page ${pageName}`);
-
-
-    // Set this client to get updates streamed to it
-    response.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive'
-    });
-  
-    // Save this new client to our list of clients that should get updates
-    const client = new Client(ipAddress, pageName, response, '', '');
-    this.clients.set(getClientKey(ipAddress, pageName), client);
-    
-    // Push initial data to this new client
-    this.pushStatusToClient(client, true);
-
-    // When the client closes its connection, remove it from our list of clients
-    request.on('close', () => 
-      this.clients.delete(getClientKey(getIpAddress(response), getPageName(response)))) ;
   }
 
 
@@ -154,16 +189,16 @@ export class StatusController {
 
 
   // It's fine (even preferred) for wall to change emoji all the time, but I don't want my desk phone needlessly changing
-  private handleEmojis(client: Client) {
+  private setEmoji(client: Client) {
     let emojiImage = client.emojiImage;
-    if (client.emoji !== this.combinedStatus.slack.emoji || client.pageName !== PAGES.DESK) {
+    if (client.pageName !== PAGES.DESK || client.emoji !== this.combinedStatus.slack.emoji) {
       // Emoji has changed, so get a new random image
       emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);
-      logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, new image is ${emojiImage}`);
+      logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, so new image is ${emojiImage}`);
       client.emoji = this.combinedStatus.slack.emoji;
       client.emojiImage = emojiImage;
     } else {
-      logger.debug(`pushStatusToClient =? emoji is still ${client.emoji} so image is staying as ${emojiImage}`);
+      logger.debug(`pushStatusToClient => emoji is still ${client.emoji} so image is staying ${emojiImage}`);
     }
   }
 
@@ -176,11 +211,9 @@ export class StatusController {
   private pushStatusToClient(client: Client, initialPush: boolean) {
     logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress}`);
 
+    this.setEmoji(client);
 
-    this.handleEmojis(client);
-    
-
-    const statusToSend = {
+    const statusToStream = {
       emojiImage: client.emojiImage,
       text: this.combinedStatus.slack.text,
       times: this.combinedStatus.slack.times,
@@ -192,18 +225,6 @@ export class StatusController {
       }
     };
     
-    client.response.write(`data: ${JSON.stringify(statusToSend)}\n\n`);
-  }
-
-  /**
-   * User says they just updated their status, so immediately 
-   * 
-   * @param response 
-   */
-  public updatedStatus(response: Response) {
-    // Have the worker thread check NOW!
-    logger.debug(`StatusController.updatedStatus() called, checking for updates NOW`);
-    this.tellWorkerToGetLatestStatus();
-    response.status(200).end();
+    client.response.write(`data: ${JSON.stringify(statusToStream)}\n\n`);
   }
 }

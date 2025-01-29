@@ -31,8 +31,6 @@ parentPort!.on('message', (oldCombinedStatus: CombinedStatus) => {
   // The object being received is a simple JSON object, not a JS class, so we must convert it
   // so we can use its methods
   oldCombinedStatus = CombinedStatus.fromJsonObject(oldCombinedStatus);
-  //logger.debug('^^^^^ status-worker.on.message() RECEIVED (after conversion)');
-  //console.log(oldCombinedStatus);
 
   getLatestStatus(oldCombinedStatus)
   .then((newCombinedStatus: CombinedStatus) => 
@@ -54,15 +52,9 @@ function getLatestStatus(oldCombinedStatus: CombinedStatus): Promise<CombinedSta
     ])
     .then(statuses => {
       // Statuses are returned in the same order they were called in Promises.all() 
-      //const [ workSlackStatus, homeSlackStatus, homeAssistantStatus ] = statuses;
       const [ workSlackStatus, homeSlackStatus ] = statuses;
-
-      //logger.debug(`[[[[[`);
-      //console.log(workSlackStatus);
-      //console.log(homeSlackStatus);
       const matchingCondition: StatusCondition|undefined = statusConditionService.getMatchingCondition(workSlackStatus, homeSlackStatus);
       return matchingCondition 
-        //? oldCombinedStatus.updateStatus(matchingCondition, workSlackStatus, homeSlackStatus, homeAssistantStatus, statusConditionService.matchesCondition(matchingCondition.conditions_home_emoji, homeSlackStatus.emoji))
         ? oldCombinedStatus.updateSlackStatus(matchingCondition, workSlackStatus, homeSlackStatus, statusConditionService.matchesCondition(matchingCondition.conditions_home_emoji, homeSlackStatus.emoji))
         : oldCombinedStatus;
     })
