@@ -6,7 +6,7 @@ import logger from '../services/logger';
 import { Client } from '../models/client';
 import { CombinedStatus } from '../models/combined-status';
 import { EmojiService } from '../services/emoji-service';
-
+import { PAGES } from '../constants';
 
 
 
@@ -151,11 +151,11 @@ export class StatusController {
   }
 
 
-  // TODO- emojiImage needs returned, but returning that hides the fact that I'm changing client. I can'tr pass emojiImage in as ref
-  // because TS doesn't have byref parameters. This stinks
-  private handleEmojis(client: Client) {
+
+    // It's fine (even preferred) for wall to change emoji all the time, but I don't want my desk phone needlessly changing
+    private handleEmojis(client: Client) {
     let emojiImage = client.emojiImage;
-    if (client.emoji !== this.combinedStatus.slack.emoji) {
+    if (client.emoji !== this.combinedStatus.slack.emoji || client.pageName !== PAGES.DESK) {
       // Emoji has changed, so get a new random image
       emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);
       logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, new image is ${emojiImage}`);
@@ -178,23 +178,12 @@ export class StatusController {
     // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
     logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress}`);
 
-    // This works, but I want to extract it into a fn. Doesn't make sense to put it in EmojiService because that just adds
-    // references to Client and CombinedStatus models, and that seems ugly, but it may be my best option
-    let emojiImage = client.emojiImage;
-    if (client.emoji !== this.combinedStatus.slack.emoji) {
-      // Emoji has changed, so get a new random image
-      emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);
-      logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, new image is ${emojiImage}`);
-      client.emoji = this.combinedStatus.slack.emoji;
-      client.emojiImage = emojiImage;
-    } else {
-      logger.debug(`pushStatusToClient =? emoji is still ${client.emoji} so image is staying as ${emojiImage}`);
-    }
 
-
+    this.handleEmojis(client);
+    
 
     const statusToSend = {
-      emojiImage: emojiImage,
+      emojiImage: client.emojiImage,
       text: this.combinedStatus.slack.text,
       times: this.combinedStatus.slack.times,
       lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE),

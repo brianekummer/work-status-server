@@ -13,18 +13,18 @@
  * 
  * 
  * TO DO ITEMS
- *   - Add error handling in desk/wall.js so that if server connection dies, I change something, 
- *     probably slack text to "COMMUNICATION ERROR" or something
- * 
  *   - Only sends updates when slack/ha changes- I want every minute so "last updated" changes
  *       - do this AFTER I look at webhook for HA, because that will likely significantly change
  *         how things are done
- *
+
+*   - Add error handling in desk/wall.js so that if server connection dies, I change something, 
+ *     probably slack text to "COMMUNICATION ERROR" or something
+ * 
  *   - is using font awesome to show HVAC status up-to-date enough to be useful?
  *   
  *   - Cleanup
- *       - find a linter
  *       - consistent style in defining functions
+ *       - check for removing env vars
  *       - Update all comments, readme's, etc.
  */
 
