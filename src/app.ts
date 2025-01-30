@@ -3,66 +3,65 @@
  *
  *
  * GENERAL STRATEGY
- *   - Timer runs every x seconds and gets my Slack status for work and home
- *     accounts, as well as some data from Home Assistant. It calculates my new
- *     status to display at home, and saves it in a global variable.
- *   - Use Server Sent Events (SSE) to periodically push the latest status 
- *     from the server (from that global variable), to the client, which then
- *     updates the elements on the page.
+ *   - A worker thread runs every x seconds and polls my work and home Slack
+ *     accounts, and collects it in a variable.
+ *   - A webhook gets updates from my smart home (Home Assistant)
+ *   - Web pages call this app and are served a web page showing those statuses
+ *   - Server Sent Events (SSE) is used to periodically stream the latest status 
+ *     from the server to those web pages, which then update the elements on 
+ *     their pages.
  *
  * 
  * 
  * TO DO ITEMS
- *   - is using font awesome to show HVAC status up-to-date enough to be useful?
+ *   - is using font awesome to show HVAC status up-to-date enough to be useful? If it's always > 1:30, then why bother?
+ *       - Timing examples
+ *           - Heat came on, took 2:58 for desk phone to get the updated icon
+ *           - Heat/fan turned off took 1:47 to update
+ *       - I THINK removing this would eliminate the need for Mustache
  *   
  *   - Cleanup
- *       - consistent style in defining functions
- *       - check for removing env vars
- *       - Update all comments, readme's, etc.
+ *       - When redeploy, remove env vars for HOME_ASSISTANT and client refresh
+ *       - update Notion documentation- move notes from RANDOM note
  */
-
 import express from 'express';
+import bodyParser from 'body-parser';
 import mustacheExpress from 'mustache-express';
 import { Worker } from 'worker_threads';
-import path from 'path';
-import bodyParser from 'body-parser';
 
-import logger from './services/logger';
-import routerModule from './routes/routes';
-import { StatusController } from './controllers/status-controller';
-import { EmojiService } from './services/emoji-service';
+import EmojiService from './services/emoji-service';
+import Logger from './services/logger';
+import RouterModule from './routes/routes';
+import StatusController from './controllers/status-controller';
 
 
-const port = 3000;        // Cannot be < 1024 (ie. 80) w/o root access
-
+const port = 3000;  // Cannot be < 1024 (ie. 80) w/o root access
 const app = express();
 
 // Configure Mustache
 app.engine('mst', mustacheExpress());
 app.set('view engine', 'mst');
-app.set('views', path.join(__dirname, 'views'));
+app.set('views', 'views');
 
-// Middleware to parse JSON bodies- must be before include the router
-app.use(bodyParser.json());
+app.use(bodyParser.json());  // Must be before the router is used
 
-const emojiService: EmojiService = new EmojiService();
-
-// Start the worker thread and pass it to the status controller
-const worker = new Worker('./controllers/status-worker.js');
+// Instantiate controllers and services
+const worker = new Worker(
+  './controllers/status-worker.js', 
+  { workerData: { statusConditionsFilename: '../../files/status-conditions.csv' }});
+const emojiService: EmojiService = new EmojiService('../public/images');
 const statusController = new StatusController(worker, emojiService);
-
-// Initialize the router, which needs the status controller
-const router = routerModule(statusController);
+const router = RouterModule(statusController);
 app.use(router);
 
-
-
-
-// Expose public folder
+// Expose the public folder
 app.use(express.static('../public'));
 
-// Hack to prevent "certificate has expired" issue. Not suitable for production,
-// but ok for me here. https://github.com/node-fetch/node-fetch/issues/568
-process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
+// TODO- DO I STILL NEED THIS? DEPLOY IT AND FIND OUT
+// Hack to prevent "certificate has expired" issue. Not suitable for production
+// on an internet-facing application, but is ok for being only accessible on my
+// home network. https://github.com/node-fetch/node-fetch/issues/568
+//process.env.NODE_TLS_REJECT_UNAUTHORIZED="0";
 
-app.listen(port, () => logger.info(`Listening on port ${port}`));
+// Start listening for requests
+app.listen(port, () => Logger.info(`Listening on port ${port}`));

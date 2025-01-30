@@ -1,79 +1,90 @@
-import { DateTime } from "luxon";
-import { Worker } from 'worker_threads';
+import { DateTime } from 'luxon';
 import { Request, Response } from 'express';
+import { Worker } from 'worker_threads';
 
-import logger from '../services/logger';
-import { Client } from '../models/client';
-import { CombinedStatus } from '../models/combined-status';
-import { EmojiService } from '../services/emoji-service';
+import Client from '../models/client';
+import CombinedStatus from '../models/combined-status';
+import EmojiService from '../services/emoji-service';
+import Logger from '../services/logger';
 import { PAGES } from '../constants';
-
 
 
 /**
  * Status Controller
  * 
- * Used to build the status that will be send to the clients
- * 
- * 
+ * This controller is responsible for
+ *   - Maintaining the combined status status (Slack + Home Assistant)
+ *       - Periodically telling the worker thread to get my Slack statuses, 
+ *         receiving it's response, and setting the new status
+ *       - Getting webhook messages from Home Assistant with updates and
+ *         applying those updates to the current status
+ *   - Periodically sending the status to all the web clients
  */
-export class StatusController {
+export default class StatusController {
   private readonly SERVER_POLLING_MS: number = (process.env.SERVER_POLLING_SECONDS || 30) * 1000;
 
-  // This variable is needed because it contains Slack.statusStartTime which this code adds to keep track of when the status started
-  // It does not come from Slack, and when we set the status, we need the current value
+
+  private clients: Map<string, Client> = new Map<string, Client>();
+  
+  // combinedStatus is required to be a module-level variable because it 
+  // contains slack.statusStartTime. This does not come from Slack and is 
+  // added by this code to keep track of when the current status started.
+  // It is necessary for maintaining slack.times ("Started @ 3:50 PM").
   private combinedStatus: CombinedStatus = CombinedStatus.EMPTY_STATUS;
 
 
-  private emojiService: EmojiService;
-  private clients: Map<string, Client> = new Map<string, Client>();
-
-
-
-  private worker: Worker;
-  
-
   /**
    * Constructor
+   * 
+   * @param worker 
+   * @param emojiService 
    */
-  constructor(worker: Worker, emojiService: EmojiService) {
+  constructor(
+    private readonly worker: Worker, 
+    private readonly emojiService: EmojiService
+  ) {
     this.worker = worker;
     this.emojiService = emojiService;
 
-    // When the worker thread sends an updated status, process it
     this.worker.on('message', (newCombinedStatus: CombinedStatus) => 
       this.processWorkerThreadMessage(newCombinedStatus));
   
-    // Tell the worker thread t5o get the latest Slack status and send it back to us,
-    // then repeat that every SERVER_REFRESH_MS.
     this.tellWorkerToGetLatestSlackStatus();
     setInterval(() => this.tellWorkerToGetLatestSlackStatus(), this.SERVER_POLLING_MS); 
   }
 
-  
- /**
-  * 
-  * Use Server Sent Events to stream updates to the browser. Constructor sets up the loop that pushes updates every SERVER_POLLING_SECONDS
-  *
-  * FYI, request.get('Referrer') returns the full URL of the referring/requesting site (http://server_ip:3000/desk)
-    // Prefix ""::ffff:" means clientIp is an IPv4-mapped IPv6 address, and I want to strip that off
-  */
-  public async streamStatusUpdates(request: Request, response: Response) {
+
+  /**
+   * Start streaming status updates to a web client, using Server Sent Events (SSE)
+   *
+   * Notes
+   *   - request.get('Referrer') returns the full URL of the referring/requesting
+   *     site (i.e. "http://server_ip:3000/desk")
+   *   - On an IP address, the prefix "::ffff:" means that the IP is an IPv4-mapped
+   *     IPv6 address, which I don't care about and will strip off
+   * 
+   * @param request - The HTTP request
+   * @param response - The HTTP response
+   */
+  public async startStreamingStatusUpdates(
+    request: Request, 
+    response: Response
+  ) {
     const ipAddress: string = (response.req.ip || '').replace('::ffff:', '');
     const pageName: string = response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
     const clientKey: string = `${ipAddress}-${pageName}`;
 
-    logger.debug(`StatusController.streamStatusUpdates() => Started streaming to IP address ${ipAddress} for page ${pageName}`);
+    Logger.debug(`StatusController.streamStatusUpdates() => Started streaming to IP address ${ipAddress} for page ${pageName}`);
 
-    // Configure this client to have updates streamed to it
+    // Configure this client for Server Sent Events
     response.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
       'Connection': 'keep-alive'
     });
   
-    // Save this new client to our list of clients that should get updates
-    const client = new Client(ipAddress, pageName, response, '', '');
+    // Save this new client to our list of clients that will get updates
+    const client = new Client(ipAddress, pageName, response);
     this.clients.set(clientKey, client);
     
     // Push initial data to this new client
@@ -84,49 +95,48 @@ export class StatusController {
   }
   
 
-  public homeAssistantUpdate(request: Request, response: Response) {
-    logger.debug(`StatusController.homeAssistantUpdate()`);
-
-    //   - status-worker is responsible for POLLING. StatusController is responsible 
-    //     for maintaining this.combinedStatus and getting it out to the clients
-    //
-    // If I get rid of HomeAssistantService and stop polling it, then when I open a 
-    // webpage, I will not have any HA data until I get my first update, which could be
-    // 5-45 minutes, depending on when something in that data changes. DO I CARE?
-    // This looks significant, but may not be. THINK ABOUT IT.
-    //   - This would affect Kaley opening the web page to see the laundry status, although
-    //     if laundry is running, it'd update every minute
-    //   - CORRECTION- this is only for the first couple of minutes the SERVER is running
-    //     once the server has been running for a couple of minutes and gets the first
-    //     HA update, any new client will IMMEDIATELY get the status. This is NOT
-    //     worth the extra mess of keeping HomeAssistantService, the async constructor mess here, etc.
-    //     DOCUMENT THIS SOMEWHERE as an oddity, known and accepted issue
-    //
-    // I thought about pushing updates for HA separate from Slack. Would be initiated
-    // from the same route, but then could push two different payloads to the client,
-    // and the client would have to look at the payload to determine what to update.
-    // This seems very unnecessary. I may want to document this decision somewhere.
+  /**
+   * Process an update from Home Assistant
+   * 
+   * Applies the update to the combinedStatus and pushes the updated combinedStatus
+   * to all the web clients.
+   * 
+   * @param request - The HTTP request
+   * @param response - the HTTP response
+   */
+  public homeAssistantUpdate(
+    request: Request,
+    response: Response
+  ) {
+    Logger.debug(`StatusController.homeAssistantUpdate()`);
 
     this.combinedStatus.updateHomeAssistantStatus(request.body);
-    this.sendStatusToAllClients();
+    this.pushStatusToAllClients();
     response.status(200).end();
   }
 
 
   /**
-   * User says they just updated their status, so immediately 
+   * User called this to say they updated their Slack status and that we
+   * should immediately get that new status and push it to the clients
    * 
-   * @param response 
+   * @param response - The HTTP response
    */
-  public updatedStatus(response: Response) {
-    logger.debug(`StatusController.updatedStatus(), checking for updates`);
+  public updatedSlackStatus(response: Response) {
+    Logger.debug(`StatusController.updatedStatus(), checking for updates`);
     this.tellWorkerToGetLatestSlackStatus();
     response.status(200).end();
   }
   
 
+  /**
+   * Worker thread has a (potentially) new combined status
+   * 
+   * @param newCombinedStatus - The new combined status, which is passed as a
+   *                            plain JSON object that needs converted to a real
+   *                            CombinedStatus object
+   */
   private processWorkerThreadMessage(newCombinedStatus: CombinedStatus) {
-    // Convert plain JSON object to a real CombinedStatus instance
     newCombinedStatus = CombinedStatus.fromJsonObject(newCombinedStatus);
 
     const timeExceeded = this.combinedStatus.lastUpdatedDateTime.diffNow('seconds').seconds < -60;
@@ -134,58 +144,79 @@ export class StatusController {
 
     if (timeExceeded || statusChanged) {
       if (timeExceeded) {
-        logger.debug(`StatusController.processWorkerThreadMessage(), pushing update because of time`);
+        Logger.debug(`StatusController.processWorkerThreadMessage(), pushing update because of time`);
       } else if (statusChanged) {
-        logger.info(`StatusController.processWorkerThreadMessage(), pushing update because status changed\n` +
+        Logger.info(`StatusController.processWorkerThreadMessage(), pushing update because status changed\n` +
           `   FROM ${this.combinedStatus.toString()}\n` +
           `     TO ${newCombinedStatus.toString()}`);
       }
 
       newCombinedStatus.lastUpdatedDateTime = DateTime.now();
       this.combinedStatus = newCombinedStatus;
-      this.sendStatusToAllClients();
+      this.pushStatusToAllClients();
     }
   }
 
 
-
-
+  /**
+   * Tell the worker thread to go get the latest Slack status, instead of 
+   * waiting for the polling to happen
+   */
   private tellWorkerToGetLatestSlackStatus() {
     this.worker.postMessage(this.combinedStatus);
   }
 
 
   /**
-   * 
+   * Push the status to all clients
    */
-  private sendStatusToAllClients() {
+  private pushStatusToAllClients() {
     this.clients.forEach((client: Client) => this.pushStatusToClient(client, false));
   }
 
 
 
-  // It's fine (even preferred) for wall to change emoji all the time, but I don't want my desk phone needlessly changing
+  /**
+   * Set the emoji and emoji image that will be sent to the clients
+   * 
+   * The emoji image is randomly selected from a list of images available for that 
+   * emoji.
+   * 
+   * It's fine, even preferred, for the wall phone to have the emoji image change 
+   * for every push. For example, one time it's 8bit_1.png, the next time it's
+   * 8bit_2.gif, etc. But I don't want my desk phone constantly changing and 
+   * distracting me for no reason.
+   *
+   * @param client - The client 
+   */
   private setEmoji(client: Client) {
     let emojiImage = client.emojiImage;
+
     if (client.pageName !== PAGES.DESK || client.emoji !== this.combinedStatus.slack.emoji) {
-      // Emoji has changed, so get a new random image
       emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);
-      logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, so new image is ${emojiImage}`);
+      Logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, so new image is ${emojiImage}`);
       client.emoji = this.combinedStatus.slack.emoji;
       client.emojiImage = emojiImage;
     } else {
-      logger.debug(`pushStatusToClient => emoji is still ${client.emoji} so image is staying ${emojiImage}`);
+      Logger.debug(`pushStatusToClient => emoji is still ${client.emoji} so image is staying ${emojiImage}`);
     }
   }
 
 
   /**
-   * 
-   *    * Get status to send to the client, making any necessary changes, such as
-   * converting an emoji to an actual filename.
+   * Push the latest status to a single client
+   *
+   * This builds the payload to send and pushes it
+   *
+   * @param client - The client to push to
+   * @param initialPush - Is this the initial push for this client? Is used ONLY
+   *                      for logging purposes
    */
-  private pushStatusToClient(client: Client, initialPush: boolean) {
-    logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress}`);
+  private pushStatusToClient(
+    client: Client,
+    initialPush: boolean
+  ) {
+    Logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress}`);
 
     this.setEmoji(client);
 

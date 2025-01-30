@@ -1,13 +1,13 @@
 /**
  * Logger
  * 
- * Using Winston for a simple logger
+ * Using Winston for a simple Logger
  * 
  * This is intentionally a module and not a class so that it acts like a
  * singleton, and it works inside status-worker, which runs in a different
  * thread. 
- *   - Setting the log level by an environment variable makes it easy for 
- *     the log level to get set for the instance of the logger instantiated 
+ *   - Setting the log level with an environment variable makes it easy for 
+ *     the log level to get set for the instance of the Logger instantiated 
  *     by status-worker.
  * 
  * Winston log levels are (quote from https://www.npmjs.com/package/winston):
@@ -24,10 +24,10 @@
  *       silly: 6
  *     };
  */
-
 import winston from 'winston';
 import 'winston-daily-rotate-file';
 import fs from 'fs';
+
 
 // Generate timestamp in New York timezone
 const timezonedTimestamp = (): string => 
@@ -40,9 +40,10 @@ const timezonedTimestamp = (): string =>
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
-    // TODO- fix this- fractionalSecondDigits: 3
-  });
+    fractionalSecondDigits: 3
+  } as Intl.DateTimeFormatOptions);
 
+  
 // Define file logging transport, set log directory to the project folder if /var/log doesn't exist
 const logDir = fs.existsSync('/var/log') ? '/var/log/' : '';
 const fileRotateTransport = new winston.transports.DailyRotateFile({
@@ -51,7 +52,8 @@ const fileRotateTransport = new winston.transports.DailyRotateFile({
   maxFiles: '10d',
 });
 
-const logger = winston.createLogger({
+
+const Logger = winston.createLogger({
   level: (process.env.LOG_LEVEL || 'error').toLowerCase(),
   format: winston.format.combine(
     winston.format.timestamp({ format: timezonedTimestamp }),
@@ -65,9 +67,11 @@ const logger = winston.createLogger({
   ],
 });
 
-logger.on('error', (err: unknown) => {
+
+Logger.on('error', (err: unknown) => {
   console.error('Error with logging:', err);   // eslint-disable-line no-console
 });
 
-// Export the logger as default
-export default logger;
+
+// Export the Logger as default
+export default Logger;

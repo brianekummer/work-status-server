@@ -1,23 +1,16 @@
 /**
  * Status Condition
  * 
- * 
+ * Defines a status condition, which is a row from status-conditions.csv.
+ * This is used in the process of deciding what the next status should be.
  */
-export class StatusCondition {
-    public conditions_work_emoji: string;
-    public conditions_work_presence: string;
-    public conditions_home_emoji: string;
-    public conditions_home_presence: string;
-    public display_emoji_image: string;
-    public display_text: string;
+export default class StatusCondition {
 
-    // Constructors
-    constructor(conditions_work_emoji: string, conditions_work_presence: string, conditions_home_emoji: string, conditions_home_presence: string, display_emoji_image: string, display_text: string) {
-      this.conditions_work_emoji = conditions_work_emoji;
-      this.conditions_work_presence = conditions_work_presence;
-      this.conditions_home_emoji = conditions_home_emoji;
-      this.conditions_home_presence = conditions_home_presence;
-      this.display_emoji_image = display_emoji_image;
-      this.display_text = display_text;
-    }
-  }
+  constructor(
+    public readonly conditionsWorkEmoji: string, 
+    public readonly conditionsWorkPresence: string,
+    public readonly conditionsHomeEmoji: string, 
+    public readonly conditionsHomePresence: string, 
+    public readonly displayEmojiImage: string, 
+    public readonly displayText: string) {}
+}

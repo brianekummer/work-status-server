@@ -1,23 +1,17 @@
 import { Response } from 'express';
 
 /**
- * Status for Client
+ * Client
  * 
- * 
+ * Defines a client or web browser that connects to this application and needs
+ * status data sent back to it.
  */
-export class Client {
-  public ipAddress: string;
-  public pageName: string;  
-  public response: Response;
-  public emoji: string;
-  public emojiImage: string;
+export default class Client {
 
-  // Constructors
-  constructor(ipAddress: string, pageName: string, response: Response, emoji: string, emojiImage: string) {
-    this.ipAddress = ipAddress;
-    this.pageName = pageName;
-    this.response = response;
-    this.emoji = emoji;
-    this.emojiImage = emojiImage;
-  }
+  constructor(
+    public readonly ipAddress: string,
+    public readonly pageName: string,
+    public readonly response: Response,
+    public emoji: string = '',
+    public emojiImage: string = '') {}
 }

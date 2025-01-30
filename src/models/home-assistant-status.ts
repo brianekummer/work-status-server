@@ -1,24 +1,17 @@
 /**
  * Home Assistant Status
  * 
- * 
+ * Defines the status retrieved from Home Assistant
  */
-export class HomeAssistantStatus {
+export default class HomeAssistantStatus {
   public static readonly EMPTY_STATUS: HomeAssistantStatus = new HomeAssistantStatus('', '', '');
   public static readonly ERROR_STATUS: HomeAssistantStatus = new HomeAssistantStatus('ERROR', 'ERROR', 'ERROR');
-    
-  
-  public washerText: string = '';
-  public dryerText: string = '';
-  public temperatureText: string = '';
-  
+     
 
-  // Constructors
-  constructor(washerText: string, dryerText: string, temperatureText: string) {
-    this.washerText = washerText;
-    this.dryerText = dryerText;
-    this.temperatureText = temperatureText;
-  }
+  constructor(
+    public readonly washerText: string,
+    public readonly dryerText: string,
+    public readonly temperatureText: string) {}
 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
