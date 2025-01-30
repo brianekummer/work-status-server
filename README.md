@@ -36,15 +36,11 @@ You need to define an app in Slack to get a security token which you can use to 
     - The mappings of status/presence for work and home are stored in the file `status-conditions.csv`, which is read upon startup, and a watcher re-reads whenever it changes. This avoids the need to restart the application for those changes to take effect.
     - A worker thread runs in the background every `SERVER_POLLING_SECONDS` and polls Slack for status updates, which is maintained by `StatusController`
     - `StatusController` pushes the up-to-date status to every client using Server Sent Events (SSE) every `SERVER_POLLING_SECONDS`
-- Font Awesome
-    - Font Awesome is used to display the icon denoting heating/cooling/fan on the desk page
-    - Font Awesome now requires an id because there is a free tier, which I'm using
-    - I have an account id that must be included in the HTML's script tag
+- Public static pages
+    - The desk phone is accessed by /desk.html
+    - The wall phone is accessed by /wall.html
 - Endpoints
     - The favicon is NOT returned by /favicon.ico
-    - The desk phone is accessed by /desk
-        - Because I need to include my Font Awesome account id in the HTML, and I don't want to hard-code that and check it into GitHub, I must inject that into the HTML, so I'm using Mustache to do that
-    - The wall phone is accessed by /wall
     - The wall and desk phones make a call to /api/status-updates to initiate getting status updates streamed to them
     - The webhook that Home Assistant calls is /api/home-assistant-update
     - I set my Slack statuses on my work laptop and home computer using an automation tool that makes HTTP POST calls to Slack's API (such as https://slack.com/api/users.profile.set and https://slack.com/api/users.setPresence). Since this app is polling Slack
@@ -60,7 +56,6 @@ You need to define an app in Slack to get a security token which you can use to 
     - `express`, for coding simple web pages
     - `glob`, for reading the list of files in /public/images folder
     - `luxon`, for date formatting, instead of momentJS
-    - `mustache-express`, for templating HTML. I specifically need it to inject my Font Awesome account id into the desk phone's HTML.
     - `node-watch`, for watching if the status conditions file changes, so we can pickup any changes to that file without requiring an app restart
     - `typescript`, duh, for TypeScript
     - `winston`, for logging
@@ -71,18 +66,20 @@ You need to define an app in Slack to get a security token which you can use to 
             - An example is CSS nesting
             - I could look into using a polyfill or SASS, or log those phones into a Google account so the WebView can be updated, but it's not currently worth it to me
 - Required environment variables
-    - `FONT_AWESOME_ACCOUNT_ID`, is my account id for Font Awesome, which is part of the URL for the script to include in my HTML
     - `SLACK_TOKEN_WORK`, is the Slack security token for my work account
     - `SLACK_TOKEN_HOME`, is the Slack security token for my home account, optional
     - `SERVER_POLLING_SECONDS`, is the refresh time on the server side, defaults to 30 seconds
-    - `LOG_LEVEL`, is the logging level- can be `DEBUG`|`INFO`|`ERROR`
+    - `LOG_LEVEL`, is the logging level- code uses `ERROR`|`INFO`|`DEBUG`
 
 ## Technical Oddities/Issues
 These are things that are a little odd, but I'll live with them because fixing them is too much work, or causes other oddities I'd rather not live with.
 - Because I am no longer polling Home Assistant, when this application starts, there is no Home Assistant data until it sends the next update. This could be a minute, or maybe 45 minutes, depending on what's happening. In this case, the desk phone will show the waster/dryer/thermometer icons but no text until the next time Home Assistant pushes an updated status.
 
+## Building
+Use `npm run build` and `npm run lint`
+
 ## Running Locally
-Use the shell script `start-service.sh`, which optionally takes the desired log level as its only parameter
+Use the shell script `start-service.sh`, which optionally takes the desired log level (`INFO`|`DEBUG`|`ERROR`) as its only parameter
 
 ## Useful Tools
 - https://ezgif.com/split takes an animated gif and splits it into individual frames. I use this to create an un-animated image to display on my desk phone, since I don't want animation there.

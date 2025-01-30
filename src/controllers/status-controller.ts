@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon';
 import { Request, Response } from 'express';
 import { Worker } from 'worker_threads';
+import path from "node:path";
 
 import Client from '../models/client';
 import CombinedStatus from '../models/combined-status';
@@ -58,8 +59,10 @@ export default class StatusController {
    * Start streaming status updates to a web client, using Server Sent Events (SSE)
    *
    * Notes
-   *   - request.get('Referrer') returns the full URL of the referring/requesting
-   *     site (i.e. "http://server_ip:3000/desk")
+   *   - To get the page name (I want "desk" or "wall" and don't want the file extension),
+   *     request.get('Referrer') returns the full URL of the referring site (i.e. 
+   *     "http://server_ip:3000/desk.html") and then I use path to get the name without
+   *     the extension
    *   - On an IP address, the prefix "::ffff:" means that the IP is an IPv4-mapped
    *     IPv6 address, which I don't care about and will strip off
    * 
@@ -71,10 +74,8 @@ export default class StatusController {
     response: Response
   ) {
     const ipAddress: string = (response.req.ip || '').replace('::ffff:', '');
-    const pageName: string = response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
+    const pageName: string = path.parse(response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '').name;
     const clientKey: string = `${ipAddress}-${pageName}`;
-
-    Logger.debug(`StatusController.streamStatusUpdates() => Started streaming to IP address ${ipAddress} for page ${pageName}`);
 
     // Configure this client for Server Sent Events
     response.writeHead(200, {
@@ -175,7 +176,6 @@ export default class StatusController {
   }
 
 
-
   /**
    * Set the emoji and emoji image that will be sent to the clients
    * 
@@ -190,15 +190,9 @@ export default class StatusController {
    * @param client - The client 
    */
   private setEmoji(client: Client) {
-    let emojiImage = client.emojiImage;
-
     if (client.pageName !== PAGES.DESK || client.emoji !== this.combinedStatus.slack.emoji) {
-      emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);
-      Logger.debug(`pushStatusToClient => emoji changing from ${client.emoji} to ${this.combinedStatus.slack.emoji}, so new image is ${emojiImage}`);
       client.emoji = this.combinedStatus.slack.emoji;
-      client.emojiImage = emojiImage;
-    } else {
-      Logger.debug(`pushStatusToClient => emoji is still ${client.emoji} so image is staying ${emojiImage}`);
+      client.emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);;
     }
   }
 
