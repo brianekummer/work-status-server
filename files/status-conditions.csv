@@ -24,7 +24,7 @@
 | On a Slack call                | :slack_call:           |          |                        |          | telephone_receiver   | On a Call            |
 | Heads down focused             | :heads-down:           |          |                        |          | heads_down           | Focusing             |
 | In Pittsburgh                  | :cityscape:            |          |                        |          | cityscape            | In Pittsburgh        |
-| In a meeting                   | :spiral_calendar_pad:  |          |                        |          | spiral_calendar      | Meeting              |
+| In a meeting                   | :spiral_calendar_pad:  |          |                        |          | meeting              | Meeting              |
 | Studying                       | :books:                |          |                        |          | books                | Studying             |
 | Home- some other emoji         |                        | away     | *                      |          |                      | (HOME_STATUS_TEXT)   |
 | Work- some other emoji         | *                      |          |                        |          |                      | (WORK_STATUS_TEXT)   |

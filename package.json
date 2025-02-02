@@ -5,7 +5,8 @@
   "homepage": "http://192.168.1.202:3000",
   "main": "app.js",
   "scripts": {
-    "build": "tsc && npm run copy-public && npm run copy-files",
+    "build": "tsc && npm run delete-dist-public && npm run copy-public && npm run copy-files",
+    "delete-dist-public": "rm -r -f dist/public/",
     "copy-public": "cp -r public dist/",
     "copy-files": "cp -r files dist/",
     "lint": "eslint \"./**/*.{ts,tsx}\" --ignore-pattern \"dist\" --ignore-pattern \"public/**/*.js\""
