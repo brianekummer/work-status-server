@@ -49,7 +49,7 @@ const logDir = fs.existsSync('/var/log') ? '/var/log/' : '';
 const fileRotateTransport = new winston.transports.DailyRotateFile({
   filename: `${logDir}work-server-status.%DATE%.log`,
   datePattern: 'YYYY-MM-DD',
-  maxFiles: '10d',
+  maxFiles: '10d'
 });
 
 
@@ -63,8 +63,8 @@ const Logger = winston.createLogger({
   ),
   transports: [
     new winston.transports.Console(),
-    fileRotateTransport,
-  ],
+    fileRotateTransport
+  ]
 });
 
 
