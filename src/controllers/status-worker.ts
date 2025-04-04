@@ -60,11 +60,25 @@ function getLatestStatus(
       
       const matchingCondition: StatusCondition|undefined = statusConditionService.getFirstMatchingCondition(workSlackStatus, homeSlackStatus);
       if (matchingCondition) {
-        return oldCombinedStatus.updateSlackStatus(
+        let updatedCombinedStatus: CombinedStatus = oldCombinedStatus.updateSlackStatus(
           matchingCondition,
           workSlackStatus,
           homeSlackStatus,
           statusConditionService.matchesCondition(matchingCondition.conditionsHomeEmoji, homeSlackStatus.emoji));
+        
+        // Now, what if this is Outlook setting us OOO?
+        if (workSlackStatus.emoji === ':no_entry' && workSlackStatus.text === 'Out of Office • Outlook Calendar') {
+          // I need to call SlackService and update the status
+
+          // And I can just hack it now
+          updatedCombinedStatus.slack.emoji = ':palm_tree:';
+          updatedCombinedStatus.slack.text = 'PTO';
+        }
+
+
+
+          
+        return updatedCombinedStatus;
       } else {
         return oldCombinedStatus;
       }
