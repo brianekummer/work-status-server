@@ -5,13 +5,12 @@
  */
 
 
-enum EMOJI {
-  CALL = ':slack_call:',
-  PTO = ':palm_tree:'
-}
-
-
 export default class SlackStatus {
+  public static readonly EMOJI = {
+    CALL: ':slack_call:',
+    VACATION: ':palm_tree:',
+    UNAVAILABLE: ':no_entry:'
+  };
   public static readonly EMPTY_STATUS = new SlackStatus();
   public static readonly ERROR_STATUS = new SlackStatus('ERROR', 'ERROR', 0, 'ERROR');
 
@@ -30,7 +29,7 @@ export default class SlackStatus {
     // for a Slack call is fine.
     return new SlackStatus(
       slackApiProfileResponse.profile.huddle_state === 'in_a_huddle' 
-                  ? EMOJI.CALL
+                  ? this.EMOJI.CALL
                   : slackApiProfileResponse.profile.status_emoji, 
       slackApiProfileResponse.profile.status_text,
       slackApiProfileResponse.profile.status_expiration || 0,

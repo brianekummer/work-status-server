@@ -20,6 +20,14 @@ export default class SlackService {
   private readonly SLACK_TOKENS = [process.env.SLACK_TOKEN_WORK, process.env.SLACK_TOKEN_HOME || ''];
 
 
+  private getHeaders(account: ACCOUNTS) {
+    return {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Authorization': `Bearer ${this.SLACK_TOKENS[account]}`  
+    };
+  }
+
+
   /**
    * Get Slack status for a given account, which includes status and presence
    *
@@ -30,10 +38,7 @@ export default class SlackService {
   public getSlackStatus(account: ACCOUNTS): Promise<SlackStatus> {
     if (this.SLACK_TOKENS[account]) {
       const accountName = (account === SlackService.ACCOUNTS.WORK ? 'WORK' : 'HOME');
-      const headers = {
-        'Content-Type':  'application/x-www-form-urlencoded',
-        'Authorization': `Bearer ${this.SLACK_TOKENS[account]}`  
-      };
+      const headers = this.getHeaders(account);
 
       return Promise.all([
         fetch('https://slack.com/api/users.profile.get', { method: 'GET', headers: headers }),
@@ -55,4 +60,21 @@ export default class SlackService {
       return Promise.resolve(SlackStatus.EMPTY_STATUS);
     }
   };
+
+
+  public setSlackStatus(account: ACCOUNTS, slackStatus: SlackStatus) {
+    fetch('https://slack.com/api/users.profile.set', {
+      method: 'POST',
+      headers: this.getHeaders(account),
+      body: `profile={'status_text': '${slackStatus.text}', 'status_emoji': '${slackStatus.emoji}', 'status_expiration': ${slackStatus.expiration}}`
+    })
+    .then(function(result) {
+      var resultString = JSON.stringify(result);
+      if (result.statusText == "OK") {
+        Logger.debug(`Successfully changed my Slack status to ${slackStatus.emoji} ${slackStatus.text} (expires ${slackStatus.expiration})`);
+      } else {
+        Logger.error(`SlackService/setSlackStatus(), Error changing my Slack status to ${slackStatus.emoji} ${slackStatus.text} (expires ${slackStatus.expiration}), and this error occurred:\n${resultString}`);
+      }
+    })
+  }
 }

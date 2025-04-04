@@ -1,7 +1,9 @@
 import { parentPort, workerData } from 'worker_threads';
+import { DateTime } from "luxon";
 
 import CombinedStatus from '../models/combined-status';
 import Logger from '../services/logger';
+import SlackStatus from '../models/slack-status';
 import SlackService from '../services/slack-service';
 import StatusCondition from '../models/status-condition';
 import StatusConditionService from '../services/status-condition-service';
@@ -40,6 +42,18 @@ parentPort!.on('message', (oldCombinedStatus: CombinedStatus) => {
 });
 
 
+function isOutlookOutOfOfficeForPto(workSlackStatus: SlackStatus, statusStartTime: string, minimumPtoDurationHours: number): boolean {
+  const startTime = DateTime.fromFormat(statusStartTime, 'h:mm a');
+  if (!startTime.isValid) {
+    Logger.error(`Invalid time format for slack.statusStartTime: ${statusStartTime}`);
+    return false;
+  } else {
+    const durationInHours = DateTime.fromSeconds(workSlackStatus.expiration).diff(startTime, 'hours').hours;
+    return workSlackStatus.emoji === SlackStatus.EMOJI.UNAVAILABLE && workSlackStatus.text === 'Out of Office • Outlook Calendar' && durationInHours >= minimumPtoDurationHours;
+  }
+}
+
+
 /**
  * Get the latest Slack status
  *
@@ -65,18 +79,16 @@ function getLatestStatus(
           workSlackStatus,
           homeSlackStatus,
           statusConditionService.matchesCondition(matchingCondition.conditionsHomeEmoji, homeSlackStatus.emoji));
-        
-        // Now, what if this is Outlook setting us OOO?
-        if (workSlackStatus.emoji === ':no_entry' && workSlackStatus.text === 'Out of Office • Outlook Calendar') {
-          // I need to call SlackService and update the status
-
-          // And I can just hack it now
-          updatedCombinedStatus.slack.emoji = ':palm_tree:';
+  
+        // If this Slack Status is Outlook changing me to Out Of Office for at least 4 hours, then
+        // set my Slack status to PTO and just return the updated status.  No need to wait for the
+        // command to finish.
+        if (isOutlookOutOfOfficeForPto(workSlackStatus, updatedCombinedStatus.slack.statusStartTime, 4)) {
+          slackService.setSlackStatus(SlackService.ACCOUNTS.WORK, 
+            new SlackStatus(SlackStatus.EMOJI.VACATION, 'PTO', workSlackStatus.expiration, 'away'));
+          updatedCombinedStatus.slack.emoji = SlackStatus.EMOJI.VACATION;
           updatedCombinedStatus.slack.text = 'PTO';
         }
-
-
-
           
         return updatedCombinedStatus;
       } else {
