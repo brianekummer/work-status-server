@@ -102,12 +102,13 @@ function getLatestStatus(
         //     doesn't change your Slack status back.
 
         // If this Slack status is from Slack's Outlook app changing me to be Out Of Office for at least x hours,
-        // then set my Slack status to PTO and just return the updated status- there's no need to wait 
-        // for setSlackStatus() to be processed.
+        // then set my Slack status to PTO.
+        //   - It looks nicer to my co-workers on Slack
+        //   - My work status phones will display nothing instead of the Outlook status, which is nice
         if (isStatusOutOfOfficeForPto(workSlackStatus, updatedCombinedStatus.slack.statusStartTime, OUT_OF_OFFICE_MIN_HOURS)) {
-          const ptoStatus = new SlackStatus(SlackStatus.EMOJI.VACATION, 'PTO', workSlackStatus.expiration);
-          slackService.setSlackStatus(SlackService.ACCOUNTS.WORK, ptoStatus);
-          updatedCombinedStatus.slack = { ...updatedCombinedStatus.slack, emoji: ptoStatus.emoji, text: ptoStatus.text };
+          slackService.setSlackStatus(
+            SlackService.ACCOUNTS.WORK,
+            new SlackStatus(SlackStatus.EMOJI.VACATION, 'PTO', workSlackStatus.expiration));
         }
           
         return updatedCombinedStatus;
