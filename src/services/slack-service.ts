@@ -63,6 +63,7 @@ export default class SlackService {
 
 
   public setSlackStatus(account: ACCOUNTS, slackStatus: SlackStatus) {
+    // This does not set the presence, only the status, since I have no need for that right now
     fetch('https://slack.com/api/users.profile.set', {
       method: 'POST',
       headers: this.getHeaders(account),
