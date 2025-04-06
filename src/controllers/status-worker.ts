@@ -106,6 +106,7 @@ function getLatestStatus(
         //   - It looks nicer to my co-workers on Slack
         //   - My work status phones will display nothing instead of the Outlook status, which is nice
         if (isStatusOutOfOfficeForPto(workSlackStatus, updatedCombinedStatus.slack.statusStartTime, OUT_OF_OFFICE_MIN_HOURS)) {
+          Logger.debug(`status-worker.getLatestStatus(), changing Out Of Office status to PTO`);
           slackService.setSlackStatus(
             SlackService.ACCOUNTS.WORK,
             new SlackStatus(SlackStatus.EMOJI.VACATION, 'PTO', workSlackStatus.expiration));
