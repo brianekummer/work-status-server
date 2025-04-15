@@ -1,4 +1,4 @@
-import { DateTime } from "luxon";
+import { DateTime } from 'luxon';
 
 import HomeAssistantStatus from './home-assistant-status';
 import SlackStatus from './slack-status';

@@ -3,10 +3,16 @@
  * 
  * Defines my status from Slack
  */
+
+
 export default class SlackStatus {
+  public static readonly EMOJI = {
+    CALL: ':slack_call:',
+    VACATION: ':palm_tree:',
+    UNAVAILABLE: ':no_entry:'
+  };
   public static readonly EMPTY_STATUS = new SlackStatus();
   public static readonly ERROR_STATUS = new SlackStatus('ERROR', 'ERROR', 0, 'ERROR');
-  private static readonly SLACK_CALL_STATUS_EMOJI: string = ':slack_call:';
 
   
   constructor(
@@ -23,7 +29,7 @@ export default class SlackStatus {
     // for a Slack call is fine.
     return new SlackStatus(
       slackApiProfileResponse.profile.huddle_state === 'in_a_huddle' 
-                  ? this.SLACK_CALL_STATUS_EMOJI
+                  ? this.EMOJI.CALL
                   : slackApiProfileResponse.profile.status_emoji, 
       slackApiProfileResponse.profile.status_text,
       slackApiProfileResponse.profile.status_expiration || 0,
