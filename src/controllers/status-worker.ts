@@ -9,8 +9,6 @@ import StatusCondition from '../models/status-condition';
 import StatusConditionService from '../services/status-condition-service';
 
 
-
-
 /**
  * Status worker thread
  *
@@ -95,16 +93,10 @@ function getLatestStatus(
           homeSlackStatus,
           statusConditionService.matchesCondition(matchingCondition.conditionsHomeEmoji, homeSlackStatus.emoji));
   
-
-        // TODO- Document in readme why I'm doing this and this oddity
-        //   - One oddity- This sets the Slack status because the Slack Outlook app sets the status. If
-        //     you delete the Outlook calendar event that started this while in progress, Outlook 
-        //     doesn't change your Slack status back.
-
         // If this Slack status is from Slack's Outlook app changing me to be Out Of Office for at least x hours,
         // then set my Slack status to PTO.
-        //   - It looks nicer to my co-workers on Slack
-        //   - My work status phones will display nothing instead of the Outlook status, which is nice
+        //   - My work status phones will display nothing instead of the OutlookOut Of Office status
+        //   - It's a little more clear to my co-workers on Slack
         if (isStatusOutOfOfficeForPto(workSlackStatus, updatedCombinedStatus.slack.statusStartTime, OUT_OF_OFFICE_MIN_HOURS)) {
           Logger.debug(`status-worker.getLatestStatus(), changing Out Of Office status to PTO`);
           slackService.setSlackStatus(

@@ -11,6 +11,8 @@ My repo [`work-status-android`](https://github.com/brianekummer/work-status-andr
     - The desk phone also shows
         - The time in 12 hour, 24 hour, and UTC
         - The status of my washer, dryer, and thermostat, as well as an icon to denote heating/cooling/fan
+- When I am on PTO, if I add an Outlook calendar entry with OOO status, the Outlook app installed on my Slack will change my Slack status to "Out Of Office - Outlook Calendar", and my work status phones display that as the "no entry" emoji for that duration- usually midnight to midnight.
+    - Since I don't like that, this code sees that Slack status, and if I'm OOO for at least x hours, it changes my Slack status to "PTO" with the palm tree emoji. The status phones then blank out and my co-workers see a nicer "PTO" status and palm tree emoji.
 
 ## Terminology
 - Emoji - A Slack status, such as :8bit:
@@ -74,6 +76,9 @@ You need to define an app in Slack to get a security token which you can use to 
 ## Technical Oddities/Issues
 These are things that are a little odd, but I'll live with them because fixing them is too much work, or causes other oddities I'd rather not live with.
 - Because I am no longer polling Home Assistant, when this application starts, there is no Home Assistant data until it sends the next update. This could be a minute, or maybe 45 minutes, depending on what's happening. In this case, the desk phone will show the waster/dryer/thermometer icons but no text until the next time Home Assistant pushes an updated status.
+- For changing OOO to PTO status, when this code sees that I'm OOO for x hours, it changes my Slack status to PTO. This happens as soon as this code sees that my Slack status has changed to "Out Of Office - Outlook Calendar".
+    - In Outlook, if you delete that calendar entry during your PTO (maybe I take a half day instead of a full day), the Outlook app in Slack doesn't clear your status.
+    - This is a little odd, but is such a minor issue that it's not worth coding for.
 
 ## Building
 Use `npm run build` and `npm run lint`
