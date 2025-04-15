@@ -87,7 +87,7 @@ function getLatestStatus(
       const matchingCondition: StatusCondition|undefined = statusConditionService.getFirstMatchingCondition(workSlackStatus, homeSlackStatus);
       if (matchingCondition) {
         // Update the combined status with the new Slack status
-        let updatedCombinedStatus: CombinedStatus = oldCombinedStatus.updateSlackStatus(
+        const updatedCombinedStatus: CombinedStatus = oldCombinedStatus.updateSlackStatus(
           matchingCondition,
           workSlackStatus,
           homeSlackStatus,

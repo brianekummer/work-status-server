@@ -70,7 +70,7 @@ export default class SlackService {
       body: `profile={'status_text': '${slackStatus.text}', 'status_emoji': '${slackStatus.emoji}', 'status_expiration': ${slackStatus.expiration}}`
     })
     .then(function(result) {
-      var resultString = JSON.stringify(result);
+      const resultString = JSON.stringify(result);
       if (result.statusText == "OK") {
         Logger.debug(`Successfully changed my Slack status to ${slackStatus.emoji} ${slackStatus.text} (expires ${slackStatus.expiration})`);
       } else {
