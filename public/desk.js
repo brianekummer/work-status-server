@@ -1,5 +1,6 @@
 "use strict";
 const EVERY_FIVE_SECONDS = 5000;
+const THIRTY_SECONDS = 30000;
 
 
 // Shorthand to select element by id
@@ -27,6 +28,7 @@ const updateClocks = () => {
  * Call the endpoint to get the status updates and the server will keep
  * sending messages with up-to-date statuses
  */
+let errorTimeout = null;
 let eventSource = new EventSource('/api/status-updates');
 
 eventSource.onmessage = (event) => {
@@ -51,17 +53,30 @@ eventSource.onmessage = (event) => {
     $('dryer-text').innerHTML = status.homeAssistant.dryerText || '';
     $('temperature-text').innerHTML = status.homeAssistant.temperatureText || '';
   }
+
+  // Clear any pending error display
+  if (errorTimeout) {
+    clearTimeout(errorTimeout);
+    errorTimeout = null;
+  }
 };
 
 eventSource.onerror = (error) => {
-  $('status-emoji').src = ``;
-  $('status-text').innerHTML = 'Communication Error!';
-  $('status-times').innerHTML = '';
-  $('last-updated-time').innerHTML = '';
+  console.error('SSE error: ', error);
 
-  $('washer-text').innerHTML = '';
-  $('dryer-text').innerHTML = '';
-  $('temperature-text').innerHTML = '';
-};
+  // Only show error if connection is down for >30 seconds
+  if (!errorTimeout) {
+    errorTimeout = setTimeout(() => {
+      $('status-emoji').src = '';
+      $('status-text').innerHTML = 'Communication Error!';
+      $('status-times').innerHTML = '';
+      $('last-updated-time').innerHTML = '';
+
+      $('washer-text').innerHTML = '';
+      $('dryer-text').innerHTML = '';
+      $('temperature-text').innerHTML = '';
+    }, THIRTY_SECONDS);
+  }
+}
 
 setInterval(updateClocks, EVERY_FIVE_SECONDS);
