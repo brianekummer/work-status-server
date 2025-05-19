@@ -92,7 +92,10 @@ export default class StatusController {
     this.pushStatusToClient(client, true);
 
     // When the client closes its connection, remove it from our list of clients
-    request.on('close', () => this.clients.delete(clientKey));
+    request.on('close', () => {
+      Logger.debug(`StatusController.startStreamingStatusUpdates.close() for clientKey=${clientKey}`);
+      this.clients.delete(clientKey);
+    });
   }
   
 
