@@ -2,6 +2,7 @@ import { DateTime } from 'luxon';
 import { Request, Response } from 'express';
 import { Worker } from 'worker_threads';
 import path from "node:path";
+import { randomUUID }from 'node:crypto';
 
 import Client from '../models/client';
 import CombinedStatus from '../models/combined-status';
@@ -66,6 +67,10 @@ export default class StatusController {
    *   - On an IP address, the prefix "::ffff:" means that the IP is an IPv4-mapped
    *     IPv6 address, which I don't care about and will strip off
    * 
+   *   - FOR DEBUGGING, adding a UUID to track if I have multiple clients coming from the
+   *     same IP (which would be a single app having multiple clients, which I obviously 
+   *     don't want)
+   * 
    * @param request - The HTTP request
    * @param response - The HTTP response
    */
@@ -75,7 +80,8 @@ export default class StatusController {
   ) {
     const ipAddress: string = (response.req.ip || '').replace('::ffff:', '');
     const pageName: string = path.parse(response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '').name;
-    const clientKey: string = `${ipAddress}-${pageName}`;
+    const uuid: string = randomUUID();
+    const clientKey: string = `${ipAddress}-${pageName}-${uuid}`;
 
     // Configure this client for Server Sent Events
     response.writeHead(200, {
@@ -89,7 +95,7 @@ export default class StatusController {
     this.clients.set(clientKey, client);
     
     // Push initial data to this new client
-    this.pushStatusToClient(client, true);
+    this.pushStatusToClient(client, true, clientKey);
 
     // When the client closes its connection, remove it from our list of clients
     request.on('close', () => {
@@ -175,7 +181,7 @@ export default class StatusController {
    * Push the status to all clients
    */
   private pushStatusToAllClients() {
-    this.clients.forEach((client: Client) => this.pushStatusToClient(client, false));
+    this.clients.forEach((client: Client, clientKey: string) => this.pushStatusToClient(client, false, clientKey));
   }
 
 
@@ -211,9 +217,10 @@ export default class StatusController {
    */
   private pushStatusToClient(
     client: Client,
-    initialPush: boolean
+    initialPush: boolean,
+    clientKey: string = "default"    // For debugging purposes only
   ) {
-    Logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress}`);
+    Logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress} key ${clientKey}`);
 
     this.setEmoji(client);
 
