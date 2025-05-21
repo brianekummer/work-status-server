@@ -28,6 +28,19 @@ export default class SlackService {
   }
 
 
+  private async fetchWithRetry(url: string, options: RequestInit, label: string): Promise<Response> {
+    try {
+      return await fetch(url, options);
+    } catch (firstError: any) {
+      Logger.debug(`${label} failed, retrying: ${firstError.name}: ${firstError.message}`);
+      try {
+        return await fetch(url, options);
+      } catch (secondError: any) {
+        throw new Error(`${label} failed after retry: ${secondError.name}: ${secondError.message}`);
+      }
+    }
+  }
+
   /**
    * Get Slack status for a given account, which includes status and presence
    *
@@ -35,31 +48,41 @@ export default class SlackService {
    *
    * @returns a SlackStatus object with the Slack status
    */
-  public getSlackStatus(account: ACCOUNTS): Promise<SlackStatus> {
-    if (this.SLACK_TOKENS[account]) {
-      const accountName = (account === SlackService.ACCOUNTS.WORK ? 'WORK' : 'HOME');
-      const headers = this.getHeaders(account);
-
-      return Promise.all([
-        fetch('https://slack.com/api/users.profile.get', { method: 'GET', headers: headers }),
-        fetch('https://slack.com/api/users.getPresence', { method: 'GET', headers: headers })
-      ])
-      .then(responses => Promise.all(responses.map(response => response.json())))
-      .then(jsonResponses => {
-        const slackStatus = SlackStatus.fromApi(jsonResponses[0], jsonResponses[1]);
-        Logger.debug(`Got SLACK for ${accountName}: ${slackStatus.toString()}`);
-
-        return Promise.resolve(slackStatus);
-      })
-      .catch(ex => {
-        Logger.error(`SlackService.getSlackStatus(), ERROR for ${accountName}: ${ex}`);
-        return Promise.resolve(SlackStatus.ERROR_STATUS);
-      });
-    } else {
+  public async getSlackStatus(account: ACCOUNTS): Promise<SlackStatus> {
+    if (!this.SLACK_TOKENS[account]) {
       // Do not have a token for this Slack account, so return an empty status
-      return Promise.resolve(SlackStatus.EMPTY_STATUS);
+      return SlackStatus.EMPTY_STATUS;
     }
-  };
+
+    const accountName = account === SlackService.ACCOUNTS.WORK ? 'WORK' : 'HOME';
+    const headers = this.getHeaders(account);
+    const requestOptions = { method: 'GET', headers };
+
+    try {
+      const [profileRes, presenceRes] = await Promise.all([
+        this.fetchWithRetry('https://slack.com/api/users.profile.get', requestOptions, `${accountName} profile fetch`),
+        this.fetchWithRetry('https://slack.com/api/users.getPresence', requestOptions, `${accountName} presence fetch`)
+      ]);
+
+      if (!profileRes.ok || !presenceRes.ok) {
+        Logger.error(`SlackService.getSlackStatus(), API error for ${accountName}: 
+          Profile status: ${profileRes.status} ${profileRes.statusText}, 
+          Presence status: ${presenceRes.status} ${presenceRes.statusText}`);
+        return SlackStatus.ERROR_STATUS;
+      }
+
+      const profileJson = await profileRes.json();
+      const presenceJson = await presenceRes.json();
+
+      const slackStatus = SlackStatus.fromApi(profileJson, presenceJson);
+      Logger.debug(`Got SLACK for ${accountName}: ${slackStatus.toString()}`);
+      return slackStatus;
+
+    } catch (err: any) {
+      Logger.error(`SlackService.getSlackStatus(), FINAL ERROR for ${accountName}: ${err.message}`);
+      return SlackStatus.ERROR_STATUS;
+    }
+  }
 
 
   public setSlackStatus(account: ACCOUNTS, slackStatus: SlackStatus) {

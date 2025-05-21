@@ -95,8 +95,13 @@ export default class CombinedStatus {
   }
 
 
+  public isBlankStatus(): boolean {
+    return this.slack.emoji === '' && this.slack.text === '';
+  }
+
+
   /**
-   * Is this model equal to another combine status?
+   * Is this model equal to another combined status model?
    * 
    * @param otherCombinedStatus - The combined status to compare this model to
    * @returns true if the properties of otherCombinedStatus match the properties of this model

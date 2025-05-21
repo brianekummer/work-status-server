@@ -56,7 +56,9 @@ parentPort!.on('message', (oldCombinedStatus: CombinedStatus) => {
  */
 function isStatusOutOfOfficeForPto(workSlackStatus: SlackStatus, statusStartTime: string, minimumPtoDurationHours: number): boolean {
   const startTime = DateTime.fromFormat(statusStartTime, 'h:mm a');
-  if (!startTime.isValid) {
+  if (!statusStartTime) {
+    return false;
+  } else if (!startTime.isValid) {
     Logger.error(`Invalid time format for slack.statusStartTime: ${statusStartTime}`);
     return false;
   } else {
@@ -83,6 +85,17 @@ function getLatestStatus(
     .then(statuses => {
       // Statuses are returned in the same order they were called in Promises.all() 
       const [ workSlackStatus, homeSlackStatus ] = statuses;
+
+
+      if (oldCombinedStatus.isBlankStatus() && (workSlackStatus === SlackStatus.ERROR_STATUS || homeSlackStatus === SlackStatus.ERROR_STATUS)) {
+        // When getting a Slack status fails, it returns ERROR. In the middle of the night when there is
+        // no status, which means my desk phone is off, I do not want a Slack status of ERROR to turn the 
+        // phone on just to display a Slack status of "ERROR". In this case, just ignore that Slack status.
+        Logger.debug(`status-worker.getLatestStatus(), ignoring Slack status of ERROR because current status is blank`);
+        return oldCombinedStatus;
+      }
+
+
       
       const matchingCondition: StatusCondition|undefined = statusConditionService.getFirstMatchingCondition(workSlackStatus, homeSlackStatus);
       if (matchingCondition) {
