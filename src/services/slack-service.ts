@@ -32,11 +32,11 @@ export default class SlackService {
     try {
       return await fetch(url, options);
     } catch (firstError: any) {
-      Logger.debug(`${label} failed, retrying: ${firstError.name}: ${firstError.message}`);
+      Logger.debug(`${label} failed because ${firstError.name}: ${firstError.message}, retrying`);
       try {
         return await fetch(url, options);
       } catch (secondError: any) {
-        throw new Error(`${label} failed after retry: ${secondError.name}: ${secondError.message}`);
+        throw new Error(`${label} failed after retry because ${secondError.name}: ${secondError.message}`);
       }
     }
   }
