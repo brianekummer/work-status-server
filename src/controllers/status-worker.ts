@@ -86,7 +86,6 @@ function getLatestStatus(
       // Statuses are returned in the same order they were called in Promises.all() 
       const [ workSlackStatus, homeSlackStatus ] = statuses;
 
-
       if (oldCombinedStatus.isBlankStatus() && (workSlackStatus === SlackStatus.ERROR_STATUS || homeSlackStatus === SlackStatus.ERROR_STATUS)) {
         // When getting a Slack status fails, it returns ERROR. In the middle of the night when there is
         // no status, which means my desk phone is off, I do not want a Slack status of ERROR to turn the 
@@ -95,8 +94,6 @@ function getLatestStatus(
         return oldCombinedStatus;
       }
 
-
-      
       const matchingCondition: StatusCondition|undefined = statusConditionService.getFirstMatchingCondition(workSlackStatus, homeSlackStatus);
       if (matchingCondition) {
         // Update the combined status with the new Slack status

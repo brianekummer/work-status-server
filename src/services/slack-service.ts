@@ -28,18 +28,19 @@ export default class SlackService {
   }
 
 
-  private async fetchWithRetry(url: string, options: RequestInit, label: string): Promise<Response> {
+  private async fetchWithRetry(url: string, options: RequestInit, logLabel: string): Promise<Response> {
     try {
       return await fetch(url, options);
     } catch (firstError: any) {
-      Logger.debug(`${label} failed because ${firstError.name}: ${firstError.message}, retrying`);
+      Logger.debug(`${logLabel} failed because ${firstError.name}: ${firstError.message}, retrying`);
       try {
         return await fetch(url, options);
       } catch (secondError: any) {
-        throw new Error(`${label} failed after retry because ${secondError.name}: ${secondError.message}`);
+        throw new Error(`${logLabel} failed after retry because ${secondError.name}: ${secondError.message}`);
       }
     }
   }
+
 
   /**
    * Get Slack status for a given account, which includes status and presence
@@ -59,20 +60,20 @@ export default class SlackService {
     const requestOptions = { method: 'GET', headers };
 
     try {
-      const [profileRes, presenceRes] = await Promise.all([
+      const [profileResponse, presenceResponse] = await Promise.all([
         this.fetchWithRetry('https://slack.com/api/users.profile.get', requestOptions, `${accountName} profile fetch`),
         this.fetchWithRetry('https://slack.com/api/users.getPresence', requestOptions, `${accountName} presence fetch`)
       ]);
 
-      if (!profileRes.ok || !presenceRes.ok) {
+      if (!profileResponse.ok || !presenceResponse.ok) {
         Logger.error(`SlackService.getSlackStatus(), API error for ${accountName}: 
-          Profile status: ${profileRes.status} ${profileRes.statusText}, 
-          Presence status: ${presenceRes.status} ${presenceRes.statusText}`);
+          Profile status: ${profileResponse.status} ${profileResponse.statusText}, 
+          Presence status: ${presenceResponse.status} ${presenceResponse.statusText}`);
         return SlackStatus.ERROR_STATUS;
       }
 
-      const profileJson = await profileRes.json();
-      const presenceJson = await presenceRes.json();
+      const profileJson = await profileResponse.json();
+      const presenceJson = await presenceResponse.json();
 
       const slackStatus = SlackStatus.fromApi(profileJson, presenceJson);
       Logger.debug(`Got SLACK for ${accountName}: ${slackStatus.toString()}`);

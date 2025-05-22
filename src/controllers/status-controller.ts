@@ -81,7 +81,7 @@ export default class StatusController {
     const ipAddress: string = (response.req.ip || '').replace('::ffff:', '');
     const pageName: string = path.parse(response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '').name;
     const uuid: string = randomUUID();
-    const clientKey: string = `${ipAddress}-${pageName}-${uuid}`;
+    const clientKey: string = `${ipAddress}_${pageName}_${uuid}`;
 
     // Configure this client for Server Sent Events
     response.writeHead(200, {
@@ -214,13 +214,14 @@ export default class StatusController {
    * @param client - The client to push to
    * @param initialPush - Is this the initial push for this client? Is used ONLY
    *                      for logging purposes
+   * @param clientKey - The clientKey
    */
   private pushStatusToClient(
     client: Client,
     initialPush: boolean,
-    clientKey: string = "default"    // For debugging purposes only
+    clientKey: string
   ) {
-    Logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} for ${client.pageName} on ${client.ipAddress} key ${clientKey}`);
+    Logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} to ${clientKey}`);
 
     this.setEmoji(client);
 
