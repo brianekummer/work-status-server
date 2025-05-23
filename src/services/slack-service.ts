@@ -1,5 +1,6 @@
 import Logger from './logger';
 import SlackStatus from '../models/slack-status';
+import Utilities from '../utilities/utilities';
 
 
 enum ACCOUNTS {
@@ -20,6 +21,12 @@ export default class SlackService {
   private readonly SLACK_TOKENS = [process.env.SLACK_TOKEN_WORK, process.env.SLACK_TOKEN_HOME || ''];
 
 
+  /**
+   * Get the headers for the specified Slack account
+   * 
+   * @param account - The Slack account
+   * @returns an object with the headers for the specified Slack account
+   */
   private getHeaders(account: ACCOUNTS) {
     return {
       'Content-Type': 'application/x-www-form-urlencoded',
@@ -28,30 +35,17 @@ export default class SlackService {
   }
 
 
-  private async fetchWithRetry(url: string, options: RequestInit, logLabel: string): Promise<Response> {
-    try {
-      return await fetch(url, options);
-    } catch (firstError: any) {
-      Logger.debug(`${logLabel} failed because ${firstError.name}: ${firstError.message}, retrying`);
-      try {
-        return await fetch(url, options);
-      } catch (secondError: any) {
-        throw new Error(`${logLabel} failed after retry because ${secondError.name}: ${secondError.message}`);
-      }
-    }
-  }
-
-
   /**
    * Get Slack status for a given account, which includes status and presence
    *
-   * If there is no security token, then an an object with empty values is returned
+   * @param account - The Slack account to get
    *
-   * @returns a SlackStatus object with the Slack status
+   * @returns a SlackStatus object with the Slack status. If there is no security token, 
+   * then an an object with empty values is returned.
    */
   public async getSlackStatus(account: ACCOUNTS): Promise<SlackStatus> {
     if (!this.SLACK_TOKENS[account]) {
-      // Do not have a token for this Slack account, so return an empty status
+      // We do not have a token for this Slack account, so return an empty status
       return SlackStatus.EMPTY_STATUS;
     }
 
@@ -61,8 +55,8 @@ export default class SlackService {
 
     try {
       const [profileResponse, presenceResponse] = await Promise.all([
-        this.fetchWithRetry('https://slack.com/api/users.profile.get', requestOptions, `${accountName} profile fetch`),
-        this.fetchWithRetry('https://slack.com/api/users.getPresence', requestOptions, `${accountName} presence fetch`)
+        Utilities.fetchWithRetry('https://slack.com/api/users.profile.get', requestOptions, `${accountName} profile fetch`),
+        Utilities.fetchWithRetry('https://slack.com/api/users.getPresence', requestOptions, `${accountName} presence fetch`)
       ]);
 
       if (!profileResponse.ok || !presenceResponse.ok) {
@@ -85,9 +79,15 @@ export default class SlackService {
     }
   }
 
-
+  
+  /**
+   * Set the Slack status for a single account. This does not set the presence, only the status,
+   * since that's all I need right now.
+   * 
+   * @param account - The Slack account to set
+   * @param slackStatus - The Slack status
+   */
   public setSlackStatus(account: ACCOUNTS, slackStatus: SlackStatus) {
-    // This does not set the presence, only the status, since I have no need for that right now
     fetch('https://slack.com/api/users.profile.set', {
       method: 'POST',
       headers: this.getHeaders(account),
