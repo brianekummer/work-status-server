@@ -87,9 +87,9 @@ function getLatestStatus(
       const [ workSlackStatus, homeSlackStatus ] = statuses;
 
       if (oldCombinedStatus.isBlankStatus() && (workSlackStatus === SlackStatus.ERROR_STATUS || homeSlackStatus === SlackStatus.ERROR_STATUS)) {
-        // When getting a Slack status fails, it returns ERROR. In the middle of the night when there is
-        // no status, which means my desk phone is off, I do not want a Slack status of ERROR to turn the 
-        // phone on just to display a Slack status of "ERROR". In this case, just ignore that Slack status.
+        // When getting a Slack status fails, it returns the status as "ERROR". In the middle of the night when
+        // there is no status, which means my desk phone is off, I do not want a Slack status of ERROR to turn
+        // the phone on just to display a Slack status of "ERROR". In this case, just ignore that Slack status.
         Logger.debug(`status-worker.getLatestStatus(), ignoring Slack status of ERROR because current status is blank`);
         return oldCombinedStatus;
       }
