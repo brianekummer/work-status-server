@@ -127,8 +127,8 @@ export default class StatusController {
 
 
   /**
-   * User called this to say they updated their Slack status and that we
-   * should immediately get that new status and push it to the clients
+   * User called this endpoint to notify that they updated their Slack status and that
+   * we should immediately get that new status and push it to the clients
    * 
    * @param response - The HTTP response
    */
