@@ -1,7 +1,6 @@
 import { DateTime } from 'luxon';
 import { Request, Response } from 'express';
 import { Worker } from 'worker_threads';
-import path from "node:path";
 import { randomUUID }from 'node:crypto';
 
 import Client from '../models/client';
@@ -60,10 +59,8 @@ export default class StatusController {
    * Start streaming status updates to a web client, using Server Sent Events (SSE)
    *
    * Notes
-   *   - To get the page name (I want "desk" or "wall" and don't want the file extension),
-   *     request.get('Referrer') returns the full URL of the referring site (i.e. 
-   *     "http://server_ip:3000/desk.html") and then I use path to get the name without
-   *     the extension
+   *   - To get the page name (I want "desk" or "wall"), request.get('Referrer') returns
+   *     the full URL of the referring site (i.e. "http://server_ip:3000/desk")
    *   - On an IP address, the prefix "::ffff:" means that the IP is an IPv4-mapped
    *     IPv6 address, which I don't care about and will strip off
    * 
@@ -79,7 +76,7 @@ export default class StatusController {
     response: Response
   ) {
     const ipAddress: string = (response.req.ip || '').replace('::ffff:', '');
-    const pageName: string = path.parse(response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '').name;
+    const pageName: string = response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
     const uuid: string = randomUUID();
     const clientKey: string = `${ipAddress}_${pageName}_${uuid}`;
 

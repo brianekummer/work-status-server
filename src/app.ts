@@ -13,6 +13,7 @@
  */
 import express from 'express';
 import bodyParser from 'body-parser';
+import mustacheExpress from 'mustache-express';
 import { Worker } from 'worker_threads';
 
 import EmojiService from './services/emoji-service';
@@ -23,6 +24,11 @@ import StatusController from './controllers/status-controller';
 
 const port = 3000;  // Cannot be < 1024 (ie. 80) w/o root access
 const app = express();
+
+// Configure MustacheAdd commentMore actions
+app.engine('mst', mustacheExpress());
+app.set('view engine', 'mst');
+app.set('views', 'views');
 
 app.use(bodyParser.json());  // Must be before the router is used
 

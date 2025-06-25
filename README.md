@@ -38,11 +38,15 @@ You need to define an app in Slack to get a security token which you can use to 
     - The mappings of status/presence for work and home are stored in the file `status-conditions.csv`, which is read upon startup, and a watcher re-reads whenever it changes. This avoids the need to restart the application for those changes to take effect.
     - A worker thread runs in the background every `SERVER_POLLING_SECONDS` and polls Slack for status updates, which is maintained by `StatusController`
     - `StatusController` pushes the up-to-date status to every client using Server Sent Events (SSE) every `SERVER_POLLING_SECONDS`
-- Public static pages
-    - The desk phone is accessed by /desk.html
-    - The wall phone is accessed by /wall.html
+    - Font AwesomeAdd comment
+       - Font Awesome is used to display the icon denoting heating/cooling/fan on the desk page
+       - Font Awesome now requires an id because there is a free tier, which I'm using
+       - I have an account id that must be included in the HTML's script tag
 - Endpoints
     - The favicon is NOT returned by /favicon.ico
+    - The desk phone is accessed by /desk
+       - Because I need to include my Font Awesome account id in the HTML, and I don't want to hard-code that and check it into GitHub, I must inject that into the HTML, so I'm using Mustache to do that
+    - The wall phone is accessed by /wall
     - The wall and desk phones make a call to /api/status-updates to initiate getting status updates streamed to them
     - The webhook that Home Assistant calls is /api/home-assistant-update
     - I set my Slack statuses on my work laptop and home computer using an automation tool that makes HTTP POST calls to Slack's API (such as https://slack.com/api/users.profile.set and https://slack.com/api/users.setPresence). Since this app is polling Slack
@@ -58,6 +62,7 @@ You need to define an app in Slack to get a security token which you can use to 
     - `express`, for coding simple web pages
     - `glob`, for reading the list of files in /public/images folder
     - `luxon`, for date formatting, instead of momentJS
+    - `mustache-express`, for templating HTML. I specifically need it to inject my Font Awesome account id into the desk phone's HTML.
     - `node-watch`, for watching if the status conditions file changes, so we can pickup any changes to that file without requiring an app restart
     - `typescript`, duh, for TypeScript
     - `winston`, for logging

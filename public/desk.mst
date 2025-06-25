@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html class='page'>
   <head>
+    <script src='https://kit.fontawesome.com/{{FONT_AWESOME_ACCOUNT_ID}}.js' crossorigin='anonymous'></script>
     <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/luxon/3.5.0/luxon.min.js'></script>
     <script type='text/javascript' src='desk.js'></script>
     <link type='text/css' href='common.css' rel='stylesheet'>
