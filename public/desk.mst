@@ -19,9 +19,9 @@
         </colgroup>
         <tbody>
           <tr>
-            <td class='left'>&nbsp;<span id='local12' class='time'></span>&nbsp;<span id='local12TimeZoneAbbreviation'></span></td>
-            <td class='center'><span id='local24' class='time'></span>&nbsp;<span id='local24TimeZoneAbbreviation'></span></td>
-            <td class='right'><span id='utc' class='time'></span>&nbsp;<span>UTC&nbsp;</span></td>
+            <td class='left'>&nbsp;<span id='local12' class='time'></span>&nbsp;<span id='local12TimeZoneAbbreviation' class='timezone'></span></td>
+            <td class='center'><span id='local24' class='time'></span>&nbsp;<span id='local24TimeZoneAbbreviation' class='timezone'></span></td>
+            <td class='right'><span id='utc' class='time'></span>&nbsp;<span class='timezone'>UTC&nbsp;</span></td>
           </tr>
         </tbody>
       </table>
