@@ -11,6 +11,7 @@
  *     from the server to those web pages, which then update the elements on 
  *     their pages.
  */
+import path from 'path';
 import express from 'express';
 import bodyParser from 'body-parser';
 import mustacheExpress from 'mustache-express';
@@ -28,7 +29,7 @@ const app = express();
 // Configure MustacheAdd commentMore actions
 app.engine('mst', mustacheExpress());
 app.set('view engine', 'mst');
-app.set('views', 'views');
+app.set('views', path.join(__dirname, '../views'));
 
 app.use(bodyParser.json());  // Must be before the router is used
 

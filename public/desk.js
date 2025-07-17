@@ -12,15 +12,15 @@ const $ = (id) => document.getElementById(id);
  * will happen every five seconds.
  */
 const updateClocks = () => {
-    if (document.body.className == 'visible') {
-        let now = luxon.DateTime.now();
-        let timeZoneAbbreviation = now.toFormat('ZZZZ');
-        $('local12').innerHTML = now.toLocaleString(luxon.DateTime.TIME_SIMPLE);
-        $('local12TimeZoneAbbreviation').innerHTML = timeZoneAbbreviation;
-        $('local24').innerHTML = now.toLocaleString(luxon.DateTime.TIME_24_SIMPLE);
-        $('local24TimeZoneAbbreviation').innerHTML = timeZoneAbbreviation;
-        $('utc').innerHTML = now.toUTC().toFormat('HH:mm');
-    }
+  if (document.body.className == 'visible') {
+    let now = luxon.DateTime.now();
+    let timeZoneAbbreviation = now.toFormat('ZZZZ');
+    $('local12').innerHTML = now.toLocaleString(luxon.DateTime.TIME_SIMPLE);
+    $('local12TimeZoneAbbreviation').innerHTML = timeZoneAbbreviation;
+    $('local24').innerHTML = now.toLocaleString(luxon.DateTime.TIME_24_SIMPLE);
+    $('local24TimeZoneAbbreviation').innerHTML = timeZoneAbbreviation;
+    $('utc').innerHTML = now.toUTC().toFormat('HH:mm');
+  }
 };
 
 
