@@ -133,7 +133,7 @@ export default class StatusController {
     Logger.debug(`StatusController.updatedStatus(), checking for updates`);
     this.tellWorkerToGetLatestSlackStatus();
 
-    Logger.debug(`StatusController.updatedSlackStatus(), combinedStatus.slack = ${this.combinedStatus.slack.toString()}`);
+    Logger.debug(`StatusController.updatedSlackStatus(), combinedStatus.slack = ${JSON.stringify(this.combinedStatus.slack)}`);
     if (this.combinedStatus != CombinedStatus.EMPTY_STATUS) {
       // I don't know if the status update has processed yet and combinedStatus has been updated yet
       // so this might not work
