@@ -133,7 +133,13 @@ export default class StatusController {
     Logger.debug(`StatusController.updatedStatus(), checking for updates`);
     this.tellWorkerToGetLatestSlackStatus();
 
-    this.turnScreenOn();
+    Logger.debug(`StatusController.updatedSlackStatus(), combinedStatus.slack = ${this.combinedStatus.slack.toString()}`);
+    if (this.combinedStatus != CombinedStatus.EMPTY_STATUS) {
+      // I don't know if the status update has processed yet and combinedStatus has been updated yet
+      // so this might not work
+      Logger.debug(`StatusController.updatedSlackStatus(), turning screen on`);
+      this.turnScreenOn();
+    }
 
     response.status(200).end();
   }
@@ -188,6 +194,8 @@ export default class StatusController {
         const response = await fetch(url, { method: 'POST' });
         if (!response.ok) {
           Logger.debug(`StatusController: Failed to turn screen on, status ${response.status}`);
+        } else {
+          Logger.debug(`StatusController: Screen successfully turned on`);
         }
       }
     } catch (error) {
