@@ -132,6 +132,10 @@ export default class StatusController {
   public updatedSlackStatus(response: Response) {
     Logger.debug(`StatusController.updatedStatus(), checking for updates`);
     this.tellWorkerToGetLatestSlackStatus();
+
+    // TEMP CODE- tell the work status pi to turn its screen on
+    this.turnScreenOn();
+
     response.status(200).end();
   }
   
@@ -177,6 +181,19 @@ export default class StatusController {
   /**
    * Push the status to all clients
    */
+  private async turnScreenOn() {
+    try {
+      const response = await fetch('http://192.168.10.40:3005/screen/on', {
+        method: 'POST'
+      });
+      if (!response.ok) {
+        Logger.debug(`StatusController: Failed to turn screen on, status ${response.status}`);
+      }
+    } catch (error) {
+      Logger.debug(`StatusController: Error turning screen on: ${error}`);
+    }
+  }
+
   private pushStatusToAllClients() {
     this.clients.forEach((client: Client, clientKey: string) => this.pushStatusToClient(client, false, clientKey));
   }

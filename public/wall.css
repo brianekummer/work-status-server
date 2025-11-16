@@ -2,7 +2,7 @@
  * I intentionally don't use CSS nesting, because that is only available on modern
  * browsers, and the phones I'm using to display my work status are typically
  * several years old.
- * 
+ *
  * https://caniuse.com/css-nesting says phone must have WebView version >= 131
  *
  * I could look into using a polyfill or SASS, or logging the status phones into
@@ -20,9 +20,10 @@ table {
 
 .vertical-center {
   position: absolute;
-  top: 50%;
-  margin: auto 5%;
-  transform: translateY(-50%);
+  top: 40%;          /* move up ~10% from previous 50% */
+  left: 45%;         /* shift left margin right by half */
+  transform: translate(-50%, -50%) scale(1.50); /* scale 150% */
+  transform-origin: top left; /* scaling from top-left corner */
   background-color: DarkGray;
 }
 
@@ -48,4 +49,13 @@ table {
 }
 .times--font-size {
   font-size: 200%;
+}
+
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* full viewport height */
+  margin: 0;
+  background-color: black
 }

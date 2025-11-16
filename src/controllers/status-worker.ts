@@ -105,7 +105,7 @@ function getLatestStatus(
   
         // If this Slack status is from Slack's Outlook app changing me to be Out Of Office for at least x hours,
         // then set my Slack status to PTO.
-        //   - My work status phones will display nothing instead of the OutlookOut Of Office status
+        //   - My work status phones will display nothing instead of the Outlook Out Of Office status
         //   - It's a little more clear to my co-workers on Slack
         if (isStatusOutOfOfficeForPto(workSlackStatus, updatedCombinedStatus.slack.statusStartTime, OUT_OF_OFFICE_MIN_HOURS)) {
           Logger.debug(`status-worker.getLatestStatus(), changing Out Of Office status to PTO`);
