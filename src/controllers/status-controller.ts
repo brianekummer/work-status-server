@@ -182,7 +182,7 @@ export default class StatusController {
    */
   private async turnScreenOn() {
     try {
-      const url = process.env.POST_SLACK_UPDATE_URL;
+      const url = process.env.TURN_MONITOR_ON_URL;
 
       if (url) {
         const response = await fetch(url, { method: 'POST' });

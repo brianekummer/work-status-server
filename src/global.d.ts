@@ -6,7 +6,7 @@ namespace NodeJS {
     SERVER_POLLING_SECONDS?: number
     OUT_OF_OFFICE_STATUS_REGEX?: string
     OUT_OF_OFFICE_MIN_HOURS?: number
-    POST_SLACK_UPDATE_URL?: string
+    TURN_MONITOR_ON_URL?: string
     LOG_LEVEL?: string
   };
 }
