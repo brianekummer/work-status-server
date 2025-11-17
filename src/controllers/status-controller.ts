@@ -133,13 +133,15 @@ export default class StatusController {
     Logger.debug(`StatusController.updatedStatus(), checking for updates`);
     this.tellWorkerToGetLatestSlackStatus();
 
-    Logger.debug(`StatusController.updatedSlackStatus(), combinedStatus.slack = ${JSON.stringify(this.combinedStatus.slack)}`);
-    if (this.combinedStatus != CombinedStatus.EMPTY_STATUS) {
-      // I don't know if the status update has processed yet and combinedStatus has been updated yet
-      // so this might not work
-      Logger.debug(`StatusController.updatedSlackStatus(), turning screen on`);
-      this.turnScreenOn();
-    }
+    Logger.debug(`StatusController.updatedSlackStatus(), turning screen on, combinedStatus.slack = ${JSON.stringify(this.combinedStatus.slack)}`);
+
+    // TODO- if the status is blank, don't turn the screen on. But at this point in the code,
+    // the worker hasn't yet updated this.combinedStatus. So I need to wait until after the worker
+    // has done its job.
+    // HOWEVER, for now this is ok because my office exit script is waiting 30 seconds or so,
+    // which lets this change my status to blank, which keeps the screen on, and then the office
+    // script turns the screen off.
+    this.turnScreenOn();
 
     response.status(200).end();
   }
