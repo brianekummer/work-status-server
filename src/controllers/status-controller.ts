@@ -76,9 +76,16 @@ export default class StatusController {
     response: Response
   ) {
     const ipAddress: string = (response.req.ip || '').replace('::ffff:', '');
-    const pageName: string = response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '';
+    
+    // prefer explicit variant passed on the SSE request e.g. /api/status-updates?variant=wall2
+    const qsVariant = (request.query?.variant as string) || '';
+    let pageName = (qsVariant || response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '');
+
+    // Optionally normalize group: e.g. treat wall2 as 'wall' for grouping rules
+    const pageGroup = pageName.startsWith('wall') ? 'wall' : pageName;
+
     const uuid: string = randomUUID();
-    const clientKey: string = `${ipAddress}_${pageName}_${uuid}`;
+    const clientKey: string = `${ipAddress}_${pageGroup}_${uuid}`;
 
     // Configure this client for Server Sent Events
     response.writeHead(200, {
@@ -88,7 +95,7 @@ export default class StatusController {
     });
   
     // Save this new client to our list of clients that will get updates
-    const client = new Client(ipAddress, pageName, response);
+    const client = new Client(ipAddress, pageGroup, response);
     this.clients.set(clientKey, client);
     
     // Push initial data to this new client
@@ -216,7 +223,7 @@ export default class StatusController {
    */
   public pushCommandToAllClients(response: Response, commandObj: any) {
     const payload = JSON.stringify(commandObj);
-    
+
     this.clients.forEach((client: Client, clientKey: string) => {
       try {
         client.response.write('event: command\n');
