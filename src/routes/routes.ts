@@ -18,7 +18,7 @@ export default (statusController: StatusController) => {
   router.get(`/${PAGES.WALL}`, (request: Request, response: Response) => response.render(PAGES.WALL, {}));
   router.get('/api/status-updates', (request: Request, response: Response) => statusController.startStreamingStatusUpdates(request, response));
   router.post('/api/updated-slack-status', (request: Request, response: Response) => statusController.updatedSlackStatus(response));
-  router.post('/api/home-assistant-update', (request: Request, response: Response) => statusController.homeAssistantUpdate(request, response));
+  router.post('/api/screen/refresh', (request: Request, response: Response) => statusController.pushCommandToAllClients(response, { action: 'reload' }));
 
   return router;
 }

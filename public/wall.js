@@ -46,3 +46,16 @@ eventSource.onerror = (error) => {
     }, THIRTY_SECONDS);
   }
 };
+
+// Listen for control commands from the server (SSE "command" events)
+eventSource.addEventListener('command', (e) => {
+  try {
+    const cmd = JSON.parse(e.data);
+    if (cmd && cmd.action === 'reload') {
+      // Reload the page, to pick up and content changes
+      window.location.reload();
+    }
+  } catch (err) {
+    console.error('Failed to handle command event', err);
+  }
+});

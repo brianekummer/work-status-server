@@ -211,6 +211,26 @@ export default class StatusController {
 
 
   /**
+   * Send a command object to all connected SSE clients as an `command` event.
+   * @param commandObj - Any JSON-serializable command (e.g. { action: 'reload' })
+   */
+  public pushCommandToAllClients(response: Response, commandObj: any) {
+    const payload = JSON.stringify(commandObj);
+    
+    this.clients.forEach((client: Client, clientKey: string) => {
+      try {
+        client.response.write('event: command\n');
+        client.response.write(`data: ${payload}\n\n`);
+      } catch (err) {
+        Logger.debug(`StatusController.pushCommandToAllClients(): failed for ${clientKey}: ${err}`);
+      }
+    });
+
+    response.status(200).end();
+  }
+
+
+  /**
    * Set the emoji and emoji image that will be sent to the clients
    * 
    * The emoji image is randomly selected from a list of images available for that 
