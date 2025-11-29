@@ -1,0 +1,120 @@
+/* wall2.css - full-screen dark-mode (updated) */
+:root{
+  --bg:#050608;
+  --panel:#0b0f12;
+  --muted:#9aa4a8;
+  --text:#e7eef0;
+  --accent:#6ee7b7;
+}
+html,body{height:100%;}
+body{margin:0;background:var(--bg);color:var(--text);font-family: 'Segoe UI', Roboto, Arial, sans-serif;}
+
+.vertical-center{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
+
+/* Use almost full width of a 1920px display */
+.status-table{width:95vw;max-width:1900px;display:flex;align-items:center;justify-content:space-between;gap:40px}
+
+/* Make emoji very large; allow it to grow to fill available height while preserving aspect */
+.emoji{width:304px;flex:0 0 304px;display:flex;align-items:center;justify-content:center}
+.emoji--size{width:100%;height:100%;max-height:80vh;object-fit:contain;display:block}
+
+/* Text column uses remaining space */
+.text-padding{flex:1.6;padding-left:48px;padding-bottom:12px;display:flex;flex-direction:column;justify-content:center}
+
+.status--font-size{font-size:520%;line-height:1.08;font-weight:700;color:var(--text);}
+.times--font-size{font-size:260%;color:var(--muted);margin-top:12px}
+.last-updated-time--font-size{font-size: clamp(22px, 4vh, 40px);color:var(--muted);margin-top:8px}
+
+/* Ensure small emoji images are scaled up cleanly (blurry is unavoidable, but use smoother scaling) */
+.emoji--size { image-rendering: auto; -webkit-font-smoothing:antialiased; }
+
+/* Optional subtle panel for better readability */
+.panel{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:30px;border-radius:12px;box-shadow:0 12px 50px rgba(0,0,0,0.7)}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width:1200px){
+  .emoji{width:176px;flex:0 0 176px}
+  .status--font-size{font-size:380%}
+  .times--font-size{font-size:180%}
+}
+@media (max-width:800px){
+  /* stacked layout for narrow screens */
+  .status-table{flex-direction:column;align-items:center;justify-content:center}
+  .emoji{width:108px;flex:0 0 108px}
+  .text-padding{padding-left:0;padding-top:20px;text-align:center}
+  .status--font-size{font-size:260%}
+  .times--font-size{font-size:140%}
+}
+
+/* Responsive text sizing and wrapping for wall2 */
+/* Status (first line) - try to be large but bounded, allow up to 2 lines with ellipsis */
+#status-text {
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;          /* limit to 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: normal;
+  word-break: break-word;
+  /* responsive font size: min 40px, preferred based on height/width, max 180px */
+  font-size: clamp(40px, 6vh + 2vw, 180px);
+}
+
+/* Times / secondary line - smaller and consistent */
+#status-times {
+  color: var(--muted);
+  margin-top: 0.25em;
+  font-size: clamp(18px, 2.8vh + 1vw, 72px);
+  line-height: 1.1;
+  white-space: normal;
+  word-break: break-word;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;   /* allow wrap if needed */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Last-updated (small) */
+/* Emoji image scaling improvements */
+.emoji {
+  /* Allow the emoji column to consume a large portion of the width */
+  width: min(900px, 45vw);
+  flex: 0 0 min(900px, 45vw);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.emoji--size {
+  width: 100%;
+  height: 100%;
+  max-height: 75vh;        /* allow emoji to grow almost full viewport height */
+  object-fit: contain;     /* preserve aspect ratio */
+  image-rendering: auto;   /* smooth scaling; for pixel art you may choose crisp-edges */
+}
+
+/* If emoji images are tiny but you want them visually crisper you can try:
+   image-rendering: -webkit-optimize-contrast;
+   or use higher-res replacements (recommended).
+*/
+
+/* Layout: ensure we actually use the wide screen */
+.status-table {
+  width: 96vw;
+  max-width: 1900px;
+  display:flex;
+  gap: 40px;
+  align-items:center;
+  justify-content: center;
+}
+
+/* For narrow screens, stack the emoji above text */
+@media (max-width: 800px) {
+  .status-table { flex-direction: column; }
+  .emoji { width: 60vw; flex: 0 0 60vw; }
+  #status-text { font-size: clamp(22px, 6.8vh, 64px); -webkit-line-clamp: 2; }
+  #status-times { font-size: clamp(14px, 3.6vh, 28px); }
+}

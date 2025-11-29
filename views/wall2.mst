@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html class='page'>
+  <head>
+    <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/luxon/3.5.0/luxon.min.js'></script>
+    <script type='text/javascript' src='/wall.js'></script>
+    <link type='text/css' href='common.css' rel='stylesheet'>
+
+    <!-- Variant-specific -->     
+    <link rel="stylesheet" href="/{{variant}}.css">
+    <script type='text/javascript'>
+      // expose variant to client JS
+      window.__WALL_VARIANT__ = "{{variant}}";
+    </script>
+  </head>
+
+  <body class='visible wall'>
+    <div class='vertical-center'>
+      <div id='status-table' class='status-table'>
+        <div class='emoji'><img id='status-emoji' class='emoji--size' src=""/></div>
+        <div class='text-padding'>
+          <div id='status-text' class='block status--font-size'></div>
+          <div style="height:14px"></div>
+          <div id='status-times' class='block times--font-size'></div>
+          <div style="height:14px"></div>
+          <div class='block last-updated-time--font-size'>Last updated <span id='last-updated-time'></span></div>
+        </div>
+      </div>
+
+    </div>
+  </body>
+</html>

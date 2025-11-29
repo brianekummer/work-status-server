@@ -63,3 +63,39 @@ eventSource.addEventListener('command', (e) => {
     console.error('Failed to handle command event', err);
   }
 });
+
+
+// Autoscale the status text to fit available space (minFontPx..maxFontPx)
+function autoscaleText(el, minFontPx = 20, maxFontPx = 180) {
+  if (!el) return;
+  // Start at the max size candidate from CSS (we'll tune down if needed)
+  let fontSize = maxFontPx;
+  el.style.fontSize = fontSize + 'px';
+  // Limit iterations to avoid perf issues
+  let tries = 0;
+  // Condition: either overflows horizontally or exceeds line clamp height.
+  const fits = () => {
+    // For clamped multi-line we check scrollHeight vs clientHeight
+    if (el.scrollHeight > el.clientHeight + 1) return false;
+    if (el.scrollWidth > el.clientWidth + 1) return false;
+    return true;
+  };
+  while (!fits() && fontSize > minFontPx && tries < 40) {
+    fontSize = Math.max(minFontPx, Math.floor(fontSize * 0.92));
+    el.style.fontSize = fontSize + 'px';
+    tries++;
+  }
+}
+
+// Hook autoscale into your existing SSE update path
+// Example: after you set status text content, call:
+const statusEl = document.getElementById('status-text');
+const timesEl  = document.getElementById('status-times');
+
+// Call autoscale after SSE updates (where your code updates DOM)
+// autoscaleText(statusEl, 28, 180);
+
+// Also run on resize so layout adapts when the wall device changes orientation:
+window.addEventListener('resize', () => {
+  autoscaleText(statusEl, 28, 180);
+});
