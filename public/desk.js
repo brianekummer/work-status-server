@@ -6,6 +6,11 @@ const THIRTY_SECONDS = 30000;
 // Shorthand to select element by id
 const $ = (id) => document.getElementById(id);
 
+// compute variant from server-injected global or location search
+const VARIANT = window.__DESK_VARIANT__ ||
+  (new URL(window.location.href)).searchParams.get('variant') ||
+  'desk';
+
 
 /**
  * Update the clocks. This will be scheduled here on the client, and
@@ -29,7 +34,7 @@ const updateClocks = () => {
  * sending messages with up-to-date statuses
  */
 let errorTimeout = null;
-let eventSource = new EventSource('/api/status-updates');
+let eventSource = new EventSource(`/api/status-updates?variant=${encodeURIComponent(VARIANT)}`);
 
 eventSource.onmessage = (event) => {
   let status = JSON.parse(event.data);

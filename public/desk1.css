@@ -1,0 +1,90 @@
+/**
+ * I intentionally don't use CSS nesting, because that is only available on modern
+ * browsers, and the phones I'm using to display my work status are typically
+ * several years old.
+ * 
+ * https://caniuse.com/css-nesting says phone must have WebView version >= 131
+ *
+ * I could look into using a polyfill or SASS, or logging the status phones into
+ * Google so I can update the webview, but it's not currently worth it to me.
+ */
+:root{
+  --bg:#050608;
+  --panel:#0b0f12;
+  --muted:#9aa4a8;
+  --text:#e7eef0;
+  --accent:#6ee7b7;
+}
+
+table {
+  table-layout: fixed;
+  margin: 8px;
+  table-layout: fixed;
+  width: calc(100% - 16px);
+  border: 1px solid rgb(106, 106, 115);
+  margin: 8px;
+  color: var(--text);
+}
+
+.vertical-center {
+  position: absolute;
+  top: 50%;
+  margin: auto 5% auto 2%;    /* margin: auto 5%; */
+  transform: translateY(-50%);
+  background-color: rgb(62, 60, 70);
+}
+
+.current-times-table {
+  display: table;
+  border-spacing: 5px;
+}
+.current-times-table .time {
+  font-size: 250%;
+}
+.current-times-table .timezone {
+  font-size: 145%;
+}
+
+
+.status-table {
+  padding: 10px;
+  border-spacing: 10px 0px;
+}
+.text-padding {
+  padding: 0px 10px;
+}
+.emoji--size {
+  width: 100%;
+  height: auto;
+}
+.last-updated-time--font-size {
+  font-size: 145%;    /* 110% */
+}
+.emoji {
+  width: 100px;
+}
+.status--font-size {
+  font-size: 350%;
+  color: var(--text);
+}
+.status--font-size__small {
+  font-size: 275%; /* 250% */
+  color: var(--text);
+}
+.times--font-size {
+  font-size: 175%;   /* 165% */
+  color: var(--text);
+}
+
+.ha {
+  width: 28%;
+}
+.ha-status-cell {
+  display: inline-flex;
+  height: 65px;
+}
+.ha-status-cell .ha--font {
+  font-size: 145%;   /* 110% */
+  display: flex;
+  align-items: center;
+}
