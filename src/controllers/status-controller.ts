@@ -81,8 +81,8 @@ export default class StatusController {
     const qsVariant = (request.query?.variant as string) || '';
     let pageName = (qsVariant || response.req.get('Referrer')?.split('/').pop()?.toLowerCase() || '');
 
-    // Optionally normalize group: e.g. treat wall2 as 'wall' for grouping rules
-    const pageGroup = pageName.startsWith('wall') ? 'wall' : pageName;
+    // Optionally normalize group: e.g. treat wall2 as 'wall' and desk1 as 'desk' for grouping rules
+    const pageGroup = pageName.startsWith('wall') ? 'wall' : (pageName.startsWith('desk') ? 'desk' : pageName);
 
     const uuid: string = randomUUID();
     const clientKey: string = `${ipAddress}_${pageGroup}_${uuid}`;

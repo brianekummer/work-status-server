@@ -28,7 +28,7 @@ export default (statusController: StatusController) => {
 
     // If there's a specific template named e.g. 'desk2.mst', render that.
     const templatePath = path.join(viewsDir, `${candidate}.mst`);
-    const templateName = fs.existsSync(templatePath) ? candidate : 'wall';
+    const templateName = fs.existsSync(templatePath) ? candidate : 'desk';
 
     console.log(`Rendering variant '${candidate}' using template '${templateName}'`);
 
