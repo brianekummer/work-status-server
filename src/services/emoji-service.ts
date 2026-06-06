@@ -52,8 +52,9 @@ export default class EmojiService {
     // For each emoji, get a list of matching images, then add entry for
     // the desk page and an entry for wall page.
     emojis.forEach(e => {
-      const matchingImages = 
-        globSync(`${this.imagesFolder}/${e}*`)
+      const matchingImages =
+      globSync(`${this.imagesFolder}/${e}*`)
+        .filter(i => path.extname(i).toLowerCase() !== '.disabled')
         .map(i => `/images/${path.basename(i)}`);
 
       // Desk phone only includes unanimated/png images

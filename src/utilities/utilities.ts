@@ -29,13 +29,15 @@ export default class Utilities {
   public static async fetchWithRetry(url: string, options: RequestInit, logLabel: string): Promise<Response> {
     try {
       return await fetch(url, options);
-    } catch (firstError: any) {
-      Logger.debug(`${logLabel} failed because ${firstError.name}: ${firstError.message}, retrying`);
+    } catch (firstError: unknown) {
+      const firstErrorMessage = firstError instanceof Error ? `${firstError.name}: ${firstError.message}` : String(firstError);
+      Logger.debug(`${logLabel} failed because ${firstErrorMessage}, retrying`);
       await this.sleep(1000);  // Give the site a chance to recover before hitting it again
       try {
         return await fetch(url, options);
-      } catch (secondError: any) {
-        throw new Error(`${logLabel} failed after retry because ${secondError.name}: ${secondError.message}`);
+      } catch (secondError: unknown) {
+        const secondErrorMessage = secondError instanceof Error ? `${secondError.name}: ${secondError.message}` : String(secondError);
+        throw new Error(`${logLabel} failed after retry because ${secondErrorMessage}`);
       }
     }
   }
