@@ -197,18 +197,6 @@ export default class StatusController {
    */
   private async turnScreenOn() {
     try {
-      /*
-      const url = process.env.TURN_MONITOR_ON_URL;
-
-      if (url) {
-        const response = await fetch(url, { method: 'POST' });
-        if (!response.ok) {
-          Logger.debug(`StatusController: Failed to turn screen on, status ${response.status}`);
-        } else {
-          Logger.debug(`StatusController: Screen successfully turned on`);
-        }
-      }*/
-
       const url = process.env.HOME_ASSISTANT_BASE_URL + '/api/services/switch/turn_on';
       const token = process.env.HOME_ASSISTANT_TOKEN;
 
@@ -229,7 +217,6 @@ export default class StatusController {
       });
 
       Logger.debug(`StatusController: Sent request to turn screen on via Home Assistant`);
-
     } catch (error) {
       Logger.debug(`StatusController: Error turning screen on: ${error}`);
     }
@@ -244,7 +231,7 @@ export default class StatusController {
    * Send a command object to all connected SSE clients as an `command` event.
    * @param commandObj - Any JSON-serializable command (e.g. { action: 'reload' })
    */
-  public pushCommandToAllClients(response: Response, commandObj: any) {
+  public pushCommandToAllClients(response: Response, commandObj: unknown) {
     const payload = JSON.stringify(commandObj);
 
     this.clients.forEach((client: Client, clientKey: string) => {
