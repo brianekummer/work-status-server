@@ -48,17 +48,17 @@
           <td rowspan='2'>
             <span>
               <span class='ha-status-cell'>
-                <img src='images/mdi-washing-machine-light.png'>
+                <img src='images/mdi-washing-machine-dark.png'>
                 <span id='washer-text' class='ha--font'></span>
               </span>
               </br>
               <span class='ha-status-cell'>
-                <img src='images/mdi-tumble-dryer-light.png'>
+                <img src='images/mdi-tumble-dryer-dark.png'>
                 <span id='dryer-text' class='ha--font'></span>
               </span>
               </br>
               <span class='ha-status-cell'>
-                <img src='images/thermometer.png'>
+                <img src='images/thermometer-dark.png'>
                 <span id='temperature-text' class='ha--font'></span>
               </span>
             </span>
