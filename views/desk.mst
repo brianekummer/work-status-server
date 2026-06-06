@@ -5,7 +5,13 @@
     <script type='text/javascript' src='https://cdnjs.cloudflare.com/ajax/libs/luxon/3.5.0/luxon.min.js'></script>
     <script type='text/javascript' src='desk.js'></script>
     <link type='text/css' href='common.css' rel='stylesheet'>
-    <link type='text/css' href='desk.css' rel='stylesheet'>
+
+    <!-- Variant-specific -->     
+    <link rel="stylesheet" href="/{{variant}}.css">
+    <script type='text/javascript'>
+      // expose variant to client JS
+      window.__DESK_VARIANT__ = "{{variant}}";
+    </script>
   </head>
 
   <body class='visible wall'>
@@ -48,17 +54,17 @@
           <td rowspan='2'>
             <span>
               <span class='ha-status-cell'>
-                <img src='images/mdi-washing-machine-light.png'>
+                <img src='images/mdi-washing-machine-dark.png'>
                 <span id='washer-text' class='ha--font'></span>
               </span>
               </br>
               <span class='ha-status-cell'>
-                <img src='images/mdi-tumble-dryer-light.png'>
+                <img src='images/mdi-tumble-dryer-dark.png'>
                 <span id='dryer-text' class='ha--font'></span>
               </span>
               </br>
               <span class='ha-status-cell'>
-                <img src='images/thermometer.png'>
+                <img src='images/thermometer-dark.png'>
                 <span id='temperature-text' class='ha--font'></span>
               </span>
             </span>
