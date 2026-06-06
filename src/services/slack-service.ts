@@ -73,8 +73,9 @@ export default class SlackService {
       Logger.debug(`Got SLACK for ${accountName}: ${slackStatus.toString()}`);
       return slackStatus;
 
-    } catch (err: any) {
-      Logger.error(`SlackService.getSlackStatus(), FINAL ERROR for ${accountName}: ${err.message}`);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      Logger.error(`SlackService.getSlackStatus(), FINAL ERROR for ${accountName}: ${errorMessage}`);
       return SlackStatus.ERROR_STATUS;
     }
   }

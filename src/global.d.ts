@@ -7,6 +7,8 @@ namespace NodeJS {
     OUT_OF_OFFICE_STATUS_REGEX?: string
     OUT_OF_OFFICE_MIN_HOURS?: number
     TURN_MONITOR_ON_URL?: string
+    HOME_ASSISTANT_BASE_URL?: string
+    HOME_ASSISTANT_TOKEN?: string
     LOG_LEVEL?: string
   };
 }
