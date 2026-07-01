@@ -5,6 +5,7 @@ import { randomUUID }from 'node:crypto';
 
 import Client from '../models/client';
 import CombinedStatus from '../models/combined-status';
+import SlackStatus from '../models/slack-status';
 import EmojiService from '../services/emoji-service';
 import Logger from '../services/logger';
 import { PAGES } from '../constants';
@@ -120,6 +121,46 @@ export default class StatusController {
     this.combinedStatus.updateHomeAssistantStatus(request.body);
     this.pushStatusToAllClients();
     response.status(200).end();
+  }
+
+
+  /** 
+   * Handle Teams call notifications from a client (e.g. AutoHotkey running on laptop)
+   * Expects JSON body: { inCall: boolean }
+   * Validates the X-Auth-Token header against TEAMS_CALLBACK_SECRET (if set)
+   */
+  public handleTeamsCall(
+    request: Request,
+    response: Response
+  ) {
+    const secret = process.env.TEAMS_CALLBACK_SECRET || '';
+    const token = (request.get('X-Auth-Token') || request.get('x-auth-token') || '');
+
+    if (secret && token !== secret) {
+      Logger.warn(`StatusController.handleTeamsCall(): unauthorized callback`);
+      return response.status(401).end();
+    }
+
+    const inCall = !!request.body?.inCall;
+    Logger.debug(`StatusController.handleTeamsCall(), inCall=${inCall}`);
+
+    if (inCall) {
+      // If not already showing a Teams call, set a Teams call status and push
+      if (!(this.combinedStatus.slack.emoji === SlackStatus.EMOJI.MEETING && this.combinedStatus.slack.text.includes('Teams'))) {
+        const startTime = DateTime.now().toLocaleString(DateTime.TIME_SIMPLE);
+        this.combinedStatus.slack.emoji = SlackStatus.EMOJI.MEETING;
+        this.combinedStatus.slack.text = 'In a Meeting (Teams)';
+        this.combinedStatus.slack.statusStartTime = startTime;
+        this.combinedStatus.slack.times = `Started @ ${startTime}`;
+        this.combinedStatus.lastUpdatedDateTime = DateTime.now();
+        this.pushStatusToAllClients();
+      }
+      return response.status(200).end();
+    } else {
+      // Call ended — tell worker to resync Slack status which will update the display
+      this.tellWorkerToGetLatestSlackStatus();
+      return response.status(200).end();
+    }
   }
 
 

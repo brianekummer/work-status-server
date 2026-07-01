@@ -9,7 +9,8 @@ export default class SlackStatus {
   public static readonly EMOJI = {
     CALL: ':slack_call:',
     VACATION: ':palm_tree:',
-    UNAVAILABLE: ':no_entry:'
+    UNAVAILABLE: ':no_entry:',
+    MEETING: 'spiral_calendar_pad'
   };
   public static readonly EMPTY_STATUS = new SlackStatus();
   public static readonly ERROR_STATUS = new SlackStatus('ERROR', 'ERROR', 0, 'ERROR');

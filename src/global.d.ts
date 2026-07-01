@@ -9,6 +9,7 @@ namespace NodeJS {
     TURN_MONITOR_ON_URL?: string
     HOME_ASSISTANT_BASE_URL?: string
     HOME_ASSISTANT_TOKEN?: string
+    TEAMS_CALLBACK_SECRET?: string
     LOG_LEVEL?: string
   };
 }
