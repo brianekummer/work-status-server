@@ -23,9 +23,12 @@ import { PAGES } from '../constants';
  */
 export default class StatusController {
   private readonly SERVER_POLLING_MS: number = (process.env.SERVER_POLLING_SECONDS || 30) * 1000;
-
+  private readonly TEAMS_HEARTBEAT_TIMEOUT_MS: number = (parseInt(`${process.env.TEAMS_HEARTBEAT_TIMEOUT_SECONDS || 90}`, 10) || 90) * 1000;
 
   private clients: Map<string, Client> = new Map<string, Client>();
+  private teamsMeetingActive: boolean = false;
+  private teamsMeetingLastSeenAt: number = 0;
+  private teamsMeetingStartedAt: number = 0;
   
   // combinedStatus is required to be a module-level variable because it 
   // contains slack.statusStartTime. This does not come from Slack and is 
@@ -51,7 +54,10 @@ export default class StatusController {
       this.processWorkerThreadMessage(newCombinedStatus));
   
     this.tellWorkerToGetLatestSlackStatus();
-    setInterval(() => this.tellWorkerToGetLatestSlackStatus(), this.SERVER_POLLING_MS); 
+    setInterval(() => {
+      this.refreshTeamsMeetingState();
+      this.tellWorkerToGetLatestSlackStatus();
+    }, this.SERVER_POLLING_MS); 
   }
 
 
@@ -120,6 +126,84 @@ export default class StatusController {
     this.combinedStatus.updateHomeAssistantStatus(request.body);
     this.pushStatusToAllClients();
     response.status(200).end();
+  }
+
+
+  /**
+   * Handle a Teams heartbeat from the laptop helper.
+   */
+  public handleTeamsCall(request: Request, response: Response) {
+    const secret = process.env.TEAMS_CALLBACK_SECRET || '';
+    const token = (request.get('X-Auth-Token') || request.get('x-auth-token') || '');
+
+    if (secret && token !== secret) {
+      Logger.warn(`StatusController.handleTeamsCall(): unauthorized callback`);
+      return response.status(401).end();
+    }
+
+    const rawInCall = request.body?.inCall;
+    const inCall = rawInCall === true || rawInCall === 'true';
+    Logger.debug(`StatusController.handleTeamsCall(), inCall=${inCall}`);
+
+    if (inCall) {
+      if (!this.teamsMeetingActive) {
+        this.teamsMeetingActive = true;
+        this.teamsMeetingStartedAt = Date.now();
+      }
+      this.teamsMeetingLastSeenAt = Date.now();
+      this.pushStatusToAllClients();
+      return response.status(200).end();
+    } else if (this.teamsMeetingActive) {
+      this.teamsMeetingActive = false;
+      this.teamsMeetingLastSeenAt = 0;
+      this.teamsMeetingStartedAt = 0;
+      this.tellWorkerToGetLatestSlackStatus();
+      this.pushStatusToAllClients();
+    }
+
+    return response.status(200).end();
+  }
+
+
+  /**
+   * Check whether the Teams heartbeat has gone stale and clear the override if needed.
+   */
+  private refreshTeamsMeetingState() {
+    if (!this.teamsMeetingActive || this.teamsMeetingLastSeenAt === 0) {
+      return;
+    }
+
+    const elapsedMs = Date.now() - this.teamsMeetingLastSeenAt;
+    if (elapsedMs > this.TEAMS_HEARTBEAT_TIMEOUT_MS) {
+      Logger.debug(`StatusController.refreshTeamsMeetingState(), Teams heartbeat expired after ${elapsedMs}ms`);
+      this.teamsMeetingActive = false;
+      this.teamsMeetingLastSeenAt = 0;
+      this.tellWorkerToGetLatestSlackStatus();
+      this.pushStatusToAllClients();
+    }
+  }
+
+
+  /**
+   * Return the display status, preferring Teams override while active.
+   */
+  private getDisplayStatus() {
+    if (this.teamsMeetingActive) {
+      const startTime = this.teamsMeetingStartedAt > 0
+        ? DateTime.fromMillis(this.teamsMeetingStartedAt).toLocaleString(DateTime.TIME_SIMPLE)
+        : DateTime.now().toLocaleString(DateTime.TIME_SIMPLE);
+      return {
+        emoji: 'meeting',    // image name
+        text: 'Meeting',
+        times: `Started @ ${startTime}`
+      };
+    }
+
+    return {
+      emoji: this.combinedStatus.slack.emoji,
+      text: this.combinedStatus.slack.text,
+      times: this.combinedStatus.slack.times
+    };
   }
 
 
@@ -254,9 +338,11 @@ export default class StatusController {
    * @param client - The client 
    */
   private setEmoji(client: Client) {
-    if (client.pageName !== PAGES.DESK || client.emoji !== this.combinedStatus.slack.emoji) {
-      client.emoji = this.combinedStatus.slack.emoji;
-      client.emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);;
+    const displayStatus = this.getDisplayStatus();
+
+    if (client.pageName !== PAGES.DESK || client.emoji !== displayStatus.emoji) {
+      client.emoji = displayStatus.emoji;
+      client.emojiImage = this.emojiService.getRandomEmojiImage(displayStatus.emoji, client.pageName);
     }
   }
 
@@ -280,10 +366,12 @@ export default class StatusController {
 
     this.setEmoji(client);
 
+    const displayStatus = this.getDisplayStatus();
+
     const statusToStream = {
       emojiImage: client.emojiImage,
-      text: this.combinedStatus.slack.text,
-      times: this.combinedStatus.slack.times,
+      text: displayStatus.text,
+      times: displayStatus.times,
       lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE),
       homeAssistant: {
         washerText: this.combinedStatus.homeAssistant.washerText,
