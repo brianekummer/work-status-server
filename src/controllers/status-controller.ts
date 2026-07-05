@@ -26,6 +26,7 @@ export default class StatusController {
   private readonly TEAMS_HEARTBEAT_TIMEOUT_MS: number = (parseInt(`${process.env.TEAMS_HEARTBEAT_TIMEOUT_SECONDS || 90}`, 10) || 90) * 1000;
 
   private clients: Map<string, Client> = new Map<string, Client>();
+  // TODO- Move these Teams variables into CombinedStatus
   private teamsMeetingActive: boolean = false;
   private teamsMeetingLastSeenAt: number = 0;
   private teamsMeetingStartedAt: number = 0;
@@ -193,7 +194,7 @@ export default class StatusController {
         ? DateTime.fromMillis(this.teamsMeetingStartedAt).toLocaleString(DateTime.TIME_SIMPLE)
         : DateTime.now().toLocaleString(DateTime.TIME_SIMPLE);
       return {
-        emoji: 'meeting',    // image name
+        emoji: 'meeting',    // TODO- look into changing this to use emoji name instead of image name, and how setEmoji() uses this
         text: 'Meeting',
         times: `Started @ ${startTime}`
       };
