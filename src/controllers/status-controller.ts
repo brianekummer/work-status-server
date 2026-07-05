@@ -186,9 +186,22 @@ export default class StatusController {
 
 
   /**
-   * Return the display status, preferring Teams override while active.
+   * Return the display status, prioritizing Slack meetings but falling back to Teams for other scenarios.
    */
   private getDisplayStatus() {
+    // Only prioritize Slack if it's a meeting-type status
+    const slackHasActiveMeeting = this.isSlackMeetingStatus(this.combinedStatus.slack.emoji);
+    
+    if (slackHasActiveMeeting) {
+      // Show scheduled/Slack meeting with its calendar-driven expiration
+      return {
+        emoji: this.combinedStatus.slack.emoji,
+        text: this.combinedStatus.slack.text,
+        times: this.combinedStatus.slack.times
+      };
+    }
+
+    // Teams overrides everything except Slack meetings
     if (this.teamsMeetingActive) {
       const startTime = this.teamsMeetingStartedAt > 0
         ? DateTime.fromMillis(this.teamsMeetingStartedAt).toLocaleString(DateTime.TIME_SIMPLE)
@@ -200,11 +213,23 @@ export default class StatusController {
       };
     }
 
+    // Fall back to normal Slack status (lunch, vacation, etc.)
     return {
       emoji: this.combinedStatus.slack.emoji,
       text: this.combinedStatus.slack.text,
       times: this.combinedStatus.slack.times
     };
+  }
+
+
+  /**
+   * Check if a Slack emoji represents a meeting-type status.
+   * Only meeting statuses take priority over Teams overrides.
+   */
+  private isSlackMeetingStatus(emoji: string): boolean {
+    // Check both Slack emoji names and display image names (after status-conditions mapping)
+    const meetingEmojis = [':slack_call:', ':spiral_calendar_pad:', ':non_work_meeting:', 'meeting', 'telephone_receiver', 'non_work_meeting'];
+    return meetingEmojis.includes(emoji);
   }
 
 
