@@ -189,15 +189,17 @@ export default class StatusController {
    * Return the display status, prioritizing Slack meetings but falling back to Teams for other scenarios.
    */
   private getDisplayStatus() {
+    // TODO- This probably should not return an "emoji" property since it's not really an emoji, but rather a status image name
+
     // Only prioritize Slack if it's a meeting-type status
-    const slackHasActiveMeeting = this.isSlackMeetingStatus(this.combinedStatus.slack.emoji);
+    const slackHasActiveMeeting = this.isSlackMeetingStatus(this.combinedStatus.status.statusImageName);
     
     if (slackHasActiveMeeting) {
       // Show scheduled/Slack meeting with its calendar-driven expiration
       return {
-        emoji: this.combinedStatus.slack.emoji,
-        text: this.combinedStatus.slack.text,
-        times: this.combinedStatus.slack.times
+        emoji: this.combinedStatus.status.statusImageName,
+        text: this.combinedStatus.status.statusText,
+        times: this.combinedStatus.status.statusTimes
       };
     }
 
@@ -215,9 +217,9 @@ export default class StatusController {
 
     // Fall back to normal Slack status (lunch, vacation, etc.)
     return {
-      emoji: this.combinedStatus.slack.emoji,
-      text: this.combinedStatus.slack.text,
-      times: this.combinedStatus.slack.times
+      emoji: this.combinedStatus.status.statusImageName,
+      text: this.combinedStatus.status.statusText,
+      times: this.combinedStatus.status.statusTimes
     };
   }
 
@@ -243,7 +245,7 @@ export default class StatusController {
     Logger.debug(`StatusController.updatedStatus(), checking for updates`);
     this.tellWorkerToGetLatestSlackStatus();
 
-    Logger.debug(`StatusController.updatedSlackStatus(), turning screen on, combinedStatus.slack = ${JSON.stringify(this.combinedStatus.slack)}`);
+    Logger.debug(`StatusController.updatedSlackStatus(), turning screen on, combinedStatus.status = ${JSON.stringify(this.combinedStatus.status)}`);
 
     // TODO- if the status is blank, don't turn the screen on. But at this point in the code,
     // the worker hasn't yet updated this.combinedStatus. So I need to wait until after the worker
