@@ -11,6 +11,6 @@ export default class StatusCondition {
     public readonly conditionsWorkPresence: string,
     public readonly conditionsHomeEmoji: string, 
     public readonly conditionsHomePresence: string, 
-    public readonly displayEmojiImage: string, 
+    public readonly displayImageName: string, 
     public readonly displayText: string) {}
 }

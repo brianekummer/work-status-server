@@ -12,6 +12,6 @@ export default class Client {
     public readonly ipAddress: string,
     public readonly pageName: string,
     public readonly response: Response,
-    public emoji: string = '',
-    public emojiImage: string = '') {}
+    public displayImageName: string = '',
+    public displayImagePath: string = '') {}
 }

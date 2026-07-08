@@ -147,7 +147,7 @@ export default class CombinedStatus {
     matchedHomeEmoji: boolean
   ): CombinedStatus {
     const newCombinedStatus = new CombinedStatus(
-      matchingCondition.displayEmojiImage,
+      matchingCondition.displayImageName,
       (matchingCondition.displayText)
         .replace('(WORK_STATUS_TEXT)', workSlackStatus.text)
         .replace('(HOME_STATUS_TEXT)', homeSlackStatus.text),

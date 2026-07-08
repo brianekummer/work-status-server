@@ -149,7 +149,12 @@ export default class StatusController {
     if (inCall) {
       if (!this.teamsMeetingActive) {
         this.teamsMeetingActive = true;
-        this.teamsMeetingStartedAt = Date.now();
+        // Only set the startedAt timestamp if we don't already have one.
+        // This preserves the original join time if the server briefly
+        // cleared the active flag due to a timeout or missed heartbeat.
+        if (this.teamsMeetingStartedAt === 0) {
+          this.teamsMeetingStartedAt = Date.now();
+        }
       }
       this.teamsMeetingLastSeenAt = Date.now();
       this.pushStatusToAllClients();
@@ -189,15 +194,13 @@ export default class StatusController {
    * Return the display status, prioritizing Slack meetings but falling back to Teams for other scenarios.
    */
   private getDisplayStatus() {
-    // TODO- This probably should not return an "emoji" property since it's not really an emoji, but rather a status image name
-
     // Only prioritize Slack if it's a meeting-type status
-    const slackHasActiveMeeting = this.isSlackMeetingStatus(this.combinedStatus.status.statusImageName);
+    const slackHasActiveMeeting = this.isMeetingStatusValue(this.combinedStatus.status.statusImageName);
     
     if (slackHasActiveMeeting) {
       // Show scheduled/Slack meeting with its calendar-driven expiration
       return {
-        emoji: this.combinedStatus.status.statusImageName,
+        imageName: this.combinedStatus.status.statusImageName,
         text: this.combinedStatus.status.statusText,
         times: this.combinedStatus.status.statusTimes
       };
@@ -209,7 +212,7 @@ export default class StatusController {
         ? DateTime.fromMillis(this.teamsMeetingStartedAt).toLocaleString(DateTime.TIME_SIMPLE)
         : DateTime.now().toLocaleString(DateTime.TIME_SIMPLE);
       return {
-        emoji: 'meeting',    // TODO- look into changing this to use emoji name instead of image name, and how setEmoji() uses this
+        imageName: 'meeting',
         text: 'Meeting',
         times: `Started @ ${startTime}`
       };
@@ -217,7 +220,7 @@ export default class StatusController {
 
     // Fall back to normal Slack status (lunch, vacation, etc.)
     return {
-      emoji: this.combinedStatus.status.statusImageName,
+      imageName: this.combinedStatus.status.statusImageName,
       text: this.combinedStatus.status.statusText,
       times: this.combinedStatus.status.statusTimes
     };
@@ -225,13 +228,13 @@ export default class StatusController {
 
 
   /**
-   * Check if a Slack emoji represents a meeting-type status.
+   * Check if a status value represents a meeting-type status.
    * Only meeting statuses take priority over Teams overrides.
    */
-  private isSlackMeetingStatus(emoji: string): boolean {
+  private isMeetingStatusValue(statusValue: string): boolean {
     // Check both Slack emoji names and display image names (after status-conditions mapping)
-    const meetingEmojis = [':slack_call:', ':spiral_calendar_pad:', ':non_work_meeting:', 'meeting', 'telephone_receiver', 'non_work_meeting'];
-    return meetingEmojis.includes(emoji);
+    const meetingStatusValues = [':slack_call:', ':spiral_calendar_pad:', ':non_work_meeting:', 'meeting', 'telephone_receiver', 'non_work_meeting'];
+    return meetingStatusValues.includes(statusValue);
   }
 
 
@@ -353,24 +356,24 @@ export default class StatusController {
 
 
   /**
-   * Set the emoji and emoji image that will be sent to the clients
+   * Set the display image that will be sent to the clients.
    * 
-   * The emoji image is randomly selected from a list of images available for that 
-   * emoji.
+   * The image path is randomly selected from a list of files available for the
+   * chosen image name.
    * 
-   * It's fine, even preferred, for the wall phone to have the emoji image change 
+   * It's fine, even preferred, for the wall phone to have the image change 
    * for every push. For example, one time it's 8bit_1.png, the next time it's
    * 8bit_2.gif, etc. But I don't want my desk phone constantly changing and 
    * distracting me for no reason.
    *
    * @param client - The client 
    */
-  private setEmoji(client: Client) {
+  private setDisplayImage(client: Client) {
     const displayStatus = this.getDisplayStatus();
 
-    if (client.pageName !== PAGES.DESK || client.emoji !== displayStatus.emoji) {
-      client.emoji = displayStatus.emoji;
-      client.emojiImage = this.emojiService.getRandomEmojiImage(displayStatus.emoji, client.pageName);
+    if (client.pageName !== PAGES.DESK || client.displayImageName !== displayStatus.imageName) {
+      client.displayImageName = displayStatus.imageName;
+      client.displayImagePath = this.emojiService.getRandomImagePath(displayStatus.imageName, client.pageName);
     }
   }
 
@@ -392,12 +395,12 @@ export default class StatusController {
   ) {
     Logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} to ${clientKey}`);
 
-    this.setEmoji(client);
+    this.setDisplayImage(client);
 
     const displayStatus = this.getDisplayStatus();
 
     const statusToStream = {
-      emojiImage: client.emojiImage,
+      imagePath: client.displayImagePath,
       text: displayStatus.text,
       times: displayStatus.times,
       lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE),
