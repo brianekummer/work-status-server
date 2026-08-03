@@ -6,7 +6,7 @@
 #   - Slack automatically sets users away after some amount of inactivity although I've seen differing statements of how long that is.
 #
 # The following line defines how this file is parsed
-| status_name | conditionsWorkEmoji | conditionsWorkPresence | conditionsHomeEmoji | conditionsHomePresence | displayEmojiImage | displayText |
+| status_name | conditionsWorkEmoji | conditionsWorkPresence | conditionsHomeEmoji | conditionsHomePresence | displayImageName | displayText |
 #
 #                                |                               Conditions                              |               What to Display               |
 #                                |               Work                |               Home                |                                             |

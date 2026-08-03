@@ -23,9 +23,13 @@ import { PAGES } from '../constants';
  */
 export default class StatusController {
   private readonly SERVER_POLLING_MS: number = (process.env.SERVER_POLLING_SECONDS || 30) * 1000;
-
+  private readonly TEAMS_HEARTBEAT_TIMEOUT_MS: number = (parseInt(`${process.env.TEAMS_HEARTBEAT_TIMEOUT_SECONDS || 90}`, 10) || 90) * 1000;
 
   private clients: Map<string, Client> = new Map<string, Client>();
+  // TODO- Move these Teams variables into CombinedStatus
+  private teamsMeetingActive: boolean = false;
+  private teamsMeetingLastSeenAt: number = 0;
+  private teamsMeetingStartedAt: number = 0;
   
   // combinedStatus is required to be a module-level variable because it 
   // contains slack.statusStartTime. This does not come from Slack and is 
@@ -51,7 +55,10 @@ export default class StatusController {
       this.processWorkerThreadMessage(newCombinedStatus));
   
     this.tellWorkerToGetLatestSlackStatus();
-    setInterval(() => this.tellWorkerToGetLatestSlackStatus(), this.SERVER_POLLING_MS); 
+    setInterval(() => {
+      this.refreshTeamsMeetingState();
+      this.tellWorkerToGetLatestSlackStatus();
+    }, this.SERVER_POLLING_MS); 
   }
 
 
@@ -124,6 +131,114 @@ export default class StatusController {
 
 
   /**
+   * Handle a Teams heartbeat from the laptop helper.
+   */
+  public handleTeamsCall(request: Request, response: Response) {
+    const secret = process.env.TEAMS_CALLBACK_SECRET || '';
+    const token = (request.get('X-Auth-Token') || request.get('x-auth-token') || '');
+
+    if (secret && token !== secret) {
+      Logger.warn(`StatusController.handleTeamsCall(): unauthorized callback`);
+      return response.status(401).end();
+    }
+
+    const rawInCall = request.body?.inCall;
+    const inCall = rawInCall === true || rawInCall === 'true';
+    Logger.debug(`StatusController.handleTeamsCall(), inCall=${inCall}`);
+
+    if (inCall) {
+      if (!this.teamsMeetingActive) {
+        this.teamsMeetingActive = true;
+        // Only set the startedAt timestamp if we don't already have one.
+        // This preserves the original join time if the server briefly
+        // cleared the active flag due to a timeout or missed heartbeat.
+        if (this.teamsMeetingStartedAt === 0) {
+          this.teamsMeetingStartedAt = Date.now();
+        }
+      }
+      this.teamsMeetingLastSeenAt = Date.now();
+      this.pushStatusToAllClients();
+      return response.status(200).end();
+    } else if (this.teamsMeetingActive) {
+      this.teamsMeetingActive = false;
+      this.teamsMeetingLastSeenAt = 0;
+      this.teamsMeetingStartedAt = 0;
+      this.tellWorkerToGetLatestSlackStatus();
+      this.pushStatusToAllClients();
+    }
+
+    return response.status(200).end();
+  }
+
+
+  /**
+   * Check whether the Teams heartbeat has gone stale and clear the override if needed.
+   */
+  private refreshTeamsMeetingState() {
+    if (!this.teamsMeetingActive || this.teamsMeetingLastSeenAt === 0) {
+      return;
+    }
+
+    const elapsedMs = Date.now() - this.teamsMeetingLastSeenAt;
+    if (elapsedMs > this.TEAMS_HEARTBEAT_TIMEOUT_MS) {
+      Logger.debug(`StatusController.refreshTeamsMeetingState(), Teams heartbeat expired after ${elapsedMs}ms`);
+      this.teamsMeetingActive = false;
+      this.teamsMeetingLastSeenAt = 0;
+      this.tellWorkerToGetLatestSlackStatus();
+      this.pushStatusToAllClients();
+    }
+  }
+
+
+  /**
+   * Return the display status, prioritizing Slack meetings but falling back to Teams for other scenarios.
+   */
+  private getDisplayStatus() {
+    // Only prioritize Slack if it's a meeting-type status
+    const slackHasActiveMeeting = this.isMeetingStatusValue(this.combinedStatus.status.statusImageName);
+    
+    if (slackHasActiveMeeting) {
+      // Show scheduled/Slack meeting with its calendar-driven expiration
+      return {
+        imageName: this.combinedStatus.status.statusImageName,
+        text: this.combinedStatus.status.statusText,
+        times: this.combinedStatus.status.statusTimes
+      };
+    }
+
+    // Teams overrides everything except Slack meetings
+    if (this.teamsMeetingActive) {
+      const startTime = this.teamsMeetingStartedAt > 0
+        ? DateTime.fromMillis(this.teamsMeetingStartedAt).toLocaleString(DateTime.TIME_SIMPLE)
+        : DateTime.now().toLocaleString(DateTime.TIME_SIMPLE);
+      return {
+        imageName: 'meeting',
+        text: 'Meeting',
+        times: `Started @ ${startTime}`
+      };
+    }
+
+    // Fall back to normal Slack status (lunch, vacation, etc.)
+    return {
+      imageName: this.combinedStatus.status.statusImageName,
+      text: this.combinedStatus.status.statusText,
+      times: this.combinedStatus.status.statusTimes
+    };
+  }
+
+
+  /**
+   * Check if a status value represents a meeting-type status.
+   * Only meeting statuses take priority over Teams overrides.
+   */
+  private isMeetingStatusValue(statusValue: string): boolean {
+    // Check both Slack emoji names and display image names (after status-conditions mapping)
+    const meetingStatusValues = [':slack_call:', ':spiral_calendar_pad:', ':non_work_meeting:', 'meeting', 'telephone_receiver', 'non_work_meeting'];
+    return meetingStatusValues.includes(statusValue);
+  }
+
+
+  /**
    * User called this endpoint to notify that they updated their Slack status and that
    * we should immediately get that new status and push it to the clients
    * 
@@ -133,7 +248,7 @@ export default class StatusController {
     Logger.debug(`StatusController.updatedStatus(), checking for updates`);
     this.tellWorkerToGetLatestSlackStatus();
 
-    Logger.debug(`StatusController.updatedSlackStatus(), turning screen on, combinedStatus.slack = ${JSON.stringify(this.combinedStatus.slack)}`);
+    Logger.debug(`StatusController.updatedSlackStatus(), turning screen on, combinedStatus.status = ${JSON.stringify(this.combinedStatus.status)}`);
 
     // TODO- if the status is blank, don't turn the screen on. But at this point in the code,
     // the worker hasn't yet updated this.combinedStatus. So I need to wait until after the worker
@@ -241,22 +356,24 @@ export default class StatusController {
 
 
   /**
-   * Set the emoji and emoji image that will be sent to the clients
+   * Set the display image that will be sent to the clients.
    * 
-   * The emoji image is randomly selected from a list of images available for that 
-   * emoji.
+   * The image path is randomly selected from a list of files available for the
+   * chosen image name.
    * 
-   * It's fine, even preferred, for the wall phone to have the emoji image change 
+   * It's fine, even preferred, for the wall phone to have the image change 
    * for every push. For example, one time it's 8bit_1.png, the next time it's
    * 8bit_2.gif, etc. But I don't want my desk phone constantly changing and 
    * distracting me for no reason.
    *
    * @param client - The client 
    */
-  private setEmoji(client: Client) {
-    if (client.pageName !== PAGES.DESK || client.emoji !== this.combinedStatus.slack.emoji) {
-      client.emoji = this.combinedStatus.slack.emoji;
-      client.emojiImage = this.emojiService.getRandomEmojiImage(this.combinedStatus.slack.emoji, client.pageName);;
+  private setDisplayImage(client: Client) {
+    const displayStatus = this.getDisplayStatus();
+
+    if (client.pageName !== PAGES.DESK || client.displayImageName !== displayStatus.imageName) {
+      client.displayImageName = displayStatus.imageName;
+      client.displayImagePath = this.emojiService.getRandomImagePath(displayStatus.imageName, client.pageName);
     }
   }
 
@@ -278,12 +395,14 @@ export default class StatusController {
   ) {
     Logger.debug(`StatusController.pushStatusToClient(), pushing ${initialPush ? 'initial data' : 'data'} to ${clientKey}`);
 
-    this.setEmoji(client);
+    this.setDisplayImage(client);
+
+    const displayStatus = this.getDisplayStatus();
 
     const statusToStream = {
-      emojiImage: client.emojiImage,
-      text: this.combinedStatus.slack.text,
-      times: this.combinedStatus.slack.times,
+      imagePath: client.displayImagePath,
+      text: displayStatus.text,
+      times: displayStatus.times,
       lastUpdatedTime: DateTime.now().toLocaleString(DateTime.TIME_SIMPLE),
       homeAssistant: {
         washerText: this.combinedStatus.homeAssistant.washerText,
