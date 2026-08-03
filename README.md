@@ -1,3 +1,19 @@
+## Overview
+
+This project serves the work-status display pages and combines Slack-derived status with Home Assistant updates. It also supports a Teams call heartbeat integration so a laptop helper can notify the server when a Teams meeting is active. This Teams integration is benefitical to keep displaying a status of "Meeting" in cases where a scheduled meeting runs long and my Slack status has changed back to "Working". 
+
+### Teams integration
+
+The service exposes an endpoint at `/api/teams-call` that accepts a JSON body like:
+
+```json
+{"inCall": true}
+```
+
+When the endpoint receives a heartbeat, the server marks the Teams override as active and displays a meeting-style status until the heartbeat stops arriving or expires. The endpoint is protected by the `TEAMS_CALLBACK_SECRET` token when that environment variable is configured.
+
+A companion AutoHotkey (AHK) script in the user's local automation project sends the Teams call state to this service. That script is the source of the heartbeat traffic into this server.
+
 # Work Status (Server App)
 This is the server-side part of my work-from-home status indicator project that shows my Slack status on an old Android phone mounted on a wall outside of my home office, as well as on a phone sitting on my office desk that shows some additional information. This Node Express app serves simple web pages to those phones.
 My repo [`work-status-android`](https://github.com/brianekummer/work-status-android) contains the very simple Android app that runs on my Android phones.

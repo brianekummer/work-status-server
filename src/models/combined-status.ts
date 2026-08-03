@@ -12,6 +12,12 @@ interface StatusData {
   statusStartTime: string;
 }
 
+interface TeamsOverrideData {
+  isActive: boolean;
+  lastHeartbeatAt: number;
+  startedAt: number;
+}
+
 
 /**
  * Combined Status model, is a combination of status from Slack and Home
@@ -36,6 +42,9 @@ export default class CombinedStatus {
 
   public status: StatusData;
   public homeAssistant: HomeAssistantStatus;
+  // Teams callback state is an ephemeral display override that can supersede
+  // the Slack-derived status while heartbeats are still arriving.
+  public teamsOverride: TeamsOverrideData;
   public lastUpdatedDateTime: DateTime;
 
   
@@ -46,7 +55,10 @@ export default class CombinedStatus {
     statusStartTime: string = '',
     homeAssistantWasherText: string = '',
     homeAssistantDryerText: string = '',
-    homeAssistantTemperatureText: string = ''
+    homeAssistantTemperatureText: string = '',
+    teamsOverrideIsActive: boolean = false,
+    teamsOverrideLastHeartbeatAt: number = 0,
+    teamsOverrideStartedAt: number = 0
   ) {
     this.status = {
       statusImageName,
@@ -59,6 +71,11 @@ export default class CombinedStatus {
       homeAssistantDryerText,
       homeAssistantTemperatureText
     );
+    this.teamsOverride = {
+      isActive: teamsOverrideIsActive,
+      lastHeartbeatAt: teamsOverrideLastHeartbeatAt,
+      startedAt: teamsOverrideStartedAt
+    };
     this.lastUpdatedDateTime = DateTime.now();
   }
 
@@ -75,13 +92,16 @@ export default class CombinedStatus {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public static fromJsonObject(jsonObject: any): CombinedStatus {
     return new CombinedStatus(
-      jsonObject.status.statusImageName, 
-      jsonObject.status.statusText, 
-      jsonObject.status.statusTimes, 
+      jsonObject.status.statusImageName,
+      jsonObject.status.statusText,
+      jsonObject.status.statusTimes,
       jsonObject.status.statusStartTime,
       jsonObject.homeAssistant.washerText,
       jsonObject.homeAssistant.dryerText,
-      jsonObject.homeAssistant.temperatureText);
+      jsonObject.homeAssistant.temperatureText,
+      jsonObject.teamsOverride?.isActive ?? false,
+      jsonObject.teamsOverride?.lastHeartbeatAt ?? 0,
+      jsonObject.teamsOverride?.startedAt ?? 0);
   }
 
 
@@ -113,7 +133,10 @@ export default class CombinedStatus {
            this.status.statusStartTime === otherCombinedStatus.status.statusStartTime &&
            this.homeAssistant.washerText === otherCombinedStatus.homeAssistant.washerText &&
            this.homeAssistant.dryerText === otherCombinedStatus.homeAssistant.dryerText &&
-           this.homeAssistant.temperatureText === otherCombinedStatus.homeAssistant.temperatureText;
+           this.homeAssistant.temperatureText === otherCombinedStatus.homeAssistant.temperatureText &&
+           this.teamsOverride.isActive === otherCombinedStatus.teamsOverride.isActive &&
+           this.teamsOverride.lastHeartbeatAt === otherCombinedStatus.teamsOverride.lastHeartbeatAt &&
+           this.teamsOverride.startedAt === otherCombinedStatus.teamsOverride.startedAt;
   }
 
 
@@ -128,6 +151,47 @@ export default class CombinedStatus {
       webhookData.Washer,
       webhookData.Dryer,
       webhookData.Temperature);
+  }
+
+
+  /**
+   * Update the Teams meeting heartbeat state and preserve it as part of the
+   * displayed status model.
+   */
+  public updateTeamsOverrideState(inCall: boolean): void {
+    if (inCall) {
+      if (!this.teamsOverride.isActive) {
+        this.teamsOverride.isActive = true;
+        if (this.teamsOverride.startedAt === 0) {
+          this.teamsOverride.startedAt = Date.now();
+        }
+      }
+      this.teamsOverride.lastHeartbeatAt = Date.now();
+      return;
+    }
+
+    this.teamsOverride.isActive = false;
+    this.teamsOverride.lastHeartbeatAt = 0;
+    this.teamsOverride.startedAt = 0;
+  }
+
+
+  /**
+   * Refresh the Teams heartbeat override state and clear the override when it
+   * expires.
+   */
+  public refreshTeamsOverrideState(heartbeatTimeoutMs: number): boolean {
+    if (!this.teamsOverride.isActive || this.teamsOverride.lastHeartbeatAt === 0) {
+      return false;
+    }
+
+    const elapsedMs = Date.now() - this.teamsOverride.lastHeartbeatAt;
+    if (elapsedMs > heartbeatTimeoutMs) {
+      this.updateTeamsOverrideState(false);
+      return true;
+    }
+
+    return false;
   }
 
 

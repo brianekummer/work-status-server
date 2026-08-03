@@ -26,10 +26,6 @@ export default class StatusController {
   private readonly TEAMS_HEARTBEAT_TIMEOUT_MS: number = (parseInt(`${process.env.TEAMS_HEARTBEAT_TIMEOUT_SECONDS || 90}`, 10) || 90) * 1000;
 
   private clients: Map<string, Client> = new Map<string, Client>();
-  // TODO- Move these Teams variables into CombinedStatus
-  private teamsMeetingActive: boolean = false;
-  private teamsMeetingLastSeenAt: number = 0;
-  private teamsMeetingStartedAt: number = 0;
   
   // combinedStatus is required to be a module-level variable because it 
   // contains slack.statusStartTime. This does not come from Slack and is 
@@ -56,7 +52,7 @@ export default class StatusController {
   
     this.tellWorkerToGetLatestSlackStatus();
     setInterval(() => {
-      this.refreshTeamsMeetingState();
+      this.refreshTeamsOverrideState();
       this.tellWorkerToGetLatestSlackStatus();
     }, this.SERVER_POLLING_MS); 
   }
@@ -147,22 +143,13 @@ export default class StatusController {
     Logger.debug(`StatusController.handleTeamsCall(), inCall=${inCall}`);
 
     if (inCall) {
-      if (!this.teamsMeetingActive) {
-        this.teamsMeetingActive = true;
-        // Only set the startedAt timestamp if we don't already have one.
-        // This preserves the original join time if the server briefly
-        // cleared the active flag due to a timeout or missed heartbeat.
-        if (this.teamsMeetingStartedAt === 0) {
-          this.teamsMeetingStartedAt = Date.now();
-        }
-      }
-      this.teamsMeetingLastSeenAt = Date.now();
+      this.combinedStatus.updateTeamsOverrideState(true);
       this.pushStatusToAllClients();
       return response.status(200).end();
-    } else if (this.teamsMeetingActive) {
-      this.teamsMeetingActive = false;
-      this.teamsMeetingLastSeenAt = 0;
-      this.teamsMeetingStartedAt = 0;
+    }
+
+    if (this.combinedStatus.teamsOverride.isActive) {
+      this.combinedStatus.updateTeamsOverrideState(false);
       this.tellWorkerToGetLatestSlackStatus();
       this.pushStatusToAllClients();
     }
@@ -174,16 +161,10 @@ export default class StatusController {
   /**
    * Check whether the Teams heartbeat has gone stale and clear the override if needed.
    */
-  private refreshTeamsMeetingState() {
-    if (!this.teamsMeetingActive || this.teamsMeetingLastSeenAt === 0) {
-      return;
-    }
-
-    const elapsedMs = Date.now() - this.teamsMeetingLastSeenAt;
-    if (elapsedMs > this.TEAMS_HEARTBEAT_TIMEOUT_MS) {
-      Logger.debug(`StatusController.refreshTeamsMeetingState(), Teams heartbeat expired after ${elapsedMs}ms`);
-      this.teamsMeetingActive = false;
-      this.teamsMeetingLastSeenAt = 0;
+  private refreshTeamsOverrideState() {
+    const expired = this.combinedStatus.refreshTeamsOverrideState(this.TEAMS_HEARTBEAT_TIMEOUT_MS);
+    if (expired) {
+      Logger.debug(`StatusController.refreshTeamsOverrideState(), Teams heartbeat expired`);
       this.tellWorkerToGetLatestSlackStatus();
       this.pushStatusToAllClients();
     }
@@ -207,9 +188,9 @@ export default class StatusController {
     }
 
     // Teams overrides everything except Slack meetings
-    if (this.teamsMeetingActive) {
-      const startTime = this.teamsMeetingStartedAt > 0
-        ? DateTime.fromMillis(this.teamsMeetingStartedAt).toLocaleString(DateTime.TIME_SIMPLE)
+    if (this.combinedStatus.teamsOverride.isActive) {
+      const startTime = this.combinedStatus.teamsOverride.startedAt > 0
+        ? DateTime.fromMillis(this.combinedStatus.teamsOverride.startedAt).toLocaleString(DateTime.TIME_SIMPLE)
         : DateTime.now().toLocaleString(DateTime.TIME_SIMPLE);
       return {
         imageName: 'meeting',
