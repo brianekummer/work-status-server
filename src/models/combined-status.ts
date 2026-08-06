@@ -220,6 +220,14 @@ export default class CombinedStatus {
       this.homeAssistant.dryerText,
       this.homeAssistant.temperatureText
     );
+
+    // Preserve the active Teams override so the meeting state remains visible
+    // while Slack refreshes.
+    newCombinedStatus.teamsOverride = {
+      isActive: this.teamsOverride.isActive,
+      lastHeartbeatAt: this.teamsOverride.lastHeartbeatAt,
+      startedAt: this.teamsOverride.startedAt
+    };
     
     // Set the status time (i.e. "Started @ 12:30 PM" or "12:30 PM - 1:00 PM") and
     // status start time
